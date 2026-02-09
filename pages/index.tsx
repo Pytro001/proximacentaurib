@@ -62,8 +62,8 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>PEAK M - Upgrading Human Capabilities</title>
-        <meta name="description" content="PEAK M produces hardware to advance human work in the US and Europe, building tech for humans to be more capable." />
+        <title>Proxima Centauri B</title>
+        <meta name="description" content="Proxima Centauri B - Upload your design ideas" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
