@@ -10,16 +10,6 @@ export const config = {
   },
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables')
-}
-
-// Create Supabase client with service role key for admin operations
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -27,6 +17,20 @@ export default async function handler(
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  // Check environment variables at runtime
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return res.status(500).json({ 
+      error: 'Server configuration error', 
+      details: 'Missing Supabase environment variables' 
+    })
+  }
+
+  // Create Supabase client with service role key for admin operations
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
   try {
     const form = formidable({
