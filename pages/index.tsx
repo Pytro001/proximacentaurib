@@ -12,7 +12,7 @@ export default function Home() {
         <link rel="apple-touch-icon" href="/favicon.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
       
       <div className={styles.container}>
@@ -28,7 +28,9 @@ export default function Home() {
               <div key={i} className={`${styles.star} ${styles[`star${i + 1}`]}`}></div>
             ))}
           </div>
-          <div className={styles.heroContent} />
+          <div className={styles.heroContent}>
+            <h1 className={styles.heroTitle}>Humans in space.</h1>
+          </div>
         </section>
 
         {/* Footer */}

@@ -128,6 +128,16 @@
   padding-top: 20px;
 }
 
+.heroTitle {
+  font-size: clamp(18px, 2.5vw, 26px);
+  font-weight: 400;
+  color: #fff;
+  margin: 0;
+  opacity: 0.95;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: 0.04em;
+}
+
 .uploadText {
   font-size: clamp(16px, 2.5vw, 24px);
   font-weight: 400;
