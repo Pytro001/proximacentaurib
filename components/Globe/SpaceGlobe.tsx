@@ -198,37 +198,54 @@ function createCSSObject(): THREE.Group {
   const blueMat = new THREE.MeshBasicMaterial({ color: '#1d9bf0' });
   const redMat = new THREE.MeshBasicMaterial({ color: '#de2910' });
 
-  const coreGeom = new THREE.CylinderGeometry(0.2 * s, 0.2 * s, 1.2 * s, 8);
+  // Tianhe core module: long cylinder (16.6m body, 4.2m diameter)
+  const coreGeom = new THREE.CylinderGeometry(0.22 * s, 0.22 * s, 1.5 * s, 10);
   const core = new THREE.Mesh(coreGeom, whiteMat);
   core.rotation.z = Math.PI / 2;
   group.add(core);
 
-  const labGeom = new THREE.CylinderGeometry(0.15 * s, 0.15 * s, 0.7 * s, 8);
-  const labL = new THREE.Mesh(labGeom, whiteMat);
-  labL.position.set(-0.8 * s, 0.4 * s, 0);
-  labL.rotation.z = -Math.PI / 3;
-  group.add(labL);
-  const labR = new THREE.Mesh(labGeom.clone(), whiteMat);
-  labR.position.set(0.8 * s, 0.35 * s, 0);
-  labR.rotation.z = Math.PI / 3;
-  group.add(labR);
+  // Forward docking node (node cabin)
+  const nodeGeom = new THREE.CylinderGeometry(0.18 * s, 0.22 * s, 0.25 * s, 10);
+  const node = new THREE.Mesh(nodeGeom, whiteMat);
+  node.rotation.z = Math.PI / 2;
+  node.position.set(0.88 * s, 0, 0);
+  group.add(node);
 
-  const wingGeom = new THREE.BoxGeometry(0.06 * s, 0.8 * s, 0.4 * s);
-  [-0.5, 0, 0.5].forEach((x) => {
+  // Docking hub accent (red, Chinese flag color)
+  const hubGeom = new THREE.CylinderGeometry(0.1 * s, 0.1 * s, 0.08 * s, 8);
+  const hub = new THREE.Mesh(hubGeom, redMat);
+  hub.rotation.z = Math.PI / 2;
+  hub.position.set(1.0 * s, 0, 0);
+  group.add(hub);
+
+  // Two large solar arrays (Tianhe has 2 steerable arrays)
+  const wingGeom = new THREE.BoxGeometry(0.04 * s, 1.0 * s, 0.35 * s);
+  const wingPositions = [-0.35 * s, 0.35 * s];
+  wingPositions.forEach((x) => {
     const wingL = new THREE.Mesh(wingGeom, blueMat);
-    wingL.position.set(x * s, 0.5 * s, 0);
+    wingL.position.set(x, 0.55 * s, 0);
     wingL.rotation.x = Math.PI / 2;
     group.add(wingL);
     const wingR = new THREE.Mesh(wingGeom.clone(), blueMat);
-    wingR.position.set(x * s, -0.5 * s, 0);
+    wingR.position.set(x, -0.55 * s, 0);
     wingR.rotation.x = -Math.PI / 2;
     group.add(wingR);
   });
 
-  const nodeGeom = new THREE.CylinderGeometry(0.12 * s, 0.12 * s, 0.15 * s, 8);
-  const node = new THREE.Mesh(nodeGeom, redMat);
-  node.position.set(0, 0, 0);
-  group.add(node);
+  // Wentian lab module (perpendicular to core, T-config)
+  const labGeom = new THREE.CylinderGeometry(0.14 * s, 0.14 * s, 0.55 * s, 8);
+  const labWentian = new THREE.Mesh(labGeom, whiteMat);
+  labWentian.position.set(-0.5 * s, 0.5 * s, 0);
+  labWentian.rotation.z = -Math.PI / 2;
+  labWentian.rotation.x = Math.PI / 4;
+  group.add(labWentian);
+
+  // Mengtian lab module (other arm of T)
+  const labMengtian = new THREE.Mesh(labGeom.clone(), whiteMat);
+  labMengtian.position.set(0.5 * s, 0.48 * s, 0);
+  labMengtian.rotation.z = Math.PI / 2;
+  labMengtian.rotation.x = Math.PI / 4;
+  group.add(labMengtian);
 
   return group;
 }

@@ -22,7 +22,7 @@ export default async function handler(
 
   try {
     let response = await fetch(
-      'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?limit=50&ordering=net&mode=normal',
+      'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?limit=50&ordering=net&mode=detailed',
       { headers: { Accept: 'application/json' } }
     );
 
@@ -47,12 +47,23 @@ export default async function handler(
 
     const launches = results.map((l: any) => {
       const rawVidUrls = l.mission?.vid_urls || l.vid_urls || [];
+      const seen = new Set<string>();
       const vidUrls = rawVidUrls
-        .map((v: any) => ({
-          url: typeof v === 'string' ? v : (v?.url || ''),
-          title: typeof v === 'object' && v?.title ? v.title : (v?.type?.name || 'Livestream'),
-        }))
-        .filter((v: { url: string }) => v.url);
+        .map((v: any) => {
+          const url = typeof v === 'string' ? v : (v?.url || '');
+          if (!url || seen.has(url)) return null;
+          seen.add(url);
+          const title = typeof v === 'object' && v?.title ? v.title : (v?.type?.name || null);
+          const source = typeof v === 'object' && v?.source ? String(v.source).toLowerCase() : '';
+          const isLive = typeof v === 'object' && v?.live === true;
+          const label = title || (isLive ? 'Livestream' : (source.includes('youtube') ? 'YouTube' : 'Video'));
+          return { url, title: label, source, isLive };
+        })
+        .filter(Boolean) as { url: string; title: string; source?: string; isLive?: boolean }[];
+      const webcastUrl = typeof l.webcast_live === 'string' ? l.webcast_live : null;
+      if (webcastUrl && !vidUrls.some((v) => v.url === webcastUrl)) {
+        vidUrls.unshift({ url: webcastUrl, title: 'Livestream', isLive: true });
+      }
       return {
         id: l.id,
         name: l.name,

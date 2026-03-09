@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react';
 import styles from '../../styles/Globe.module.css';
 import { SatellitePosition } from '../../lib/satellites';
-import { Launch, formatLaunchDate, getLaunchStatusColor } from '../../lib/launches';
+import { Launch, formatLaunchDate, getLaunchStatusColor, getCountdown } from '../../lib/launches';
 
 interface InfoPanelProps {
   satellite: SatellitePosition | null;
@@ -80,63 +81,54 @@ function SatelliteInfo({ sat }: { sat: SatellitePosition }) {
   );
 }
 
-function LaunchInfo({ launch }: { launch: Launch }) {
+function CountdownDisplay({ net }: { net: string }) {
+  const [cd, setCd] = useState(() => getCountdown(net));
+  useEffect(() => {
+    const t = setInterval(() => setCd(getCountdown(net)), 1000);
+    return () => clearInterval(t);
+  }, [net]);
+  if (cd.past) return <span className={styles.countdownText}>Liftoff!</span>;
+  const parts = [
+    cd.days > 0 && `${cd.days}d`,
+    `${String(cd.hours).padStart(2, '0')}h`,
+    `${String(cd.mins).padStart(2, '0')}m`,
+    `${String(cd.secs).padStart(2, '0')}s`,
+  ].filter(Boolean);
+  return <span className={styles.countdownText}>T-{parts.join(' ')}</span>;
+}
+
+function LaunchInfo({ launch, isNext }: { launch: Launch; isNext?: boolean }) {
   const statusColor = getLaunchStatusColor(launch.status);
 
   return (
-    <div className={styles.dataField} style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-        <span
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            background: statusColor,
-            flexShrink: 0,
-          }}
-        />
-        <span className={styles.dataValue} style={{ fontWeight: 600 }}>{launch.name}</span>
-        <span style={{ fontSize: 11, color: '#71767b', fontWeight: 500 }}>— Rocket launch</span>
+    <div className={styles.launchCard}>
+      <div className={styles.launchCardHeader}>
+        {isNext && <span className={styles.nextBadge}>NEXT</span>}
+        <span className={styles.launchDot} style={{ background: statusColor }} />
+        <span className={styles.launchName}>{launch.name}</span>
       </div>
-      <div className={styles.dataField}>
-        <span className={styles.dataLabel}>Date</span>
-        <span className={styles.dataValueMono}>{formatLaunchDate(launch.net)}</span>
-      </div>
-      <div className={styles.dataField}>
-        <span className={styles.dataLabel}>Rocket</span>
-        <span className={styles.dataValue}>{launch.rocket}</span>
-      </div>
-      {launch.provider && (
-        <div className={styles.dataField}>
-          <span className={styles.dataLabel}>Provider</span>
-          <span className={styles.dataValue}>{launch.provider}</span>
+      {isNext ? (
+        <div className={styles.countdownBlock}>
+          <CountdownDisplay net={launch.net} />
         </div>
+      ) : (
+        <div className={styles.launchDate}>{formatLaunchDate(launch.net)}</div>
       )}
-      {launch.padName && (
-        <div className={styles.dataField}>
-          <span className={styles.dataLabel}>Launch pad</span>
-          <span className={styles.dataValue}>{launch.padName}</span>
-        </div>
-      )}
-      <div className={styles.dataField}>
-        <span className={styles.dataLabel}>Status</span>
-        <span className={styles.dataValue} style={{ color: statusColor }}>{launch.status}</span>
+      <div className={styles.launchMeta}>
+        <span>{launch.rocket}</span>
+        {launch.padLocation && <span> · {launch.padLocation}</span>}
       </div>
       {launch.vidUrls && launch.vidUrls.length > 0 && (
-        <div className={styles.dataField}>
-          <span className={styles.dataLabel}>Livestream</span>
-          {launch.vidUrls.map((v, i) => (
-            <a
-              key={i}
-              href={v.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.dataValue}
-              style={{ color: '#1d9bf0', textDecoration: 'underline', display: 'block' }}
-            >
-              {v.title || 'Watch'}
-            </a>
-          ))}
+        <div className={styles.videoLinks}>
+          {launch.vidUrls.slice(0, 2).map((v, i) => {
+            const isYt = (v.source || v.url || '').toLowerCase().includes('youtube');
+            const label = v.title || (v.isLive ? 'Livestream' : (isYt ? 'YouTube' : 'Watch'));
+            return (
+              <a key={i} href={v.url} target="_blank" rel="noopener noreferrer" className={styles.videoLink}>
+                <span>{isYt ? '▶' : '🔗'}</span> {label}
+              </a>
+            );
+          })}
         </div>
       )}
     </div>
@@ -148,22 +140,10 @@ function LaunchLocationInfo({ launches }: { launches: Launch[] }) {
 
   return (
     <div className={styles.infoPanelBody}>
-      <div className={styles.dataField} style={{ marginBottom: 8 }}>
-        <span className={styles.dataLabel}>Launch site</span>
-        <span className={styles.dataValue} style={{ fontWeight: 600 }}>{locationName}</span>
-      </div>
-      <div className={styles.dataField}>
-        <span className={styles.dataLabel}>Upcoming launches</span>
-        <span className={styles.dataValueMono}>{launches.length}</span>
-      </div>
-      <div className={styles.divider} />
-      <div style={{ fontSize: 12, color: '#71767b', marginBottom: 8 }}>
-        Green points = rocket launch sites. Satellites appear as objects in orbit.
-      </div>
-      <div className={styles.divider} />
-      <div style={{ maxHeight: 320, overflowY: 'auto' }}>
-        {launches.map((launch) => (
-          <LaunchInfo key={launch.id} launch={launch} />
+      <div className={styles.siteLabel}>{locationName}</div>
+      <div className={styles.launchList}>
+        {launches.map((launch, i) => (
+          <LaunchInfo key={launch.id} launch={launch} isNext={i === 0} />
         ))}
       </div>
     </div>
@@ -173,14 +153,9 @@ function LaunchLocationInfo({ launches }: { launches: Launch[] }) {
 function UpcomingLaunchesInfo({ launches }: { launches: Launch[] }) {
   return (
     <div className={styles.infoPanelBody}>
-      <div className={styles.dataField}>
-        <span className={styles.dataLabel}>Upcoming launches</span>
-        <span className={styles.dataValueMono}>{launches.length}</span>
-      </div>
-      <div className={styles.divider} />
-      <div style={{ maxHeight: 'calc(100vh - 170px)', overflowY: 'auto' }}>
-        {launches.map((launch) => (
-          <LaunchInfo key={launch.id} launch={launch} />
+      <div className={styles.launchList}>
+        {launches.map((launch, i) => (
+          <LaunchInfo key={launch.id} launch={launch} isNext={i === 0} />
         ))}
       </div>
     </div>
@@ -193,8 +168,8 @@ export default function InfoPanel({ satellite, launches, upcomingLaunches, onClo
   const isOpen = hasSatelliteSelection || hasLaunchSelection || upcomingLaunches.length > 0;
   const title = satellite?.name
     || (hasLaunchSelection
-      ? `Launch site: ${launches?.[0]?.padLocation || launches?.[0]?.padName || 'Unknown'} (${launches?.length || 0} upcoming)`
-      : `Upcoming launches (${upcomingLaunches.length})`);
+      ? `${launches?.[0]?.padLocation || launches?.[0]?.padName || 'Launch site'}`
+      : `Upcoming · ${upcomingLaunches.length}`);
 
   return (
     <div className={`${styles.infoPanel} ${isOpen ? styles.infoPanelOpen : ''}`}>

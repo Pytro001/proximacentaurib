@@ -15,8 +15,8 @@
   top: 4px;
   left: 18px;
   z-index: 25;
-  width: 172px;
-  height: 48px;
+  width: 132px;
+  height: 36px;
   display: block;
   opacity: 0.95;
 }
@@ -171,21 +171,23 @@
   border-radius: 6px;
 }
 
-/* Info panel (right side slide-in) */
+/* Info panel (right side, glass card) */
 .infoPanel {
   position: fixed;
-  top: 72px;
-  right: 18px;
+  top: 64px;
+  right: 14px;
   bottom: auto;
-  width: 340px;
-  height: calc(100vh - 96px);
-  max-width: 100vw;
+  width: 280px;
+  max-height: calc(100vh - 88px);
+  max-width: calc(100vw - 28px);
   z-index: 26;
-  background: rgba(0, 0, 0, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
-  transform: translateX(calc(100% + 24px));
+  background: rgba(12, 12, 16, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transform: translateX(calc(100% + 20px));
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow-y: auto;
   display: flex;
@@ -200,48 +202,134 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: sticky;
   top: 0;
-  background: rgba(0, 0, 0, 0.9);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
+  background: rgba(12, 12, 16, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
   z-index: 1;
 }
 
 .infoPanelTitle {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 600;
   margin: 0;
-  color: #e7e9ea;
-  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: 0.02em;
 }
 
 .closeBtn {
-  background: none;
+  background: rgba(255, 255, 255, 0.06);
   border: none;
-  color: #e7e9ea;
+  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
-  font-size: 18px;
+  border-radius: 8px;
+  font-size: 14px;
   transition: background 0.15s;
 }
 
 .closeBtn:hover {
-  background: rgba(239, 243, 244, 0.1);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .infoPanelBody {
-  padding: 20px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+}
+
+.siteLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 4px;
+}
+
+.launchList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+
+.launchCard {
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.launchCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.nextBadge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, #1d9bf0, #0d8bd9);
+  color: #fff;
+  border-radius: 4px;
+  letter-spacing: 0.08em;
+}
+
+.launchDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.launchName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.countdownBlock {
+  padding: 8px 0;
+  margin: 4px 0;
+}
+
+.countdownText {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #1d9bf0;
+  letter-spacing: 0.04em;
+}
+
+.launchDate {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
+}
+
+.launchMeta {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 6px;
 }
 
 /* Data field rows */
@@ -294,6 +382,31 @@
   background: rgba(29, 155, 240, 0.15);
   color: #1d9bf0;
   width: fit-content;
+}
+
+/* Launch video links */
+.videoLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.videoLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: rgba(29, 155, 240, 0.15);
+  border-radius: 6px;
+  color: #1d9bf0;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.videoLink:hover {
+  background: rgba(29, 155, 240, 0.25);
 }
 
 /* Divider */
@@ -360,8 +473,8 @@
   .logo {
     top: 4px;
     left: 16px;
-    width: 146px;
-    height: 42px;
+    width: 118px;
+    height: 32px;
   }
 
   .controlsWrap {
@@ -407,13 +520,14 @@
     width: 100vw;
     top: auto;
     bottom: 0;
-    height: 60vh;
-    border-left: none;
-    border-right: none;
-    border-top: 1px solid #2f3336;
+    height: 55vh;
+    max-height: none;
+    right: 0;
     border-radius: 16px 16px 0 0;
     transform: translateY(100%);
-    right: 0;
+    border-left: none;
+    border-right: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   .infoPanelOpen {
@@ -429,8 +543,8 @@
   .logo {
     top: 4px;
     left: 16px;
-    width: 126px;
-    height: 36px;
+    width: 100px;
+    height: 28px;
   }
 
   .infoStrip {

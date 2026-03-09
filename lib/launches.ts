@@ -1,6 +1,8 @@
 export interface LaunchVidUrl {
   url: string;
   title?: string;
+  source?: string;
+  isLive?: boolean;
 }
 
 export interface Launch {
@@ -75,4 +77,18 @@ export function getLaunchStatusColor(status: string): string {
   if (s.includes('in flight')) return '#ff6d00';
   if (s.includes('fail')) return '#ff1744';
   return '#8899a6';
+}
+
+export function getCountdown(net: string): { days: number; hours: number; mins: number; secs: number; past: boolean } {
+  const target = Date.parse(net);
+  const now = Date.now();
+  const diff = target - now;
+  if (diff <= 0) {
+    return { days: 0, hours: 0, mins: 0, secs: 0, past: true };
+  }
+  const secs = Math.floor((diff / 1000) % 60);
+  const mins = Math.floor((diff / 60000) % 60);
+  const hours = Math.floor((diff / 3600000) % 24);
+  const days = Math.floor(diff / 86400000);
+  return { days, hours, mins, secs, past: false };
 }
