@@ -174,15 +174,18 @@
 /* Info panel (right side slide-in) */
 .infoPanel {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 460px;
+  top: 72px;
+  right: 18px;
+  bottom: auto;
+  width: 340px;
+  height: calc(100vh - 96px);
   max-width: 100vw;
   z-index: 26;
-  background: rgba(0, 0, 0, 0.95);
-  border-left: 1px solid rgba(255, 255, 255, 0.2);
-  transform: translateX(100%);
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  transform: translateX(calc(100% + 24px));
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow-y: auto;
   display: flex;
@@ -201,7 +204,9 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   position: sticky;
   top: 0;
-  background: rgba(0, 0, 0, 0.95);
+  background: rgba(0, 0, 0, 0.9);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
   z-index: 1;
 }
 
@@ -404,9 +409,11 @@
     bottom: 0;
     height: 60vh;
     border-left: none;
+    border-right: none;
     border-top: 1px solid #2f3336;
     border-radius: 16px 16px 0 0;
     transform: translateY(100%);
+    right: 0;
   }
 
   .infoPanelOpen {
