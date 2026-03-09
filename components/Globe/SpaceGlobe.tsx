@@ -484,7 +484,7 @@ export default function SpaceGlobe() {
 
   const launchPointsData = useMemo(() => {
     if (!showLaunches || launches.length === 0) return [];
-    const key = (l: Launch) => `${(l.lat ?? 0).toFixed(4)}_${(l.lng ?? 0).toFixed(4)}`;
+    const key = (l: Launch) => `${(l.lat ?? 0).toFixed(2)}_${(l.lng ?? 0).toFixed(2)}`;
     const byLoc = new Map<string, Launch[]>();
     for (const l of launches) {
       if (l.lat == null || l.lng == null) continue;
@@ -499,18 +499,6 @@ export default function SpaceGlobe() {
       locationName: launchList[0].padLocation || launchList[0].padName || 'Launch site',
     }));
   }, [showLaunches, launches]);
-
-  const launchRingsData = useMemo(() => {
-    if (!showLaunches) return [];
-    return launchPointsData.map((loc) => ({
-      lat: loc.lat,
-      lng: loc.lng,
-      maxR: 3,
-      propagationSpeed: 2,
-      repeatPeriod: 1200,
-      color: '#00c853',
-    }));
-  }, [showLaunches, launchPointsData]);
 
   const nightPolygonsData = useMemo(() => {
     if (!nightPolygon || dayNightMaterial) return [];
@@ -550,29 +538,21 @@ export default function SpaceGlobe() {
           atmosphereAltitude={0.15}
           onGlobeReady={handleGlobeReady}
           onZoom={handleZoom}
-          // Satellite dots floating at real altitude
+          // Satellites: 3D objects in orbit (never as ground points)
           objectsData={satPointsData}
           objectLat="lat"
           objectLng="lng"
-          objectAltitude={(d: any) => (d.alt || 400) / EARTH_RADIUS_KM}
+          objectAltitude={(d: any) => Math.max((d.alt || 400) / EARTH_RADIUS_KM, 0.02)}
           objectThreeObject={createSatObject}
           objectLabel={() => ''}
           onObjectClick={handleSatelliteClick}
-          // Launch rings (pulsing)
-          ringsData={launchRingsData}
-          ringLat="lat"
-          ringLng="lng"
-          ringMaxRadius="maxR"
-          ringPropagationSpeed="propagationSpeed"
-          ringRepeatPeriod="repeatPeriod"
-          ringColor="color"
-          // Launch point (next only, dot only, no labels)
+          // Launch points: one green point per location, click shows all upcoming launches
           pointsData={launchPointsData}
           pointLat="lat"
           pointLng="lng"
           pointColor={() => '#00c853'}
           pointAltitude={0.01}
-          pointRadius={0.4}
+          pointRadius={0.5}
           pointLabel={() => ''}
           onPointClick={(p: object) => handleLaunchClick(p)}
           // Night side overlay

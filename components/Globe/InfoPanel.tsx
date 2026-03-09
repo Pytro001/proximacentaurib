@@ -95,6 +95,7 @@ function LaunchInfo({ launch }: { launch: Launch }) {
           }}
         />
         <span className={styles.dataValue} style={{ fontWeight: 600 }}>{launch.name}</span>
+        <span style={{ fontSize: 11, color: '#71767b', fontWeight: 500 }}>— Rocket launch</span>
       </div>
       <div className={styles.dataField}>
         <span className={styles.dataLabel}>Date</span>
@@ -104,6 +105,18 @@ function LaunchInfo({ launch }: { launch: Launch }) {
         <span className={styles.dataLabel}>Rocket</span>
         <span className={styles.dataValue}>{launch.rocket}</span>
       </div>
+      {launch.provider && (
+        <div className={styles.dataField}>
+          <span className={styles.dataLabel}>Provider</span>
+          <span className={styles.dataValue}>{launch.provider}</span>
+        </div>
+      )}
+      {launch.padName && (
+        <div className={styles.dataField}>
+          <span className={styles.dataLabel}>Launch pad</span>
+          <span className={styles.dataValue}>{launch.padName}</span>
+        </div>
+      )}
       <div className={styles.dataField}>
         <span className={styles.dataLabel}>Status</span>
         <span className={styles.dataValue} style={{ color: statusColor }}>{launch.status}</span>
@@ -134,13 +147,17 @@ function LaunchLocationInfo({ launches }: { launches: Launch[] }) {
 
   return (
     <div className={styles.infoPanelBody}>
-      <div className={styles.dataField}>
-        <span className={styles.dataLabel}>Location</span>
-        <span className={styles.dataValue}>{locationName}</span>
+      <div className={styles.dataField} style={{ marginBottom: 8 }}>
+        <span className={styles.dataLabel}>Launch site</span>
+        <span className={styles.dataValue} style={{ fontWeight: 600 }}>{locationName}</span>
       </div>
       <div className={styles.dataField}>
         <span className={styles.dataLabel}>Upcoming launches</span>
         <span className={styles.dataValueMono}>{launches.length}</span>
+      </div>
+      <div className={styles.divider} />
+      <div style={{ fontSize: 12, color: '#71767b', marginBottom: 8 }}>
+        Green points = rocket launch sites. Satellites appear as objects in orbit.
       </div>
       <div className={styles.divider} />
       <div style={{ maxHeight: 320, overflowY: 'auto' }}>
@@ -154,7 +171,7 @@ function LaunchLocationInfo({ launches }: { launches: Launch[] }) {
 
 export default function InfoPanel({ satellite, launches, onClose }: InfoPanelProps) {
   const isOpen = !!(satellite || (launches && launches.length > 0));
-  const title = satellite?.name || (launches?.length ? `${launches[0]?.padLocation || 'Launch site'} (${launches.length} launches)` : '');
+  const title = satellite?.name || (launches?.length ? `Launch site: ${launches[0]?.padLocation || launches[0]?.padName || 'Unknown'} (${launches.length} upcoming)` : '');
 
   return (
     <div className={`${styles.infoPanel} ${isOpen ? styles.infoPanelOpen : ''}`}>
