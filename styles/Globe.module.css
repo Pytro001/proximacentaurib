@@ -12,7 +12,7 @@
 /* Logo top left */
 .logo {
   position: fixed;
-  top: 16px;
+  top: 8px;
   left: 16px;
   z-index: 15;
   width: 56px;
@@ -317,7 +317,7 @@
 /* Responsive */
 @media (max-width: 768px) {
   .logo {
-    top: 16px;
+    top: 8px;
     left: 16px;
     width: 48px;
     height: 48px;
@@ -360,7 +360,7 @@
 
 @media (max-width: 480px) {
   .logo {
-    top: 16px;
+    top: 8px;
     left: 16px;
     width: 44px;
     height: 44px;
