@@ -338,6 +338,7 @@ export default function SpaceGlobe() {
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedSatellite, setSelectedSatellite] = useState<SatellitePosition | null>(null);
   const [selectedLaunches, setSelectedLaunches] = useState<Launch[] | null>(null);
+  const [showUpcomingPanel, setShowUpcomingPanel] = useState(true);
   const [nightPolygon, setNightPolygon] = useState<any>(null);
   const [dayNightMaterial, setDayNightMaterial] = useState<THREE.ShaderMaterial | null>(null);
   const sunPosRef = useRef<THREE.Vector2>(new THREE.Vector2());
@@ -523,6 +524,7 @@ export default function SpaceGlobe() {
       const sat = point as SatellitePosition;
       setSelectedSatellite(sat);
       setSelectedLaunches(null);
+      setShowUpcomingPanel(true);
     },
     []
   );
@@ -532,6 +534,7 @@ export default function SpaceGlobe() {
       const loc = point as { lat: number; lng: number; launches: Launch[] };
       setSelectedLaunches(loc?.launches || null);
       setSelectedSatellite(null);
+      setShowUpcomingPanel(true);
     },
     []
   );
@@ -539,6 +542,7 @@ export default function SpaceGlobe() {
   const handleClosePanel = useCallback(() => {
     setSelectedSatellite(null);
     setSelectedLaunches(null);
+    setShowUpcomingPanel(false);
   }, []);
 
   const satPointsData = useMemo(() => {
@@ -667,6 +671,7 @@ export default function SpaceGlobe() {
         satellite={selectedSatellite}
         launches={selectedLaunches}
         upcomingLaunches={upcomingLaunches}
+        showUpcomingPanel={showUpcomingPanel}
         onClose={handleClosePanel}
       />
     </>

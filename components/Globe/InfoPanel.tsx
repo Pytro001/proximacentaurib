@@ -7,6 +7,7 @@ interface InfoPanelProps {
   satellite: SatellitePosition | null;
   launches: Launch[] | null;
   upcomingLaunches: Launch[];
+  showUpcomingPanel?: boolean;
   onClose: () => void;
 }
 
@@ -130,13 +131,16 @@ function LaunchInfo({
   const statusColor = getLaunchStatusColor(launch.status);
 
   return (
-    <div className={styles.launchCard}>
-      <button className={styles.launchHeaderButton} onClick={onToggle} type="button">
-        <div className={styles.launchCardHeader}>
-<span className={styles.launchName}>{launch.name}</span>
-        <span className={styles.expandIcon}>{isExpanded ? '−' : '+'}</span>
-        </div>
-      </button>
+    <div
+      className={styles.launchCard}
+      role="button"
+      tabIndex={0}
+      onClick={onToggle}
+      onKeyDown={(e) => e.key === 'Enter' && onToggle()}
+    >
+      <div className={styles.launchCardHeader}>
+        <span className={styles.launchName}>{launch.name}</span>
+      </div>
       {isNext ? (
         <div className={styles.countdownBlock}>
           <CountdownDisplay net={launch.net} />
@@ -164,7 +168,7 @@ function LaunchInfo({
         </div>
       )}
       {isExpanded && launch.vidUrls && launch.vidUrls.length > 0 && (
-        <div className={styles.videoLinks}>
+        <div className={styles.videoLinks} onClick={(e) => e.stopPropagation()}>
           {launch.vidUrls
             .filter((v) => !/go for launch/i.test(v.title || ''))
             .slice(0, 2)
@@ -180,7 +184,7 @@ function LaunchInfo({
         </div>
       )}
       {isExpanded && launch.externalLinks && launch.externalLinks.length > 0 && (
-        <div className={styles.videoLinks}>
+        <div className={styles.videoLinks} onClick={(e) => e.stopPropagation()}>
           {launch.externalLinks
             .filter((link) => !/spacex\.com|x\.com\/spacex/i.test(link.url))
             .slice(0, 2)
@@ -234,10 +238,10 @@ function UpcomingLaunchesInfo({ launches }: { launches: Launch[] }) {
   );
 }
 
-export default function InfoPanel({ satellite, launches, upcomingLaunches, onClose }: InfoPanelProps) {
+export default function InfoPanel({ satellite, launches, upcomingLaunches, showUpcomingPanel = true, onClose }: InfoPanelProps) {
   const hasLaunchSelection = !!(launches && launches.length > 0);
   const hasSatelliteSelection = !!satellite;
-  const isOpen = hasSatelliteSelection || hasLaunchSelection || upcomingLaunches.length > 0;
+  const isOpen = hasSatelliteSelection || hasLaunchSelection || (showUpcomingPanel && upcomingLaunches.length > 0);
   const title = satellite?.name
     || (hasLaunchSelection
       ? `${launches?.[0]?.padLocation || launches?.[0]?.padName || 'Launch site'}`
@@ -247,9 +251,9 @@ export default function InfoPanel({ satellite, launches, upcomingLaunches, onClo
     <div className={`${styles.infoPanel} ${isOpen ? styles.infoPanelOpen : ''}`}>
       <div className={styles.infoPanelHeader}>
         <h2 className={styles.infoPanelTitle}>{title}</h2>
-        {(hasSatelliteSelection || hasLaunchSelection) && (
-          <button className={styles.closeBtn} onClick={onClose}>
-            ✕
+        {isOpen && (
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
+            −
           </button>
         )}
       </div>
