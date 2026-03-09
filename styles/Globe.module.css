@@ -201,13 +201,13 @@
 }
 
 .infoPanelCollapsed {
-  width: 120px;
-  min-width: 120px;
+  height: fit-content;
+  max-height: none;
 }
 
 .infoPanelCollapsed .infoPanelHeader {
   border-bottom: none;
-  padding: 10px 12px;
+  padding: 12px 20px;
 }
 
 .expandBtn {
