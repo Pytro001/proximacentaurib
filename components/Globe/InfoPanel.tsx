@@ -115,7 +115,6 @@ function LaunchInfo({
       <button className={styles.launchHeaderButton} onClick={onToggle} type="button">
         <div className={styles.launchCardHeader}>
         {isNext && <span className={styles.nextBadge}>NEXT</span>}
-        <span className={styles.launchDot} style={{ background: statusColor }} />
         <span className={styles.launchName}>{launch.name}</span>
         <span className={styles.expandIcon}>{isExpanded ? '−' : '+'}</span>
         </div>
