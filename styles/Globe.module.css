@@ -200,6 +200,37 @@
   transform: translateX(0);
 }
 
+.infoPanelCollapsed {
+  width: 120px;
+  min-width: 120px;
+}
+
+.infoPanelCollapsed .infoPanelHeader {
+  border-bottom: none;
+  padding: 10px 12px;
+}
+
+.expandBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.expandBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+
 .infoPanelHeader {
   display: flex;
   align-items: center;

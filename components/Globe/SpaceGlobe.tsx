@@ -673,6 +673,7 @@ export default function SpaceGlobe() {
         upcomingLaunches={upcomingLaunches}
         showUpcomingPanel={showUpcomingPanel}
         onClose={handleClosePanel}
+        onExpandUpcoming={() => setShowUpcomingPanel(true)}
       />
     </>
   );

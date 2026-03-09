@@ -9,6 +9,7 @@ interface InfoPanelProps {
   upcomingLaunches: Launch[];
   showUpcomingPanel?: boolean;
   onClose: () => void;
+  onExpandUpcoming?: () => void;
 }
 
 
@@ -238,28 +239,35 @@ function UpcomingLaunchesInfo({ launches }: { launches: Launch[] }) {
   );
 }
 
-export default function InfoPanel({ satellite, launches, upcomingLaunches, showUpcomingPanel = true, onClose }: InfoPanelProps) {
+export default function InfoPanel({ satellite, launches, upcomingLaunches, showUpcomingPanel = true, onClose, onExpandUpcoming }: InfoPanelProps) {
   const hasLaunchSelection = !!(launches && launches.length > 0);
   const hasSatelliteSelection = !!satellite;
-  const isOpen = hasSatelliteSelection || hasLaunchSelection || (showUpcomingPanel && upcomingLaunches.length > 0);
+  const isOpen = hasSatelliteSelection || hasLaunchSelection || upcomingLaunches.length > 0;
   const title = satellite?.name
     || (hasLaunchSelection
       ? `${launches?.[0]?.padLocation || launches?.[0]?.padName || 'Launch site'}`
       : `Upcoming ${upcomingLaunches.length}`);
 
+  const isUpcomingOnly = !hasSatelliteSelection && !hasLaunchSelection && upcomingLaunches.length > 0;
+  const isCollapsed = isUpcomingOnly && !showUpcomingPanel;
+
   return (
-    <div className={`${styles.infoPanel} ${isOpen ? styles.infoPanelOpen : ''}`}>
+    <div className={`${styles.infoPanel} ${isOpen ? styles.infoPanelOpen : ''} ${isCollapsed ? styles.infoPanelCollapsed : ''}`}>
       <div className={styles.infoPanelHeader}>
-        <h2 className={styles.infoPanelTitle}>{title}</h2>
-        {isOpen && (
+        <h2 className={styles.infoPanelTitle}>{isCollapsed ? 'Upcoming' : title}</h2>
+        {isCollapsed ? (
+          <button className={styles.expandBtn} onClick={onExpandUpcoming} aria-label="Expand">
+            +
+          </button>
+        ) : isOpen ? (
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
             −
           </button>
-        )}
+        ) : null}
       </div>
-      {satellite && <SatelliteInfo sat={satellite} />}
-      {!satellite && hasLaunchSelection && launches && <LaunchLocationInfo launches={launches} />}
-      {!satellite && !hasLaunchSelection && upcomingLaunches.length > 0 && (
+      {!isCollapsed && satellite && <SatelliteInfo sat={satellite} />}
+      {!isCollapsed && !satellite && hasLaunchSelection && launches && <LaunchLocationInfo launches={launches} />}
+      {!isCollapsed && !satellite && !hasLaunchSelection && upcomingLaunches.length > 0 && (
         <UpcomingLaunchesInfo launches={upcomingLaunches} />
       )}
     </div>
