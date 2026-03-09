@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 
 export default function Home() {
@@ -29,7 +30,9 @@ export default function Home() {
             ))}
           </div>
           <div className={styles.heroContent}>
-            <h1 className={styles.heroTitle}>Humans in space.</h1>
+            <Link href="/globe" className={styles.globeLink}>
+              Enter Earth →
+            </Link>
           </div>
         </section>
 
