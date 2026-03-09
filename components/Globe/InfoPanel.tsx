@@ -254,7 +254,12 @@ export default function InfoPanel({ satellite, launches, upcomingLaunches, showU
   return (
     <div className={`${styles.infoPanel} ${isOpen ? styles.infoPanelOpen : ''} ${isCollapsed ? styles.infoPanelCollapsed : ''}`}>
       <div className={styles.infoPanelHeader}>
-        <h2 className={styles.infoPanelTitle}>{isCollapsed ? 'Upcoming' : title}</h2>
+        <div className={styles.infoPanelTitleWrap}>
+          <h2 className={styles.infoPanelTitle}>{isUpcomingOnly ? 'Upcoming' : title}</h2>
+          {isUpcomingOnly && upcomingLaunches.length > 0 && (
+            <span className={styles.upcomingBadge}>{upcomingLaunches.length}</span>
+          )}
+        </div>
         {isCollapsed ? (
           <button className={styles.expandBtn} onClick={onExpandUpcoming} aria-label="Expand">
             +
