@@ -77,7 +77,7 @@ const DAY_NIGHT_FRAG = `
     float intensity = dot(normalize(vNormal), normalize(rotatedSunDirection));
     vec4 dayColor = texture2D(dayTexture, vUv);
     vec4 nightColor = texture2D(nightTexture, vUv);
-    float blendFactor = smoothstep(-0.1, 0.1, intensity);
+    float blendFactor = smoothstep(-0.15, 0.15, intensity);
     gl_FragColor = mix(nightColor, dayColor, blendFactor);
   }
 `;
@@ -102,6 +102,10 @@ const CATEGORY_COLORS: Record<string, string> = {
   Weather: '#1d9bf0',
   Science: '#e040fb',
   Communications: '#ffab00',
+  'Earth Observation': '#4caf50',
+  Cargo: '#9c27b0',
+  Crew: '#2196f3',
+  Debris: '#757575',
   Other: '#546e7a',
 };
 
@@ -195,11 +199,10 @@ export default function SpaceGlobe() {
   const globeRef = useRef<GlobeMethods>();
   const [isLoading, setIsLoading] = useState(true);
   const [showSatellites, setShowSatellites] = useState(true);
-  const [showOrbits, setShowOrbits] = useState(false);
+  const [showOrbits, setShowOrbits] = useState(true);
   const [showLaunches, setShowLaunches] = useState(true);
   const [showNightSide, setShowNightSide] = useState(true);
   const [satellitePositions, setSatellitePositions] = useState<SatellitePosition[]>([]);
-  const [orbitPaths, setOrbitPaths] = useState<SatelliteOrbitPath[]>([]);
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedSatellite, setSelectedSatellite] = useState<SatellitePosition | null>(null);
   const [selectedLaunch, setSelectedLaunch] = useState<Launch | null>(null);
@@ -321,19 +324,11 @@ export default function SpaceGlobe() {
     return () => cancelAnimationFrame(rafId);
   }, [dayNightMaterial, showNightSide]);
 
-  useEffect(() => {
-    if (!showOrbits || satellitePositions.length === 0) {
-      setOrbitPaths([]);
-      return;
-    }
-
-    const paths: SatelliteOrbitPath[] = [];
-    for (const sat of satellitePositions) {
-      const path = computeOrbitPath(sat.noradId, sat.period || 90, 120);
-      if (path) paths.push(path);
-    }
-    setOrbitPaths(paths);
-  }, [showOrbits, satellitePositions]);
+  // Orbit path for selected satellite only (shown when clicking a satellite)
+  const selectedOrbitPath = useMemo(() => {
+    if (!selectedSatellite) return null;
+    return computeOrbitPath(selectedSatellite.noradId, selectedSatellite.period || 90, 180);
+  }, [selectedSatellite]);
 
   const handleGlobeReady = useCallback(() => {
     setTimeout(() => {
@@ -411,9 +406,9 @@ export default function SpaceGlobe() {
   }, [nightPolygon, dayNightMaterial]);
 
   const pathsData = useMemo(() => {
-    if (!showOrbits) return [];
-    return orbitPaths;
-  }, [showOrbits, orbitPaths]);
+    if (!showOrbits || !selectedOrbitPath) return [];
+    return [selectedOrbitPath];
+  }, [showOrbits, selectedOrbitPath]);
 
   const defaultGlobeUrl = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
   const bumpImageUrl = '//unpkg.com/three-globe/example/img/earth-topology.png';
@@ -479,7 +474,7 @@ export default function SpaceGlobe() {
           pathPointLat="lat"
           pathPointLng="lng"
           pathPointAlt="alt"
-          pathColor={() => 'rgba(255, 255, 255, 0.5)'}
+          pathColor={() => 'rgba(255, 255, 255, 0.6)'}
           pathStroke={0.6}
           pathDashLength={0.006}
           pathDashGap={0.004}

@@ -57,7 +57,7 @@ export default function ControlsPanel({
         onChange={setShowSatellites}
       />
       <Toggle
-        label="Orbit paths"
+        label="Orbit on click"
         checked={showOrbits}
         onChange={setShowOrbits}
       />
