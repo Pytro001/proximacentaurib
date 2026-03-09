@@ -124,7 +124,16 @@ function getSatMaterial(category: string): THREE.MeshBasicMaterial {
 const ISS_NORAD_ID = 25544;
 const CSS_NORAD_IDS = [48274, 53239, 54216]; // Tianhe, Wentian, Mengtian
 
-const STATION_SCALE = 1.75;
+function isCSS(sat: SatellitePosition): boolean {
+  const n = sat.name.toUpperCase();
+  return (
+    CSS_NORAD_IDS.includes(sat.noradId) ||
+    /^CSS\s*\(/i.test(sat.name) ||
+    (sat.category === 'Station' && /TIANHE|WENTIAN|MENGTIAN|TIANGONG/i.test(n))
+  );
+}
+
+const STATION_SCALE = 2.15;
 
 function createISSObject(): THREE.Group {
   const group = new THREE.Group();
@@ -228,7 +237,7 @@ function createSatObject(d: object): THREE.Group {
   if (sat.noradId === ISS_NORAD_ID || (sat.category === 'Station' && /^ISS\s*\(ZARYA\)/i.test(sat.name))) {
     return createISSObject();
   }
-  if (CSS_NORAD_IDS.includes(sat.noradId) || (sat.category === 'Station' && /^CSS\s*\(/i.test(sat.name))) {
+  if (isCSS(sat)) {
     return createCSSObject();
   }
 

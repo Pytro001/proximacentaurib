@@ -6,9 +6,8 @@
 const DESCRIPTIONS: Array<{ pattern: string | RegExp; desc: string }> = [
   // Space stations
   { pattern: /^ISS\s*\(ZARYA\)/i, desc: 'International Space Station – modular space station for research and habitation in low Earth orbit.' },
-  { pattern: /^CSS\s*\(TIANGONG\)/i, desc: 'Chinese Space Station – modular space station for microgravity research and crew operations.' },
-  { pattern: /^TIANGONG/i, desc: 'Chinese space station module for crew habitation and scientific experiments.' },
-  { pattern: /^NAUKA|^WENTIAN|^MENGTIAN/i, desc: 'Chinese Space Station module for research and crew support.' },
+  { pattern: /^CSS\s*\(/i, desc: 'Chinese Space Station – modular space station for microgravity research and crew operations.' },
+  { pattern: /^TIANGONG|^TIANHE|^WENTIAN|^MENGTIAN/i, desc: 'Chinese Space Station module – space station for research and crew support.' },
   // Reconnaissance / military
   { pattern: /HELIOS\s*1[AB]/i, desc: 'French military photo-reconnaissance satellite; Italy and Spain participated.' },
   { pattern: /HELIOS\s*2/i, desc: 'French military optical reconnaissance satellite with improved resolution.' },
