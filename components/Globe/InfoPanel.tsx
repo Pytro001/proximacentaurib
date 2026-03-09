@@ -4,7 +4,7 @@ import { Launch, formatLaunchDate, getLaunchStatusColor } from '../../lib/launch
 
 interface InfoPanelProps {
   satellite: SatellitePosition | null;
-  launch: Launch | null;
+  launches: Launch[] | null;
   onClose: () => void;
 }
 
@@ -83,103 +83,78 @@ function LaunchInfo({ launch }: { launch: Launch }) {
   const statusColor = getLaunchStatusColor(launch.status);
 
   return (
-    <div className={styles.infoPanelBody}>
-      <div
-        className={styles.statusBadge}
-        style={{
-          background: `${statusColor}20`,
-          color: statusColor,
-        }}
-      >
+    <div className={styles.dataField} style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
         <span
           style={{
             width: 6,
             height: 6,
             borderRadius: '50%',
             background: statusColor,
-            display: 'inline-block',
+            flexShrink: 0,
           }}
         />
-        {launch.status}
+        <span className={styles.dataValue} style={{ fontWeight: 600 }}>{launch.name}</span>
       </div>
-
+      <div className={styles.dataField}>
+        <span className={styles.dataLabel}>Date</span>
+        <span className={styles.dataValueMono}>{formatLaunchDate(launch.net)}</span>
+      </div>
       <div className={styles.dataField}>
         <span className={styles.dataLabel}>Rocket</span>
         <span className={styles.dataValue}>{launch.rocket}</span>
       </div>
-
       <div className={styles.dataField}>
-        <span className={styles.dataLabel}>Provider</span>
-        <span className={styles.dataValue}>{launch.provider}</span>
+        <span className={styles.dataLabel}>Status</span>
+        <span className={styles.dataValue} style={{ color: statusColor }}>{launch.status}</span>
       </div>
-
-      <div className={styles.divider} />
-
-      <div className={styles.dataField}>
-        <span className={styles.dataLabel}>Launch Date</span>
-        <span className={styles.dataValueMono}>
-          {formatLaunchDate(launch.net)}
-        </span>
-      </div>
-
-      {launch.orbitName && (
-        <div className={styles.dataField}>
-          <span className={styles.dataLabel}>Target Orbit</span>
-          <span className={styles.dataValue}>{launch.orbitName}</span>
-        </div>
-      )}
-
-      <div className={styles.dataField}>
-        <span className={styles.dataLabel}>Launch Pad</span>
-        <span className={styles.dataValue}>{launch.padName}</span>
-      </div>
-
-      <div className={styles.dataField}>
-        <span className={styles.dataLabel}>Location</span>
-        <span className={styles.dataValue}>{launch.padLocation}</span>
-      </div>
-
-      {launch.missionDescription && (
-        <>
-          <div className={styles.divider} />
-          <div className={styles.dataField}>
-            <span className={styles.dataLabel}>Mission</span>
-            <span className={styles.dataValue} style={{ lineHeight: 1.5 }}>
-              {launch.missionDescription}
-            </span>
-          </div>
-        </>
-      )}
-
       {launch.vidUrls && launch.vidUrls.length > 0 && (
-        <>
-          <div className={styles.divider} />
-          <div className={styles.dataField}>
-            <span className={styles.dataLabel}>Livestream</span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {launch.vidUrls.map((v, i) => (
-                <a
-                  key={i}
-                  href={v.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.dataValue}
-                  style={{ color: '#1d9bf0', textDecoration: 'underline' }}
-                >
-                  {v.title || 'Watch livestream'}
-                </a>
-              ))}
-            </div>
-          </div>
-        </>
+        <div className={styles.dataField}>
+          <span className={styles.dataLabel}>Livestream</span>
+          {launch.vidUrls.map((v, i) => (
+            <a
+              key={i}
+              href={v.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.dataValue}
+              style={{ color: '#1d9bf0', textDecoration: 'underline', display: 'block' }}
+            >
+              {v.title || 'Watch'}
+            </a>
+          ))}
+        </div>
       )}
     </div>
   );
 }
 
-export default function InfoPanel({ satellite, launch, onClose }: InfoPanelProps) {
-  const isOpen = !!(satellite || launch);
-  const title = satellite?.name || launch?.mission || '';
+function LaunchLocationInfo({ launches }: { launches: Launch[] }) {
+  const locationName = launches[0]?.padLocation || launches[0]?.padName || 'Launch site';
+
+  return (
+    <div className={styles.infoPanelBody}>
+      <div className={styles.dataField}>
+        <span className={styles.dataLabel}>Location</span>
+        <span className={styles.dataValue}>{locationName}</span>
+      </div>
+      <div className={styles.dataField}>
+        <span className={styles.dataLabel}>Upcoming launches</span>
+        <span className={styles.dataValueMono}>{launches.length}</span>
+      </div>
+      <div className={styles.divider} />
+      <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+        {launches.map((launch) => (
+          <LaunchInfo key={launch.id} launch={launch} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function InfoPanel({ satellite, launches, onClose }: InfoPanelProps) {
+  const isOpen = !!(satellite || (launches && launches.length > 0));
+  const title = satellite?.name || (launches?.length ? `${launches[0]?.padLocation || 'Launch site'} (${launches.length} launches)` : '');
 
   return (
     <div className={`${styles.infoPanel} ${isOpen ? styles.infoPanelOpen : ''}`}>
@@ -190,7 +165,7 @@ export default function InfoPanel({ satellite, launch, onClose }: InfoPanelProps
         </button>
       </div>
       {satellite && <SatelliteInfo sat={satellite} />}
-      {launch && <LaunchInfo launch={launch} />}
+      {launches && launches.length > 0 && <LaunchLocationInfo launches={launches} />}
     </div>
   );
 }

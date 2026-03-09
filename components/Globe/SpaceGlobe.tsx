@@ -122,6 +122,7 @@ function getSatMaterial(category: string): THREE.MeshBasicMaterial {
 }
 
 const ISS_NORAD_ID = 25544;
+const CSS_NORAD_IDS = [48274, 53239, 54216]; // Tianhe, Wentian, Mengtian
 
 function createISSObject(): THREE.Group {
   const group = new THREE.Group();
@@ -182,10 +183,58 @@ function createISSObject(): THREE.Group {
   return group;
 }
 
+function createCSSObject(): THREE.Group {
+  const group = new THREE.Group();
+  const whiteMat = new THREE.MeshBasicMaterial({ color: '#e8e8e8' });
+  const blueMat = new THREE.MeshBasicMaterial({ color: '#1d9bf0' });
+  const redMat = new THREE.MeshBasicMaterial({ color: '#de2910' });
+
+  // Core module (Tianhe) - horizontal cylinder
+  const coreGeom = new THREE.CylinderGeometry(0.2, 0.2, 1.2, 8);
+  const core = new THREE.Mesh(coreGeom, whiteMat);
+  core.rotation.z = Math.PI / 2;
+  group.add(core);
+
+  // Lab modules (Wentian, Mengtian) - T-shape arms
+  const labGeom = new THREE.CylinderGeometry(0.15, 0.15, 0.7, 8);
+  const labL = new THREE.Mesh(labGeom, whiteMat);
+  labL.position.set(-0.8, 0.4, 0);
+  labL.rotation.z = -Math.PI / 3;
+  group.add(labL);
+  const labR = new THREE.Mesh(labGeom.clone(), whiteMat);
+  labR.position.set(0.8, 0.35, 0);
+  labR.rotation.z = Math.PI / 3;
+  group.add(labR);
+
+  // Solar array wings (CSS has large arrays)
+  const wingGeom = new THREE.BoxGeometry(0.06, 0.8, 0.4);
+  [-0.5, 0, 0.5].forEach((x) => {
+    const wingL = new THREE.Mesh(wingGeom, blueMat);
+    wingL.position.set(x, 0.5, 0);
+    wingL.rotation.x = Math.PI / 2;
+    group.add(wingL);
+    const wingR = new THREE.Mesh(wingGeom.clone(), blueMat);
+    wingR.position.set(x, -0.5, 0);
+    wingR.rotation.x = -Math.PI / 2;
+    group.add(wingR);
+  });
+
+  // Docking node / hub (red accent)
+  const nodeGeom = new THREE.CylinderGeometry(0.12, 0.12, 0.15, 8);
+  const node = new THREE.Mesh(nodeGeom, redMat);
+  node.position.set(0, 0, 0);
+  group.add(node);
+
+  return group;
+}
+
 function createSatObject(d: object): THREE.Group {
   const sat = d as SatellitePosition;
   if (sat.noradId === ISS_NORAD_ID || (sat.category === 'Station' && /^ISS\s*\(ZARYA\)/i.test(sat.name))) {
     return createISSObject();
+  }
+  if (CSS_NORAD_IDS.includes(sat.noradId) || (sat.category === 'Station' && /^CSS\s*\(/i.test(sat.name))) {
+    return createCSSObject();
   }
 
   const group = new THREE.Group();
@@ -269,7 +318,7 @@ export default function SpaceGlobe() {
   const [satellitePositions, setSatellitePositions] = useState<SatellitePosition[]>([]);
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedSatellite, setSelectedSatellite] = useState<SatellitePosition | null>(null);
-  const [selectedLaunch, setSelectedLaunch] = useState<Launch | null>(null);
+  const [selectedLaunches, setSelectedLaunches] = useState<Launch[] | null>(null);
   const [nightPolygon, setNightPolygon] = useState<any>(null);
   const [dayNightMaterial, setDayNightMaterial] = useState<THREE.ShaderMaterial | null>(null);
   const sunPosRef = useRef<THREE.Vector2>(new THREE.Vector2());
@@ -417,15 +466,15 @@ export default function SpaceGlobe() {
     (point: object) => {
       const sat = point as SatellitePosition;
       setSelectedSatellite(sat);
-      setSelectedLaunch(null);
+      setSelectedLaunches(null);
     },
     []
   );
 
   const handleLaunchClick = useCallback(
     (point: object) => {
-      const launch = point as Launch;
-      setSelectedLaunch(launch);
+      const loc = point as { lat: number; lng: number; launches: Launch[] };
+      setSelectedLaunches(loc?.launches || null);
       setSelectedSatellite(null);
     },
     []
@@ -433,7 +482,7 @@ export default function SpaceGlobe() {
 
   const handleClosePanel = useCallback(() => {
     setSelectedSatellite(null);
-    setSelectedLaunch(null);
+    setSelectedLaunches(null);
   }, []);
 
   const satPointsData = useMemo(() => {
@@ -442,21 +491,34 @@ export default function SpaceGlobe() {
   }, [showSatellites, satellitePositions]);
 
   const launchPointsData = useMemo(() => {
-    if (!showLaunches) return [];
-    return launches;
+    if (!showLaunches || launches.length === 0) return [];
+    const key = (l: Launch) => `${(l.lat ?? 0).toFixed(4)}_${(l.lng ?? 0).toFixed(4)}`;
+    const byLoc = new Map<string, Launch[]>();
+    for (const l of launches) {
+      if (l.lat == null || l.lng == null) continue;
+      const k = key(l);
+      if (!byLoc.has(k)) byLoc.set(k, []);
+      byLoc.get(k)!.push(l);
+    }
+    return Array.from(byLoc.entries()).map(([_, launchList]) => ({
+      lat: launchList[0].lat!,
+      lng: launchList[0].lng!,
+      launches: launchList,
+      locationName: launchList[0].padLocation || launchList[0].padName || 'Launch site',
+    }));
   }, [showLaunches, launches]);
 
   const launchRingsData = useMemo(() => {
     if (!showLaunches) return [];
-    return launches.map((l) => ({
-      lat: l.lat,
-      lng: l.lng,
+    return launchPointsData.map((loc) => ({
+      lat: loc.lat,
+      lng: loc.lng,
       maxR: 3,
       propagationSpeed: 2,
       repeatPeriod: 1200,
-      color: getLaunchStatusColor(l.status),
+      color: '#00c853',
     }));
-  }, [showLaunches, launches]);
+  }, [showLaunches, launchPointsData]);
 
   const nightPolygonsData = useMemo(() => {
     if (!nightPolygon || dayNightMaterial) return [];
@@ -516,7 +578,7 @@ export default function SpaceGlobe() {
           pointsData={launchPointsData}
           pointLat="lat"
           pointLng="lng"
-          pointColor={(d: any) => getLaunchStatusColor(d.status)}
+          pointColor={() => '#00c853'}
           pointAltitude={0.01}
           pointRadius={0.4}
           pointLabel={() => ''}
@@ -534,10 +596,11 @@ export default function SpaceGlobe() {
           pathPointLng="lng"
           pathPointAlt="alt"
           pathColor={() => 'rgba(255, 255, 255, 0.6)'}
-          pathStroke={0.6}
-          pathDashLength={0.006}
-          pathDashGap={0.004}
-          pathDashAnimateTime={8000}
+          pathStroke={0.5}
+          pathDashLength={1}
+          pathDashGap={0}
+          pathDashInitialGap={0}
+          pathDashAnimateTime={0}
           pathTransitionDuration={0}
         />
       </div>
@@ -554,7 +617,7 @@ export default function SpaceGlobe() {
 
       <InfoPanel
         satellite={selectedSatellite}
-        launch={selectedLaunch}
+        launches={selectedLaunches}
         onClose={handleClosePanel}
       />
     </>
