@@ -199,7 +199,6 @@ export default function SpaceGlobe() {
   const globeRef = useRef<GlobeMethods>();
   const [isLoading, setIsLoading] = useState(true);
   const [showSatellites, setShowSatellites] = useState(true);
-  const [showOrbits, setShowOrbits] = useState(true);
   const [showLaunches, setShowLaunches] = useState(true);
   const [showNightSide, setShowNightSide] = useState(true);
   const [satellitePositions, setSatellitePositions] = useState<SatellitePosition[]>([]);
@@ -240,7 +239,7 @@ export default function SpaceGlobe() {
         const validLaunches = (launchData || []).filter(
           (l: Launch) => l.lat != null && l.lng != null
         );
-        setLaunches(validLaunches.slice(0, 1));
+        setLaunches(validLaunches);
       } catch (err) {
         console.error('Globe data load error:', err);
       } finally {
@@ -400,9 +399,9 @@ export default function SpaceGlobe() {
   }, [nightPolygon, dayNightMaterial]);
 
   const pathsData = useMemo(() => {
-    if (!showOrbits || !selectedOrbitPath) return [];
+    if (!selectedOrbitPath) return [];
     return [selectedOrbitPath];
-  }, [showOrbits, selectedOrbitPath]);
+  }, [selectedOrbitPath]);
 
   const defaultGlobeUrl = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
   const bumpImageUrl = '//unpkg.com/three-globe/example/img/earth-topology.png';
@@ -481,8 +480,6 @@ export default function SpaceGlobe() {
       <ControlsPanel
         showSatellites={showSatellites}
         setShowSatellites={setShowSatellites}
-        showOrbits={showOrbits}
-        setShowOrbits={setShowOrbits}
         showLaunches={showLaunches}
         setShowLaunches={setShowLaunches}
         showNightSide={showNightSide}

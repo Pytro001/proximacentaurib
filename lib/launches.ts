@@ -1,3 +1,8 @@
+export interface LaunchVidUrl {
+  url: string;
+  title?: string;
+}
+
 export interface Launch {
   id: string;
   name: string;
@@ -15,6 +20,7 @@ export interface Launch {
   lat: number | null;
   lng: number | null;
   image: string | null;
+  vidUrls: LaunchVidUrl[];
 }
 
 function getApiBase(): string {

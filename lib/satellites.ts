@@ -1,4 +1,5 @@
 import * as satellite from 'satellite.js';
+import { getSatelliteDescription } from './satelliteDescriptions';
 
 export interface SatellitePosition {
   id: string;
@@ -60,40 +61,6 @@ function categorizeByName(name: string): string {
   if (n.includes('STARLINK') && n.includes('DEB')) return 'Debris';
   if (n.includes('DEB') || n.includes('R/B') || n.includes('Rocket')) return 'Debris';
   return 'Other';
-}
-
-function getSatelliteUseCase(name: string, category: string): string {
-  const n = name.toUpperCase();
-  if (category === 'Station') return 'Crewed space station for research, habitation, and microgravity experiments in low Earth orbit.';
-  if (category === 'Starlink') return 'Broadband internet constellation providing global satellite internet coverage.';
-  if (category === 'Navigation') return 'Satellite navigation system for GPS positioning, timing, and navigation worldwide.';
-  if (category === 'Weather') return 'Weather monitoring and forecasting; observes Earth atmosphere, clouds, and climate.';
-  if (category === 'Science') return 'Space telescope or scientific observatory for astronomy and astrophysics research.';
-  if (category === 'Communications') return 'Communications satellite for TV, radio, telephone, and data relay services.';
-  if (category === 'Earth Observation') return 'Earth observation for land use, agriculture, environmental monitoring, and disaster response.';
-  if (category === 'Cargo') return 'Cargo spacecraft for resupplying space stations.';
-  if (category === 'Crew') return 'Crew spacecraft for transporting astronauts to and from space stations.';
-  if (category === 'Debris') return 'Space debris or defunct satellite.';
-  if (n.includes('IRIDIUM')) return 'Mobile voice and data satellite communications network for phones and IoT.';
-  if (n.includes('ONEWEB')) return 'Low Earth orbit broadband internet constellation.';
-  if (n.includes('GOES')) return 'Geostationary weather satellite monitoring Americas.';
-  if (n.includes('NOAA')) return 'Polar-orbiting weather and environmental monitoring.';
-  if (n.includes('METEOSAT')) return 'European geostationary weather satellite.';
-  if (n.includes('HIMAWARI')) return 'Japanese geostationary weather satellite.';
-  if (n.includes('LANDSAT')) return 'NASA/USGS Earth observation for land use and agriculture.';
-  if (n.includes('SENTINEL')) return 'ESA Copernicus Earth observation for environment and security.';
-  if (n.includes('TERRA') || n.includes('AQUA')) return 'NASA Earth observation for climate and environmental science.';
-  if (n.includes('HUBBLE')) return 'Optical space telescope for deep-space astronomy.';
-  if (n.includes('JAMES WEBB') || n.includes('JWST')) return 'Infrared space telescope for early universe and exoplanet research.';
-  if (n.includes('CHANDRA')) return 'X-ray observatory for high-energy astrophysics.';
-  if (n.includes('ISS') || n.includes('ZARYA')) return 'International Space Station – modular space station in LEO.';
-  if (n.includes('CSS') || n.includes('TIANGONG')) return 'Chinese Space Station – modular space station in LEO.';
-  if (n.includes('GALILEO')) return 'European satellite navigation system.';
-  if (n.includes('GLONASS')) return 'Russian satellite navigation system.';
-  if (n.includes('BEIDOU')) return 'Chinese satellite navigation system.';
-  if (n.includes('GPS') || n.includes('NAVSTAR')) return 'US Global Positioning System.';
-  if (category === 'Other') return 'General-purpose or specialized satellite.';
-  return `${category} satellite.`;
 }
 
 let parsedSatellites: ParsedSatellite[] = [];
@@ -172,7 +139,7 @@ export function propagatePositions(date: Date): SatellitePosition[] {
         period: sat.period,
         eccentricity: sat.eccentricity,
         orbitType: classifyOrbit(alt),
-        useCase: getSatelliteUseCase(sat.name, sat.category),
+        useCase: getSatelliteDescription(sat.name, sat.category),
       });
     } catch {
       // skip propagation failures

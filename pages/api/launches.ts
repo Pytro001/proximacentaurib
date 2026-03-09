@@ -22,7 +22,7 @@ export default async function handler(
 
   try {
     let response = await fetch(
-      'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?limit=20&ordering=net',
+      'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?limit=50&ordering=net&mode=normal',
       { headers: { Accept: 'application/json' } }
     );
 
@@ -45,24 +45,34 @@ export default async function handler(
       results = results.filter((l: any) => l.net && l.net >= now);
     }
 
-    const launches = results.map((l: any) => ({
-      id: l.id,
-      name: l.name,
-      status: l.status?.name || 'Unknown',
-      net: l.net,
-      windowStart: l.window_start,
-      windowEnd: l.window_end,
-      provider: l.launch_service_provider?.name || 'Unknown',
-      rocket: l.rocket?.configuration?.name || 'Unknown',
-      mission: l.mission?.name || l.name,
-      missionDescription: l.mission?.description || '',
-      orbitName: l.mission?.orbit?.name || '',
-      padName: l.pad?.name || 'Unknown',
-      padLocation: l.pad?.location?.name || '',
-      lat: l.pad?.latitude ? parseFloat(l.pad.latitude) : null,
-      lng: l.pad?.longitude ? parseFloat(l.pad.longitude) : null,
-      image: l.image || null,
-    }));
+    const launches = results.map((l: any) => {
+      const rawVidUrls = l.mission?.vid_urls || l.vid_urls || [];
+      const vidUrls = rawVidUrls
+        .map((v: any) => ({
+          url: typeof v === 'string' ? v : (v?.url || ''),
+          title: typeof v === 'object' && v?.title ? v.title : (v?.type?.name || 'Livestream'),
+        }))
+        .filter((v: { url: string }) => v.url);
+      return {
+        id: l.id,
+        name: l.name,
+        status: l.status?.name || 'Unknown',
+        net: l.net,
+        windowStart: l.window_start,
+        windowEnd: l.window_end,
+        provider: l.launch_service_provider?.name || 'Unknown',
+        rocket: l.rocket?.configuration?.name || 'Unknown',
+        mission: l.mission?.name || l.name,
+        missionDescription: l.mission?.description || '',
+        orbitName: l.mission?.orbit?.name || '',
+        padName: l.pad?.name || 'Unknown',
+        padLocation: l.pad?.location?.name || '',
+        lat: l.pad?.latitude ? parseFloat(l.pad.latitude) : null,
+        lng: l.pad?.longitude ? parseFloat(l.pad.longitude) : null,
+        image: l.image?.image_url || l.image || null,
+        vidUrls,
+      };
+    });
 
     cache = { data: launches, timestamp: Date.now() };
 

@@ -150,6 +150,29 @@ function LaunchInfo({ launch }: { launch: Launch }) {
           </div>
         </>
       )}
+
+      {launch.vidUrls && launch.vidUrls.length > 0 && (
+        <>
+          <div className={styles.divider} />
+          <div className={styles.dataField}>
+            <span className={styles.dataLabel}>Livestream</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {launch.vidUrls.map((v, i) => (
+                <a
+                  key={i}
+                  href={v.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.dataValue}
+                  style={{ color: '#1d9bf0', textDecoration: 'underline' }}
+                >
+                  {v.title || 'Watch livestream'}
+                </a>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

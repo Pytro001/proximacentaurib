@@ -3,8 +3,6 @@ import styles from '../../styles/Globe.module.css';
 interface ControlsPanelProps {
   showSatellites: boolean;
   setShowSatellites: (v: boolean) => void;
-  showOrbits: boolean;
-  setShowOrbits: (v: boolean) => void;
   showLaunches: boolean;
   setShowLaunches: (v: boolean) => void;
   showNightSide: boolean;
@@ -40,8 +38,6 @@ function Toggle({
 export default function ControlsPanel({
   showSatellites,
   setShowSatellites,
-  showOrbits,
-  setShowOrbits,
   showLaunches,
   setShowLaunches,
   showNightSide,
@@ -55,11 +51,6 @@ export default function ControlsPanel({
         label="Satellites"
         checked={showSatellites}
         onChange={setShowSatellites}
-      />
-      <Toggle
-        label="Orbit on click"
-        checked={showOrbits}
-        onChange={setShowOrbits}
       />
       <Toggle
         label="Launches"
