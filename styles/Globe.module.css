@@ -392,10 +392,10 @@
 }
 
 .countdownLabel {
-  font-size: 18px;
+  font-size: 28px;
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.55);
+  color: #fff;
   letter-spacing: 0.05em;
   margin-right: 8px;
 }
