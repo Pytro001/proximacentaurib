@@ -570,7 +570,7 @@ export default function SpaceGlobe() {
           polygonSideColor={() => 'rgba(0, 0, 0, 0)'}
           polygonStrokeColor={() => 'rgba(0, 0, 0, 0)'}
           polygonAltitude={0.005}
-          // Orbit paths (subtle white lines)
+          // Orbit paths: solid line, no animation
           pathsData={pathsData}
           pathPoints="coords"
           pathPointLat="lat"
@@ -578,7 +578,7 @@ export default function SpaceGlobe() {
           pathPointAlt="alt"
           pathColor={() => 'rgba(255, 255, 255, 0.6)'}
           pathStroke={0.5}
-          pathDashLength={1}
+          pathDashLength={10}
           pathDashGap={0}
           pathDashInitialGap={0}
           pathDashAnimateTime={0}
