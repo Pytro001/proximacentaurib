@@ -50,7 +50,8 @@ function categorizeByName(name: string): string {
   if (n.includes('BEIDOU') || n.includes('COMPASS')) return 'Navigation';
   if (n.includes('QZSS')) return 'Navigation';
   if (n.includes('GOES') || n.includes('NOAA') || n.includes('METEOSAT') || n.includes('METOP') || n.includes('HIMAWARI')) return 'Weather';
-  if (n.includes('ISS') || n.includes('ZARYA') || n.includes('TIANGONG') || n.includes('CSS') || n.includes('NAUKA') || n.includes('WENTIAN') || n.includes('MENGTIAN')) return 'Station';
+  if (/^ISS \(ZARYA\)$|^ISS \(NAUKA\)$|^POISK$/.test(n)) return 'Station';
+  if (/^CSS \(|^TIANHE|^TIANGONG|^WENTIAN|^MENGTIAN/.test(n)) return 'Station';
   if (n.includes('HUBBLE') || n.includes('JAMES WEBB') || n.includes('CHANDRA') || n.includes('SPITZER') || n.includes('XMM')) return 'Science';
   if (n.includes('IRIDIUM') || n.includes('ORBCOMM') || n.includes('GLOBALSTAR')) return 'Communications';
   if (n.includes('INTELSAT') || n.includes('SES') || n.includes('TELESAT') || n.includes('EUTELSAT') || n.includes('AMOS')) return 'Communications';

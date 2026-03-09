@@ -368,12 +368,47 @@ export default function SpaceGlobe() {
   useEffect(() => {
     if (!showSatellites) return;
 
-    const interval = setInterval(() => {
-      const positions = propagatePositions(new Date());
-      setSatellitePositions(positions);
-    }, 2000);
+    let rafId: number;
+    let lastPropTime = 0;
+    const PROP_INTERVAL = 1000; // recompute SGP4 every 1s
+    const INTERP_STEP = 50; // interpolate position every 50ms for smooth movement
 
-    return () => clearInterval(interval);
+    let prevPositions: SatellitePosition[] = [];
+    let nextPositions: SatellitePosition[] = [];
+    let interpStart = Date.now();
+
+    const propagate = () => {
+      prevPositions = nextPositions.length > 0 ? nextPositions : propagatePositions(new Date());
+      nextPositions = propagatePositions(new Date(Date.now() + PROP_INTERVAL));
+      interpStart = Date.now();
+    };
+    propagate();
+    setSatellitePositions(prevPositions);
+
+    const tick = () => {
+      const now = Date.now();
+      if (now - lastPropTime >= PROP_INTERVAL) {
+        lastPropTime = now;
+        propagate();
+      }
+      const t = Math.min((now - interpStart) / PROP_INTERVAL, 1);
+      if (prevPositions.length === nextPositions.length && prevPositions.length > 0) {
+        const interpolated = prevPositions.map((prev, i) => {
+          const next = nextPositions[i];
+          return {
+            ...prev,
+            lat: prev.lat + (next.lat - prev.lat) * t,
+            lng: prev.lng + (next.lng - prev.lng) * t,
+            alt: prev.alt + (next.alt - prev.alt) * t,
+          };
+        });
+        setSatellitePositions(interpolated);
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+
+    return () => cancelAnimationFrame(rafId);
   }, [showSatellites]);
 
   useEffect(() => {
