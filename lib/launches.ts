@@ -17,9 +17,16 @@ export interface Launch {
   image: string | null;
 }
 
+function getApiBase(): string {
+  if (typeof window !== 'undefined') return window.location.origin;
+  return process.env.NEXT_PUBLIC_VERCEL_URL
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+    : 'http://localhost:3000';
+}
+
 export async function fetchLaunches(): Promise<Launch[]> {
   try {
-    const res = await fetch('/api/launches');
+    const res = await fetch(`${getApiBase()}/api/launches`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
@@ -30,7 +37,7 @@ export async function fetchLaunches(): Promise<Launch[]> {
 
 export async function fetchSatelliteData(): Promise<any[]> {
   try {
-    const res = await fetch('/api/satellites?group=visual');
+    const res = await fetch(`${getApiBase()}/api/satellites?group=visual`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {

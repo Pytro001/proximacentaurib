@@ -166,19 +166,27 @@ export default function SpaceGlobe() {
     dataLoadedRef.current = true;
 
     async function loadData() {
-      const [satData, launchData] = await Promise.all([
-        fetchSatelliteData(),
-        fetchLaunches(),
-      ]);
+      try {
+        const [satData, launchData] = await Promise.all([
+          fetchSatelliteData(),
+          fetchLaunches(),
+        ]);
 
-      if (satData.length > 0) {
-        parseSatelliteData(satData);
-        const positions = propagatePositions(new Date());
-        setSatellitePositions(positions);
+        if (satData?.length > 0) {
+          parseSatelliteData(satData);
+          const positions = propagatePositions(new Date());
+          setSatellitePositions(positions);
+        }
+
+        const validLaunches = (launchData || []).filter(
+          (l: Launch) => l.lat != null && l.lng != null
+        );
+        setLaunches(validLaunches.slice(0, 1));
+      } catch (err) {
+        console.error('Globe data load error:', err);
+      } finally {
+        setIsLoading(false);
       }
-
-      setLaunches(launchData.filter((l: Launch) => l.lat !== null && l.lng !== null));
-      setIsLoading(false);
     }
 
     loadData();
@@ -342,14 +350,15 @@ export default function SpaceGlobe() {
           ringPropagationSpeed="propagationSpeed"
           ringRepeatPeriod="repeatPeriod"
           ringColor="color"
-          // Launch points (using labels layer)
+          // Launch point (next launch only, dot only to avoid overlapping labels)
           labelsData={launchPointsData}
           labelLat="lat"
           labelLng="lng"
-          labelText="name"
+          labelText={() => ''}
           labelSize={LAUNCH_POINT_SIZE}
           labelColor={(d: any) => getLaunchStatusColor(d.status)}
-          labelDotRadius={0.4}
+          labelDotRadius={0.5}
+          labelIncludeDot={true}
           labelResolution={2}
           labelAltitude={0.01}
           onLabelClick={handleLaunchClick}

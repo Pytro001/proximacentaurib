@@ -22,7 +22,7 @@ export default async function handler(
 
   try {
     const response = await fetch(
-      'https://ll.thespacedevs.com/2.3.0/launches/?limit=50&ordering=-net',
+      'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?limit=5&ordering=net',
       {
         headers: { Accept: 'application/json' },
       }
