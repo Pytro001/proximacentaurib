@@ -13,6 +13,13 @@ function SatelliteInfo({ sat }: { sat: SatellitePosition }) {
     <div className={styles.infoPanelBody}>
       <div className={styles.categoryTag}>{sat.category}</div>
 
+      {sat.useCase && (
+        <div className={styles.dataField}>
+          <span className={styles.dataLabel}>Use Case</span>
+          <span className={styles.dataValue} style={{ lineHeight: 1.5 }}>{sat.useCase}</span>
+        </div>
+      )}
+
       <div className={styles.dataField}>
         <span className={styles.dataLabel}>NORAD ID</span>
         <span className={styles.dataValueMono}>{sat.noradId}</span>

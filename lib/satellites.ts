@@ -13,6 +13,7 @@ export interface SatellitePosition {
   period: number; // minutes
   eccentricity: number;
   orbitType: string;
+  useCase: string;
 }
 
 export interface SatelliteOrbitPath {
@@ -52,6 +53,27 @@ function categorizeByName(name: string): string {
   if (n.includes('IRIDIUM')) return 'Communications';
   if (n.includes('INTELSAT') || n.includes('SES') || n.includes('TELESAT')) return 'Communications';
   return 'Other';
+}
+
+function getSatelliteUseCase(name: string, category: string): string {
+  const n = name.toUpperCase();
+  if (category === 'Station') return 'Crewed space station for research and habitation in low Earth orbit.';
+  if (category === 'Starlink') return 'Broadband internet constellation providing global satellite internet coverage.';
+  if (category === 'Navigation') return 'Satellite navigation system for GPS positioning, timing, and navigation worldwide.';
+  if (category === 'Weather') return 'Weather monitoring and forecasting; observes Earth atmosphere, clouds, and climate.';
+  if (category === 'Science') return 'Space telescope or scientific observatory for astronomy and astrophysics research.';
+  if (category === 'Communications') return 'Communications satellite for TV, radio, telephone, and data relay services.';
+  if (n.includes('IRIDIUM')) return 'Mobile voice and data satellite communications network.';
+  if (n.includes('GOES')) return 'Geostationary weather satellite monitoring Americas.';
+  if (n.includes('NOAA')) return 'Polar-orbiting weather and environmental monitoring.';
+  if (n.includes('METEOSAT')) return 'European geostationary weather satellite.';
+  if (n.includes('LANDSAT') || n.includes('SENTINEL')) return 'Earth observation for land use, agriculture, and environmental monitoring.';
+  if (n.includes('TERRA') || n.includes('AQUA')) return 'NASA Earth observation for climate and environmental science.';
+  if (n.includes('HUBBLE')) return 'Optical space telescope for deep-space astronomy.';
+  if (n.includes('JAMES WEBB') || n.includes('JWST')) return 'Infrared space telescope for early universe and exoplanet research.';
+  if (n.includes('CHANDRA')) return 'X-ray observatory for high-energy astrophysics.';
+  if (category === 'Other') return 'General-purpose or specialized satellite.';
+  return `${category} satellite.`;
 }
 
 let parsedSatellites: ParsedSatellite[] = [];
@@ -130,6 +152,7 @@ export function propagatePositions(date: Date): SatellitePosition[] {
         period: sat.period,
         eccentricity: sat.eccentricity,
         orbitType: classifyOrbit(alt),
+        useCase: getSatelliteUseCase(sat.name, sat.category),
       });
     } catch {
       // skip propagation failures

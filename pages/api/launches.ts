@@ -21,20 +21,31 @@ export default async function handler(
   }
 
   try {
-    const response = await fetch(
-      'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?limit=5&ordering=net',
-      {
-        headers: { Accept: 'application/json' },
-      }
+    let response = await fetch(
+      'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?limit=20&ordering=net',
+      { headers: { Accept: 'application/json' } }
     );
+
+    if (!response.ok) {
+      response = await fetch(
+        'https://ll.thespacedevs.com/2.3.0/launches/?limit=30&ordering=net',
+        { headers: { Accept: 'application/json' } }
+      );
+    }
 
     if (!response.ok) {
       throw new Error(`Launch Library responded with ${response.status}`);
     }
 
     const raw = await response.json();
+    let results = raw.results || [];
+    const isUpcoming = response.url.includes('upcoming');
+    if (!isUpcoming) {
+      const now = new Date().toISOString();
+      results = results.filter((l: any) => l.net && l.net >= now);
+    }
 
-    const launches = (raw.results || []).map((l: any) => ({
+    const launches = results.map((l: any) => ({
       id: l.id,
       name: l.name,
       status: l.status?.name || 'Unknown',

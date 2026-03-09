@@ -2,6 +2,7 @@ import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import type { GlobeMethods } from 'react-globe.gl';
 import * as THREE from 'three';
+import { century, equationOfTime, declination } from 'solar-calculator';
 import {
   SatellitePosition,
   SatelliteOrbitPath,
@@ -19,6 +20,53 @@ import {
 import ControlsPanel from './ControlsPanel';
 import InfoPanel from './InfoPanel';
 import styles from '../../styles/Globe.module.css';
+
+function getSubsolarPoint(date: Date): [number, number] {
+  const dt = +date;
+  const dayStart = new Date(date).setUTCHours(0, 0, 0, 0);
+  const t = century(dt);
+  const longitude = ((dayStart - dt) / 864e5) * 360 - 180;
+  const lng = longitude - equationOfTime(t) / 4;
+  const lat = declination(t);
+  return [lng, lat];
+}
+
+const DAY_NIGHT_VERT = `
+  varying vec3 vNormal;
+  varying vec2 vUv;
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const DAY_NIGHT_FRAG = `
+  #define PI 3.141592653589793
+  uniform sampler2D dayTexture;
+  uniform sampler2D nightTexture;
+  uniform vec2 sunPosition;
+  varying vec3 vNormal;
+  varying vec2 vUv;
+
+  vec3 polarToCart(vec2 c) {
+    float theta = (90.0 - c.x) * PI / 180.0;
+    float phi = (90.0 - c.y) * PI / 180.0;
+    return vec3(sin(phi) * cos(theta), cos(phi), sin(phi) * sin(theta));
+  }
+
+  void main() {
+    vec3 sunDir = polarToCart(sunPosition);
+    float intensity = dot(normalize(vNormal), normalize(sunDir));
+    vec4 dayColor = texture2D(dayTexture, vUv);
+    vec4 nightColor = texture2D(nightTexture, vUv);
+    float blend = smoothstep(-0.12, 0.12, intensity);
+    gl_FragColor = mix(nightColor, dayColor, blend);
+  }
+`;
+
+const DAY_URL = '//unpkg.com/three-globe/example/img/earth-day.jpg';
+const NIGHT_URL = '//unpkg.com/three-globe/example/img/earth-night.jpg';
 
 const GlobeGL = dynamic(() => import('react-globe.gl'), { ssr: false });
 
@@ -88,21 +136,10 @@ function createSatObject(d: object): THREE.Group {
   return group;
 }
 
-function getSolarPosition(date: Date): { lat: number; lng: number } {
-  const dayOfYear =
-    (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) -
-      Date.UTC(date.getFullYear(), 0, 0)) /
-    86400000;
-  const declination = -23.44 * Math.cos((360 / 365) * (dayOfYear + 10) * (Math.PI / 180));
-  const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60;
-  const lng = (12 - utcHours) * 15;
-  return { lat: declination, lng };
-}
-
 function generateNightPolygon(date: Date) {
-  const sun = getSolarPosition(date);
-  const sunLatRad = (sun.lat * Math.PI) / 180;
-  const sunLngRad = (sun.lng * Math.PI) / 180;
+  const [sunLng, sunLat] = getSubsolarPoint(date);
+  const sunLatRad = (sunLat * Math.PI) / 180;
+  const sunLngRad = (sunLng * Math.PI) / 180;
   const steps = 120;
   const coords: [number, number][] = [];
 
@@ -150,6 +187,8 @@ export default function SpaceGlobe() {
   const [selectedSatellite, setSelectedSatellite] = useState<SatellitePosition | null>(null);
   const [selectedLaunch, setSelectedLaunch] = useState<Launch | null>(null);
   const [nightPolygon, setNightPolygon] = useState<any>(null);
+  const [dayNightMaterial, setDayNightMaterial] = useState<THREE.ShaderMaterial | null>(null);
+  const sunPosRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const [globeReady, setGlobeReady] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const dataLoadedRef = useRef(false);
@@ -181,7 +220,7 @@ export default function SpaceGlobe() {
         const validLaunches = (launchData || []).filter(
           (l: Launch) => l.lat != null && l.lng != null
         );
-        setLaunches(validLaunches.slice(0, 1));
+        setLaunches(validLaunches);
       } catch (err) {
         console.error('Globe data load error:', err);
       } finally {
@@ -206,13 +245,44 @@ export default function SpaceGlobe() {
   useEffect(() => {
     if (!showNightSide) {
       setNightPolygon(null);
+      setDayNightMaterial(null);
       return;
     }
-    const update = () => setNightPolygon(generateNightPolygon(new Date()));
-    update();
-    const interval = setInterval(update, 60000);
-    return () => clearInterval(interval);
+    const loader = new THREE.TextureLoader();
+    let fallbackInterval: ReturnType<typeof setInterval> | undefined;
+    Promise.all([
+      loader.loadAsync(`https:${DAY_URL}`),
+      loader.loadAsync(`https:${NIGHT_URL}`),
+    ]).then(([dayTex, nightTex]) => {
+      const [lng, lat] = getSubsolarPoint(new Date());
+      sunPosRef.current.set(lng, lat);
+      const mat = new THREE.ShaderMaterial({
+        uniforms: {
+          dayTexture: { value: dayTex },
+          nightTexture: { value: nightTex },
+          sunPosition: { value: sunPosRef.current.clone() },
+        },
+        vertexShader: DAY_NIGHT_VERT,
+        fragmentShader: DAY_NIGHT_FRAG,
+      });
+      setDayNightMaterial(mat);
+    }).catch(() => {
+      setNightPolygon(generateNightPolygon(new Date()));
+      fallbackInterval = setInterval(() => setNightPolygon(generateNightPolygon(new Date())), 60000);
+    });
+    return () => { if (fallbackInterval) clearInterval(fallbackInterval); };
   }, [showNightSide]);
+
+  useEffect(() => {
+    if (!dayNightMaterial || !showNightSide) return;
+    const update = () => {
+      const [lng, lat] = getSubsolarPoint(new Date());
+      dayNightMaterial.uniforms.sunPosition.value.set(lng, lat);
+    };
+    update();
+    const interval = setInterval(update, 30000);
+    return () => clearInterval(interval);
+  }, [dayNightMaterial, showNightSide]);
 
   useEffect(() => {
     if (!showOrbits || satellitePositions.length === 0) {
@@ -299,16 +369,16 @@ export default function SpaceGlobe() {
   }, [showLaunches, launches]);
 
   const nightPolygonsData = useMemo(() => {
-    if (!nightPolygon) return [];
+    if (!nightPolygon || dayNightMaterial) return [];
     return [nightPolygon];
-  }, [nightPolygon]);
+  }, [nightPolygon, dayNightMaterial]);
 
   const pathsData = useMemo(() => {
     if (!showOrbits) return [];
     return orbitPaths;
   }, [showOrbits, orbitPaths]);
 
-  const globeImageUrl = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
+  const defaultGlobeUrl = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
   const bumpImageUrl = '//unpkg.com/three-globe/example/img/earth-topology.png';
 
   if (dimensions.width === 0) return null;
@@ -328,8 +398,9 @@ export default function SpaceGlobe() {
           width={dimensions.width}
           height={dimensions.height}
           backgroundColor="rgba(0,0,0,0)"
-          globeImageUrl={globeImageUrl}
-          bumpImageUrl={bumpImageUrl}
+          globeImageUrl={dayNightMaterial ? null : defaultGlobeUrl}
+          globeMaterial={dayNightMaterial || undefined}
+          bumpImageUrl={dayNightMaterial ? null : bumpImageUrl}
           showAtmosphere={true}
           atmosphereColor="#1d9bf0"
           atmosphereAltitude={0.15}
@@ -350,15 +421,14 @@ export default function SpaceGlobe() {
           ringPropagationSpeed="propagationSpeed"
           ringRepeatPeriod="repeatPeriod"
           ringColor="color"
-          // Launch point (next launch only, dot only to avoid overlapping labels)
+          // Launch points
           labelsData={launchPointsData}
           labelLat="lat"
           labelLng="lng"
-          labelText={() => ''}
-          labelSize={LAUNCH_POINT_SIZE}
+          labelText="name"
+          labelSize={0.5}
           labelColor={(d: any) => getLaunchStatusColor(d.status)}
-          labelDotRadius={0.5}
-          labelIncludeDot={true}
+          labelDotRadius={0.4}
           labelResolution={2}
           labelAltitude={0.01}
           onLabelClick={handleLaunchClick}
