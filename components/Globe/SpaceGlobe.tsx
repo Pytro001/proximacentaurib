@@ -82,8 +82,9 @@ const DAY_NIGHT_FRAG = `
   }
 `;
 
-const DAY_URL = '//unpkg.com/three-globe/example/img/earth-day.jpg';
-const NIGHT_URL = '//unpkg.com/three-globe/example/img/earth-night.jpg';
+const DAY_URL = 'https://upload.wikimedia.org/wikipedia/commons/0/04/Solarsystemscope_texture_8k_earth_daymap.jpg';
+const NIGHT_URL = 'https://upload.wikimedia.org/wikipedia/commons/b/b3/Solarsystemscope_texture_8k_earth_nightmap.jpg';
+const DAY_BUMP_URL = '//unpkg.com/three-globe/example/img/earth-topology.png';
 
 const GlobeGL = dynamic(() => import('react-globe.gl'), { ssr: false });
 
@@ -420,8 +421,8 @@ export default function SpaceGlobe() {
     const loader = new THREE.TextureLoader();
     let fallbackInterval: ReturnType<typeof setInterval> | undefined;
     Promise.all([
-      loader.loadAsync(`https:${DAY_URL}`),
-      loader.loadAsync(`https:${NIGHT_URL}`),
+      loader.loadAsync(DAY_URL),
+      loader.loadAsync(NIGHT_URL),
     ]).then(([dayTex, nightTex]) => {
       const [lng, lat] = getSubsolarPoint(new Date());
       sunPosRef.current.set(lng, lat);
@@ -435,6 +436,8 @@ export default function SpaceGlobe() {
         vertexShader: DAY_NIGHT_VERT,
         fragmentShader: DAY_NIGHT_FRAG,
       });
+      dayTex.anisotropy = 16;
+      nightTex.anisotropy = 16;
       setDayNightMaterial(mat);
     }).catch(() => {
       setNightPolygon(generateNightPolygon(new Date()));
@@ -487,7 +490,7 @@ export default function SpaceGlobe() {
           controls.autoRotateSpeed = 0.3;
           controls.enableDamping = true;
           controls.dampingFactor = 0.1;
-          controls.minDistance = 101;
+          controls.minDistance = 100.15;
           controls.maxDistance = 1000;
         }
       } catch {
@@ -554,8 +557,8 @@ export default function SpaceGlobe() {
     return [selectedOrbitPath];
   }, [selectedOrbitPath]);
 
-  const defaultGlobeUrl = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
-  const bumpImageUrl = '//unpkg.com/three-globe/example/img/earth-topology.png';
+  const defaultGlobeUrl = DAY_URL;
+  const bumpImageUrl = DAY_BUMP_URL;
 
   if (dimensions.width === 0) return null;
 
