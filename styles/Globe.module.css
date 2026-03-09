@@ -421,7 +421,7 @@
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
   color: #fff;
-  letter-spacing: 0.05em;
+  letter-spacing: -0.01em;
   margin-right: 8px;
 }
 
