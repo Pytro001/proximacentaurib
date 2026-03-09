@@ -46,22 +46,39 @@ const DAY_NIGHT_FRAG = `
   uniform sampler2D dayTexture;
   uniform sampler2D nightTexture;
   uniform vec2 sunPosition;
+  uniform vec2 globeRotation;
   varying vec3 vNormal;
   varying vec2 vUv;
 
-  vec3 polarToCart(vec2 c) {
-    float theta = (90.0 - c.x) * PI / 180.0;
-    float phi = (90.0 - c.y) * PI / 180.0;
+  float toRad(in float a) {
+    return a * PI / 180.0;
+  }
+
+  vec3 Polar2Cartesian(in vec2 c) {
+    float theta = toRad(90.0 - c.x);
+    float phi = toRad(90.0 - c.y);
     return vec3(sin(phi) * cos(theta), cos(phi), sin(phi) * sin(theta));
   }
 
   void main() {
-    vec3 sunDir = polarToCart(sunPosition);
-    float intensity = dot(normalize(vNormal), normalize(sunDir));
+    float invLon = toRad(globeRotation.x);
+    float invLat = -toRad(globeRotation.y);
+    mat3 rotX = mat3(
+      1.0, 0.0, 0.0,
+      0.0, cos(invLat), -sin(invLat),
+      0.0, sin(invLat), cos(invLat)
+    );
+    mat3 rotY = mat3(
+      cos(invLon), 0.0, sin(invLon),
+      0.0, 1.0, 0.0,
+      -sin(invLon), 0.0, cos(invLon)
+    );
+    vec3 rotatedSunDirection = rotX * rotY * Polar2Cartesian(sunPosition);
+    float intensity = dot(normalize(vNormal), normalize(rotatedSunDirection));
     vec4 dayColor = texture2D(dayTexture, vUv);
     vec4 nightColor = texture2D(nightTexture, vUv);
-    float blend = smoothstep(-0.12, 0.12, intensity);
-    gl_FragColor = mix(nightColor, dayColor, blend);
+    float blendFactor = smoothstep(-0.1, 0.1, intensity);
+    gl_FragColor = mix(nightColor, dayColor, blendFactor);
   }
 `;
 
@@ -189,6 +206,7 @@ export default function SpaceGlobe() {
   const [nightPolygon, setNightPolygon] = useState<any>(null);
   const [dayNightMaterial, setDayNightMaterial] = useState<THREE.ShaderMaterial | null>(null);
   const sunPosRef = useRef<THREE.Vector2>(new THREE.Vector2());
+  const globeRotRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const [globeReady, setGlobeReady] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const dataLoadedRef = useRef(false);
@@ -220,7 +238,7 @@ export default function SpaceGlobe() {
         const validLaunches = (launchData || []).filter(
           (l: Launch) => l.lat != null && l.lng != null
         );
-        setLaunches(validLaunches);
+        setLaunches(validLaunches.slice(0, 1));
       } catch (err) {
         console.error('Globe data load error:', err);
       } finally {
@@ -256,11 +274,13 @@ export default function SpaceGlobe() {
     ]).then(([dayTex, nightTex]) => {
       const [lng, lat] = getSubsolarPoint(new Date());
       sunPosRef.current.set(lng, lat);
+      globeRotRef.current.set(0, 20);
       const mat = new THREE.ShaderMaterial({
         uniforms: {
           dayTexture: { value: dayTex },
           nightTexture: { value: nightTex },
           sunPosition: { value: sunPosRef.current.clone() },
+          globeRotation: { value: globeRotRef.current.clone() },
         },
         vertexShader: DAY_NIGHT_VERT,
         fragmentShader: DAY_NIGHT_FRAG,
@@ -275,13 +295,30 @@ export default function SpaceGlobe() {
 
   useEffect(() => {
     if (!dayNightMaterial || !showNightSide) return;
-    const update = () => {
+    const updateSun = () => {
       const [lng, lat] = getSubsolarPoint(new Date());
       dayNightMaterial.uniforms.sunPosition.value.set(lng, lat);
     };
-    update();
-    const interval = setInterval(update, 30000);
-    return () => clearInterval(interval);
+    updateSun();
+    const sunInterval = setInterval(updateSun, 30000);
+    return () => clearInterval(sunInterval);
+  }, [dayNightMaterial, showNightSide]);
+
+  useEffect(() => {
+    if (!dayNightMaterial || !showNightSide || !globeRef.current) return;
+    let rafId: number;
+    const updateGlobeRotation = () => {
+      const globe = globeRef.current;
+      if (globe && typeof globe.pointOfView === 'function') {
+        const pov = globe.pointOfView();
+        if (pov && typeof pov.lng === 'number' && typeof pov.lat === 'number') {
+          dayNightMaterial.uniforms.globeRotation.value.set(pov.lng, pov.lat);
+        }
+      }
+      rafId = requestAnimationFrame(updateGlobeRotation);
+    };
+    updateGlobeRotation();
+    return () => cancelAnimationFrame(rafId);
   }, [dayNightMaterial, showNightSide]);
 
   useEffect(() => {
@@ -411,7 +448,7 @@ export default function SpaceGlobe() {
           objectLng="lng"
           objectAltitude={(d: any) => (d.alt || 400) / EARTH_RADIUS_KM}
           objectThreeObject={createSatObject}
-          objectLabel={(d: any) => d.name}
+          objectLabel={() => ''}
           onObjectClick={handleSatelliteClick}
           // Launch rings (pulsing)
           ringsData={launchRingsData}
@@ -421,17 +458,15 @@ export default function SpaceGlobe() {
           ringPropagationSpeed="propagationSpeed"
           ringRepeatPeriod="repeatPeriod"
           ringColor="color"
-          // Launch points
-          labelsData={launchPointsData}
-          labelLat="lat"
-          labelLng="lng"
-          labelText="name"
-          labelSize={0.5}
-          labelColor={(d: any) => getLaunchStatusColor(d.status)}
-          labelDotRadius={0.4}
-          labelResolution={2}
-          labelAltitude={0.01}
-          onLabelClick={handleLaunchClick}
+          // Launch point (next only, dot only, no labels)
+          pointsData={launchPointsData}
+          pointLat="lat"
+          pointLng="lng"
+          pointColor={(d: any) => getLaunchStatusColor(d.status)}
+          pointAltitude={0.01}
+          pointRadius={0.4}
+          pointLabel={() => ''}
+          onPointClick={(p: object) => handleLaunchClick(p)}
           // Night side overlay
           polygonsData={nightPolygonsData}
           polygonCapColor={() => 'rgba(0, 0, 20, 0.5)'}
