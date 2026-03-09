@@ -15,8 +15,8 @@
   top: 16px;
   left: 16px;
   z-index: 15;
-  width: 80px;
-  height: 80px;
+  width: 56px;
+  height: 56px;
   display: block;
 }
 
@@ -316,6 +316,13 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .logo {
+    top: 16px;
+    left: 16px;
+    width: 48px;
+    height: 48px;
+  }
+
   .controls {
     top: auto;
     bottom: 16px;
@@ -348,5 +355,14 @@
     right: 16px;
     font-size: 12px;
     padding: 6px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    top: 16px;
+    left: 16px;
+    width: 44px;
+    height: 44px;
   }
 }

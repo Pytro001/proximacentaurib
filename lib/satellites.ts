@@ -68,7 +68,7 @@ let parsedSatellites: ParsedSatellite[] = [];
 export function parseSatelliteData(records: satellite.OMMJsonObject[]): void {
   parsedSatellites = [];
 
-  const limit = Math.min(records.length, 500);
+  const limit = Math.min(records.length, 2000);
 
   for (let i = 0; i < limit; i++) {
     const rec = records[i];

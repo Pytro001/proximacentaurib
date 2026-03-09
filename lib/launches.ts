@@ -43,7 +43,7 @@ export async function fetchLaunches(): Promise<Launch[]> {
 
 export async function fetchSatelliteData(): Promise<any[]> {
   try {
-    const res = await fetch(`${getApiBase()}/api/satellites?group=visual`);
+    const res = await fetch(`${getApiBase()}/api/satellites?group=all`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {

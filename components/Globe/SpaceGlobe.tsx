@@ -124,60 +124,58 @@ function getSatMaterial(category: string): THREE.MeshBasicMaterial {
 const ISS_NORAD_ID = 25544;
 const CSS_NORAD_IDS = [48274, 53239, 54216]; // Tianhe, Wentian, Mengtian
 
+const STATION_SCALE = 1.75;
+
 function createISSObject(): THREE.Group {
   const group = new THREE.Group();
+  const s = STATION_SCALE;
   const whiteMat = new THREE.MeshBasicMaterial({ color: '#e0e0e0' });
   const blueMat = new THREE.MeshBasicMaterial({ color: '#1d9bf0' });
   const goldMat = new THREE.MeshBasicMaterial({ color: '#ffd54f' });
 
-  // Central truss (long horizontal spine)
   const truss = new THREE.Mesh(
-    new THREE.BoxGeometry(2.2, 0.12, 0.12),
+    new THREE.BoxGeometry(2.2 * s, 0.12 * s, 0.12 * s),
     whiteMat
   );
   group.add(truss);
 
-  // Node modules (central hub - 3 cylinders)
-  const nodeGeom = new THREE.CylinderGeometry(0.15, 0.15, 0.2, 8);
+  const nodeGeom = new THREE.CylinderGeometry(0.15 * s, 0.15 * s, 0.2 * s, 8);
   const node1 = new THREE.Mesh(nodeGeom, whiteMat);
   node1.position.set(0, 0, 0);
   group.add(node1);
   const node2 = new THREE.Mesh(nodeGeom.clone(), whiteMat);
-  node2.position.set(0.3, 0.15, 0);
+  node2.position.set(0.3 * s, 0.15 * s, 0);
   node2.rotation.z = Math.PI / 6;
   group.add(node2);
   const node3 = new THREE.Mesh(nodeGeom.clone(), whiteMat);
-  node3.position.set(-0.3, 0.12, 0);
+  node3.position.set(-0.3 * s, 0.12 * s, 0);
   node3.rotation.z = -Math.PI / 6;
   group.add(node3);
 
-  // Solar array wings (4 pairs along truss - ISS has 8 arrays)
-  const wingGeom = new THREE.BoxGeometry(0.08, 0.9, 0.5);
+  const wingGeom = new THREE.BoxGeometry(0.08 * s, 0.9 * s, 0.5 * s);
   const positions = [-1.0, -0.5, 0.5, 1.0];
   positions.forEach((x) => {
     const wingL = new THREE.Mesh(wingGeom, blueMat);
-    wingL.position.set(x, 0.45, 0);
+    wingL.position.set(x * s, 0.45 * s, 0);
     wingL.rotation.x = Math.PI / 2;
     group.add(wingL);
     const wingR = new THREE.Mesh(wingGeom.clone(), blueMat);
-    wingR.position.set(x, -0.45, 0);
+    wingR.position.set(x * s, -0.45 * s, 0);
     wingR.rotation.x = -Math.PI / 2;
     group.add(wingR);
   });
 
-  // Lab module (larger cylinder)
-  const labGeom = new THREE.CylinderGeometry(0.2, 0.2, 0.6, 8);
+  const labGeom = new THREE.CylinderGeometry(0.2 * s, 0.2 * s, 0.6 * s, 8);
   const lab = new THREE.Mesh(labGeom, whiteMat);
-  lab.position.set(0.6, 0.25, 0);
+  lab.position.set(0.6 * s, 0.25 * s, 0);
   lab.rotation.z = -Math.PI / 4;
   group.add(lab);
 
-  // Cupola / dome (small)
   const cupola = new THREE.Mesh(
-    new THREE.SphereGeometry(0.12, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.SphereGeometry(0.12 * s, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2),
     goldMat
   );
-  cupola.position.set(0.5, 0.35, 0.1);
+  cupola.position.set(0.5 * s, 0.35 * s, 0.1 * s);
   group.add(cupola);
 
   return group;
@@ -185,42 +183,39 @@ function createISSObject(): THREE.Group {
 
 function createCSSObject(): THREE.Group {
   const group = new THREE.Group();
+  const s = STATION_SCALE;
   const whiteMat = new THREE.MeshBasicMaterial({ color: '#e8e8e8' });
   const blueMat = new THREE.MeshBasicMaterial({ color: '#1d9bf0' });
   const redMat = new THREE.MeshBasicMaterial({ color: '#de2910' });
 
-  // Core module (Tianhe) - horizontal cylinder
-  const coreGeom = new THREE.CylinderGeometry(0.2, 0.2, 1.2, 8);
+  const coreGeom = new THREE.CylinderGeometry(0.2 * s, 0.2 * s, 1.2 * s, 8);
   const core = new THREE.Mesh(coreGeom, whiteMat);
   core.rotation.z = Math.PI / 2;
   group.add(core);
 
-  // Lab modules (Wentian, Mengtian) - T-shape arms
-  const labGeom = new THREE.CylinderGeometry(0.15, 0.15, 0.7, 8);
+  const labGeom = new THREE.CylinderGeometry(0.15 * s, 0.15 * s, 0.7 * s, 8);
   const labL = new THREE.Mesh(labGeom, whiteMat);
-  labL.position.set(-0.8, 0.4, 0);
+  labL.position.set(-0.8 * s, 0.4 * s, 0);
   labL.rotation.z = -Math.PI / 3;
   group.add(labL);
   const labR = new THREE.Mesh(labGeom.clone(), whiteMat);
-  labR.position.set(0.8, 0.35, 0);
+  labR.position.set(0.8 * s, 0.35 * s, 0);
   labR.rotation.z = Math.PI / 3;
   group.add(labR);
 
-  // Solar array wings (CSS has large arrays)
-  const wingGeom = new THREE.BoxGeometry(0.06, 0.8, 0.4);
+  const wingGeom = new THREE.BoxGeometry(0.06 * s, 0.8 * s, 0.4 * s);
   [-0.5, 0, 0.5].forEach((x) => {
     const wingL = new THREE.Mesh(wingGeom, blueMat);
-    wingL.position.set(x, 0.5, 0);
+    wingL.position.set(x * s, 0.5 * s, 0);
     wingL.rotation.x = Math.PI / 2;
     group.add(wingL);
     const wingR = new THREE.Mesh(wingGeom.clone(), blueMat);
-    wingR.position.set(x, -0.5, 0);
+    wingR.position.set(x * s, -0.5 * s, 0);
     wingR.rotation.x = -Math.PI / 2;
     group.add(wingR);
   });
 
-  // Docking node / hub (red accent)
-  const nodeGeom = new THREE.CylinderGeometry(0.12, 0.12, 0.15, 8);
+  const nodeGeom = new THREE.CylinderGeometry(0.12 * s, 0.12 * s, 0.15 * s, 8);
   const node = new THREE.Mesh(nodeGeom, redMat);
   node.position.set(0, 0, 0);
   group.add(node);
@@ -239,33 +234,30 @@ function createSatObject(d: object): THREE.Group {
 
   const group = new THREE.Group();
   const mat = getSatMaterial(sat.category);
+  const s = 0.5; // smaller scale for regular satellites
 
-  // Main body
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), mat);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.35 * s, 0.35 * s, 0.35 * s), mat);
   group.add(body);
 
-  // Solar panel left
   const panelL = new THREE.Mesh(
-    new THREE.BoxGeometry(1.4, 0.05, 0.7),
+    new THREE.BoxGeometry(0.8 * s, 0.03 * s, 0.4 * s),
     panelMaterial!
   );
-  panelL.position.set(-1.0, 0, 0);
+  panelL.position.set(-0.55 * s, 0, 0);
   group.add(panelL);
 
-  // Solar panel right
   const panelR = new THREE.Mesh(
-    new THREE.BoxGeometry(1.4, 0.05, 0.7),
+    new THREE.BoxGeometry(0.8 * s, 0.03 * s, 0.4 * s),
     panelMaterial!
   );
-  panelR.position.set(1.0, 0, 0);
+  panelR.position.set(0.55 * s, 0, 0);
   group.add(panelR);
 
-  // Antenna dish (small cone on top)
   const antenna = new THREE.Mesh(
-    new THREE.ConeGeometry(0.15, 0.4, 6),
+    new THREE.ConeGeometry(0.08 * s, 0.22 * s, 6),
     mat
   );
-  antenna.position.set(0, 0.5, 0);
+  antenna.position.set(0, 0.28 * s, 0);
   group.add(antenna);
 
   return group;
