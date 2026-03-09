@@ -209,7 +209,6 @@ export default function SpaceGlobe() {
   const [nightPolygon, setNightPolygon] = useState<any>(null);
   const [dayNightMaterial, setDayNightMaterial] = useState<THREE.ShaderMaterial | null>(null);
   const sunPosRef = useRef<THREE.Vector2>(new THREE.Vector2());
-  const globeRotRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const [globeReady, setGlobeReady] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const dataLoadedRef = useRef(false);
@@ -277,13 +276,12 @@ export default function SpaceGlobe() {
     ]).then(([dayTex, nightTex]) => {
       const [lng, lat] = getSubsolarPoint(new Date());
       sunPosRef.current.set(lng, lat);
-      globeRotRef.current.set(0, 20);
       const mat = new THREE.ShaderMaterial({
         uniforms: {
           dayTexture: { value: dayTex },
           nightTexture: { value: nightTex },
           sunPosition: { value: sunPosRef.current.clone() },
-          globeRotation: { value: globeRotRef.current.clone() },
+          globeRotation: { value: new THREE.Vector2(0, 0) },
         },
         vertexShader: DAY_NIGHT_VERT,
         fragmentShader: DAY_NIGHT_FRAG,
@@ -307,22 +305,14 @@ export default function SpaceGlobe() {
     return () => clearInterval(sunInterval);
   }, [dayNightMaterial, showNightSide]);
 
-  useEffect(() => {
-    if (!dayNightMaterial || !showNightSide || !globeRef.current) return;
-    let rafId: number;
-    const updateGlobeRotation = () => {
-      const globe = globeRef.current;
-      if (globe && typeof globe.pointOfView === 'function') {
-        const pov = globe.pointOfView();
-        if (pov && typeof pov.lng === 'number' && typeof pov.lat === 'number') {
-          dayNightMaterial.uniforms.globeRotation.value.set(pov.lng, pov.lat);
-        }
+  const handleZoom = useCallback(
+    (pov: { lat: number; lng: number; altitude: number }) => {
+      if (dayNightMaterial) {
+        dayNightMaterial.uniforms.globeRotation.value.set(pov.lng, pov.lat);
       }
-      rafId = requestAnimationFrame(updateGlobeRotation);
-    };
-    updateGlobeRotation();
-    return () => cancelAnimationFrame(rafId);
-  }, [dayNightMaterial, showNightSide]);
+    },
+    [dayNightMaterial]
+  );
 
   // Orbit path for selected satellite only (shown when clicking a satellite)
   const selectedOrbitPath = useMemo(() => {
@@ -336,6 +326,10 @@ export default function SpaceGlobe() {
       if (!globe || typeof globe.pointOfView !== 'function') return;
 
       globe.pointOfView({ lat: 20, lng: 0, altitude: 2.5 }, 0);
+
+      if (dayNightMaterial) {
+        dayNightMaterial.uniforms.globeRotation.value.set(0, 20);
+      }
 
       try {
         const controls = globe.controls();
@@ -353,7 +347,7 @@ export default function SpaceGlobe() {
 
       setGlobeReady(true);
     }, 100);
-  }, []);
+  }, [dayNightMaterial]);
 
   const handleSatelliteClick = useCallback(
     (point: object) => {
@@ -437,6 +431,7 @@ export default function SpaceGlobe() {
           atmosphereColor="#1d9bf0"
           atmosphereAltitude={0.15}
           onGlobeReady={handleGlobeReady}
+          onZoom={handleZoom}
           // Satellite dots floating at real altitude
           objectsData={satPointsData}
           objectLat="lat"
