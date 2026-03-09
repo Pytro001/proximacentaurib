@@ -5,6 +5,11 @@ export interface LaunchVidUrl {
   isLive?: boolean;
 }
 
+export interface LaunchExternalLink {
+  url: string;
+  title: string;
+}
+
 export interface Launch {
   id: string;
   name: string;
@@ -19,10 +24,12 @@ export interface Launch {
   orbitName: string;
   padName: string;
   padLocation: string;
+  providerUrl?: string;
   lat: number | null;
   lng: number | null;
   image: string | null;
   vidUrls: LaunchVidUrl[];
+  externalLinks: LaunchExternalLink[];
 }
 
 function getApiBase(): string {

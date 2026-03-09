@@ -97,16 +97,29 @@ function CountdownDisplay({ net }: { net: string }) {
   return <span className={styles.countdownText}>T-{parts.join(' ')}</span>;
 }
 
-function LaunchInfo({ launch, isNext }: { launch: Launch; isNext?: boolean }) {
+function LaunchInfo({
+  launch,
+  isNext,
+  isExpanded,
+  onToggle,
+}: {
+  launch: Launch;
+  isNext?: boolean;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
   const statusColor = getLaunchStatusColor(launch.status);
 
   return (
     <div className={styles.launchCard}>
-      <div className={styles.launchCardHeader}>
+      <button className={styles.launchHeaderButton} onClick={onToggle} type="button">
+        <div className={styles.launchCardHeader}>
         {isNext && <span className={styles.nextBadge}>NEXT</span>}
         <span className={styles.launchDot} style={{ background: statusColor }} />
         <span className={styles.launchName}>{launch.name}</span>
-      </div>
+        <span className={styles.expandIcon}>{isExpanded ? '−' : '+'}</span>
+        </div>
+      </button>
       {isNext ? (
         <div className={styles.countdownBlock}>
           <CountdownDisplay net={launch.net} />
@@ -118,7 +131,25 @@ function LaunchInfo({ launch, isNext }: { launch: Launch; isNext?: boolean }) {
         <span>{launch.rocket}</span>
         {launch.padLocation && <span> · {launch.padLocation}</span>}
       </div>
-      {launch.vidUrls && launch.vidUrls.length > 0 && (
+      {isExpanded && (
+        <div className={styles.launchDetails}>
+          <div className={styles.dataField}>
+            <span className={styles.dataLabel}>Status</span>
+            <span className={styles.dataValue} style={{ color: statusColor }}>{launch.status}</span>
+          </div>
+          {!!launch.missionDescription && (
+            <div className={styles.dataField}>
+              <span className={styles.dataLabel}>Mission</span>
+              <span className={styles.dataValue}>
+                {launch.missionDescription.length > 180
+                  ? `${launch.missionDescription.slice(0, 180)}...`
+                  : launch.missionDescription}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+      {isExpanded && launch.vidUrls && launch.vidUrls.length > 0 && (
         <div className={styles.videoLinks}>
           {launch.vidUrls.slice(0, 2).map((v, i) => {
             const isYt = (v.source || v.url || '').toLowerCase().includes('youtube');
@@ -131,6 +162,35 @@ function LaunchInfo({ launch, isNext }: { launch: Launch; isNext?: boolean }) {
           })}
         </div>
       )}
+      {isExpanded && launch.externalLinks && launch.externalLinks.length > 0 && (
+        <div className={styles.videoLinks}>
+          {launch.externalLinks.slice(0, 2).map((link, i) => (
+            <a key={`ext-${i}`} href={link.url} target="_blank" rel="noopener noreferrer" className={styles.videoLink}>
+              <span>🌐</span> {link.title}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LaunchCards({ launches }: { launches: Launch[] }) {
+  const [expandedId, setExpandedId] = useState<string | null>(launches[0]?.id || null);
+  useEffect(() => {
+    setExpandedId(launches[0]?.id || null);
+  }, [launches]);
+  return (
+    <div className={styles.launchList}>
+      {launches.map((launch, i) => (
+        <LaunchInfo
+          key={launch.id}
+          launch={launch}
+          isNext={i === 0}
+          isExpanded={expandedId === launch.id}
+          onToggle={() => setExpandedId(expandedId === launch.id ? null : launch.id)}
+        />
+      ))}
     </div>
   );
 }
@@ -141,11 +201,7 @@ function LaunchLocationInfo({ launches }: { launches: Launch[] }) {
   return (
     <div className={styles.infoPanelBody}>
       <div className={styles.siteLabel}>{locationName}</div>
-      <div className={styles.launchList}>
-        {launches.map((launch, i) => (
-          <LaunchInfo key={launch.id} launch={launch} isNext={i === 0} />
-        ))}
-      </div>
+      <LaunchCards launches={launches} />
     </div>
   );
 }
@@ -153,11 +209,7 @@ function LaunchLocationInfo({ launches }: { launches: Launch[] }) {
 function UpcomingLaunchesInfo({ launches }: { launches: Launch[] }) {
   return (
     <div className={styles.infoPanelBody}>
-      <div className={styles.launchList}>
-        {launches.map((launch, i) => (
-          <LaunchInfo key={launch.id} launch={launch} isNext={i === 0} />
-        ))}
-      </div>
+      <LaunchCards launches={launches} />
     </div>
   );
 }

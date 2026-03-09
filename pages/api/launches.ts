@@ -64,6 +64,34 @@ export default async function handler(
       if (webcastUrl && !vidUrls.some((v) => v.url === webcastUrl)) {
         vidUrls.unshift({ url: webcastUrl, title: 'Livestream', isLive: true });
       }
+      const rawLinks = [
+        ...(Array.isArray(l.info_urls) ? l.info_urls : []),
+        ...(Array.isArray(l.mission?.info_urls) ? l.mission.info_urls : []),
+        l.mission?.wiki_url || null,
+        l.rocket?.configuration?.wiki_url || null,
+      ];
+      const linkSeen = new Set<string>();
+      const externalLinks = rawLinks
+        .map((x: any) => {
+          const url = typeof x === 'string' ? x : (x?.url || '');
+          const title = typeof x === 'object' && x?.title ? x.title : '';
+          if (!url || linkSeen.has(url)) return null;
+          linkSeen.add(url);
+          return {
+            url,
+            title: title || (url.includes('wikipedia') ? 'Wikipedia' : 'Mission link'),
+          };
+        })
+        .filter(Boolean) as { url: string; title: string }[];
+      const providerUrl = typeof l.launch_service_provider?.url === 'string'
+        ? l.launch_service_provider.url
+        : undefined;
+      if (providerUrl && !externalLinks.some((x) => x.url === providerUrl)) {
+        externalLinks.unshift({
+          url: providerUrl,
+          title: `${l.launch_service_provider?.name || 'Provider'} website`,
+        });
+      }
       return {
         id: l.id,
         name: l.name,
@@ -78,10 +106,12 @@ export default async function handler(
         orbitName: l.mission?.orbit?.name || '',
         padName: l.pad?.name || 'Unknown',
         padLocation: l.pad?.location?.name || '',
+        providerUrl,
         lat: l.pad?.latitude ? parseFloat(l.pad.latitude) : null,
         lng: l.pad?.longitude ? parseFloat(l.pad.longitude) : null,
         image: l.image?.image_url || l.image || null,
         vidUrls,
+        externalLinks,
       };
     });
 
