@@ -32,7 +32,7 @@ export default function Home() {
 
       <div className={styles.page}>
         <Link href="/" className={styles.logo}>
-          <img src="/logo.png" alt="PEAK M Logo" />
+          <img src="/logo-peak.png" alt="PEAK Logo" />
         </Link>
         <SpaceGlobe />
       </div>

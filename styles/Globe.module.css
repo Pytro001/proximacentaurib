@@ -12,11 +12,11 @@
 /* Logo top left */
 .logo {
   position: fixed;
-  top: 10px;
+  top: 4px;
   left: 18px;
   z-index: 25;
-  width: 56px;
-  height: 56px;
+  width: 172px;
+  height: 48px;
   display: block;
   opacity: 0.95;
 }
@@ -353,10 +353,10 @@
 /* Responsive */
 @media (max-width: 768px) {
   .logo {
-    top: 10px;
+    top: 4px;
     left: 16px;
-    width: 48px;
-    height: 48px;
+    width: 146px;
+    height: 42px;
   }
 
   .controlsWrap {
@@ -420,10 +420,10 @@
 
 @media (max-width: 480px) {
   .logo {
-    top: 10px;
+    top: 4px;
     left: 16px;
-    width: 44px;
-    height: 44px;
+    width: 126px;
+    height: 36px;
   }
 
   .infoStrip {

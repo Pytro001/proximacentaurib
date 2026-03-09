@@ -477,10 +477,10 @@ export default function SpaceGlobe() {
       const globe = globeRef.current;
       if (!globe || typeof globe.pointOfView !== 'function') return;
 
-      globe.pointOfView({ lat: 20, lng: 0, altitude: 2.5 }, 0);
+      globe.pointOfView({ lat: 28, lng: -38, altitude: 2.5 }, 0);
 
       if (dayNightMaterial) {
-        dayNightMaterial.uniforms.globeRotation.value.set(0, 20);
+        dayNightMaterial.uniforms.globeRotation.value.set(-38, 28);
       }
 
       try {

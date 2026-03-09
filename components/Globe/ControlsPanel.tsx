@@ -75,16 +75,7 @@ export default function ControlsPanel({
           <span className={styles.infoCardLabel}>Launch sites</span>
           <span className={styles.infoCardValue}>{launchSiteCount}</span>
         </div>
-        <div className={styles.infoCard}>
-          <span className={styles.infoCardLabel}>Day/night mode</span>
-          <span className={styles.infoCardValue}>{showNightSide ? 'ON' : 'OFF'}</span>
-        </div>
       </div>
-      {showSatellites && satelliteCount > 0 && (
-        <div className={styles.badge}>
-          {satelliteCount} tracked
-        </div>
-      )}
     </div>
   );
 }
