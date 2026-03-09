@@ -94,7 +94,7 @@ function CountdownDisplay({ net }: { net: string }) {
     `${String(cd.mins).padStart(2, '0')}m`,
     `${String(cd.secs).padStart(2, '0')}s`,
   ].filter(Boolean);
-  return <span className={styles.countdownText}>T-{parts.join(' ')}</span>;
+  return <span className={styles.countdownText}>{parts.join(' ')}</span>;
 }
 
 function LaunchInfo({

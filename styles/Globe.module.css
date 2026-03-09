@@ -5,7 +5,7 @@
   background: #000;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
-  color: #e7e9ea;
+  color: #f5f7fa;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -51,8 +51,8 @@
   gap: 6px;
   padding: 10px 12px;
   min-width: 160px;
-  background: rgba(0, 0, 0, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(12, 14, 18, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 6px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -71,8 +71,8 @@
   gap: 16px;
   min-width: 160px;
   padding: 8px 10px;
-  background: rgba(0, 0, 0, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(12, 14, 18, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
 }
 
@@ -181,10 +181,10 @@
   max-height: calc(100vh - 88px);
   max-width: calc(100vw - 28px);
   z-index: 26;
-  background: rgba(12, 12, 16, 0.55);
+  background: rgba(10, 12, 16, 0.58);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   transform: translateX(calc(100% + 20px));
@@ -206,7 +206,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: sticky;
   top: 0;
-  background: rgba(12, 12, 16, 0.6);
+  background: rgba(10, 12, 16, 0.64);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-top-left-radius: 14px;
@@ -267,8 +267,8 @@
 
 .launchCard {
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
 }
 
@@ -293,7 +293,7 @@
   font-size: 9px;
   font-weight: 700;
   padding: 2px 6px;
-  background: linear-gradient(135deg, #1d9bf0, #0d8bd9);
+  background: linear-gradient(135deg, #1d9bf0, #8b5cf6);
   color: #fff;
   border-radius: 4px;
   letter-spacing: 0.08em;
@@ -323,21 +323,27 @@
 }
 
 .countdownBlock {
-  padding: 8px 0;
-  margin: 4px 0;
+  padding: 10px 12px;
+  margin: 6px 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .countdownText {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 800;
+  font-family: 'Space Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
   font-variant-numeric: tabular-nums;
-  color: #1d9bf0;
-  letter-spacing: 0.04em;
+  color: #0a0a0a;
+  letter-spacing: 0.02em;
 }
 
 .launchDate {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.7);
+  font-family: 'Space Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   margin-bottom: 4px;
 }
@@ -379,7 +385,8 @@
 .dataValueMono {
   font-size: 14px;
   color: #e7e9ea;
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: 'Space Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -419,9 +426,9 @@
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  background: rgba(29, 155, 240, 0.15);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 6px;
-  color: #1d9bf0;
+  color: #f5f7fa;
   font-size: 11px;
   font-weight: 600;
   text-decoration: none;
@@ -429,7 +436,7 @@
 }
 
 .videoLink:hover {
-  background: rgba(29, 155, 240, 0.25);
+  background: rgba(29, 155, 240, 0.2);
 }
 
 /* Divider */
