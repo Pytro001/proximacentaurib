@@ -34,9 +34,6 @@ export default function GlobePage() {
         <Link href="/" className={styles.logo}>
           <img src="/logo.png" alt="PEAK M Logo" />
         </Link>
-        <Link href="/" className={styles.backBtn}>
-          ← Back
-        </Link>
         <SpaceGlobe />
       </div>
     </>

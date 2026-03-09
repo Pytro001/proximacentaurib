@@ -12,12 +12,13 @@
 /* Logo top left */
 .logo {
   position: fixed;
-  top: 8px;
-  left: 16px;
-  z-index: 15;
+  top: 10px;
+  left: 18px;
+  z-index: 25;
   width: 56px;
   height: 56px;
   display: block;
+  opacity: 0.95;
 }
 
 .logo img {
@@ -36,12 +37,15 @@
 /* Controls panel (bottom left) */
 .controls {
   position: fixed;
-  bottom: 16px;
-  left: 16px;
-  z-index: 10;
+  top: 16px;
+  left: 96px;
+  z-index: 24;
   display: flex;
-  flex-direction: column;
-  gap: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .controlsTitle {
@@ -51,21 +55,22 @@
 .controlRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 0;
+  gap: 8px;
+  padding: 0;
 }
 
 .controlLabel {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
-  min-width: 72px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.82);
+  min-width: 0;
+  font-weight: 600;
 }
 
 /* Toggle switch (X.com style) */
 .toggle {
   position: relative;
-  width: 32px;
-  height: 18px;
+  width: 34px;
+  height: 16px;
   cursor: pointer;
 }
 
@@ -79,17 +84,18 @@
 .toggleSlider {
   position: absolute;
   inset: 0;
-  background: #333639;
-  border-radius: 9px;
-  transition: background 0.2s;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .toggleSlider::before {
   content: '';
   position: absolute;
-  width: 14px;
-  height: 14px;
-  left: 2px;
+  width: 10px;
+  height: 10px;
+  left: 3px;
   bottom: 2px;
   background: #fff;
   border-radius: 50%;
@@ -97,11 +103,12 @@
 }
 
 .toggleInput:checked + .toggleSlider {
-  background: #1d9bf0;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.8);
 }
 
 .toggleInput:checked + .toggleSlider::before {
-  transform: translateX(14px);
+  transform: translateX(16px);
 }
 
 /* Satellite count badge */
@@ -121,11 +128,9 @@
   bottom: 0;
   width: 380px;
   max-width: 100vw;
-  z-index: 20;
-  background: rgba(0, 0, 0, 0.92);
-  border-left: 1px solid #2f3336;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  z-index: 26;
+  background: rgba(0, 0, 0, 0.95);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow-y: auto;
@@ -142,18 +147,16 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid #2f3336;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   position: sticky;
   top: 0;
-  background: rgba(0, 0, 0, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(0, 0, 0, 0.95);
   z-index: 1;
 }
 
 .infoPanelTitle {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   margin: 0;
   color: #e7e9ea;
   letter-spacing: -0.02em;
@@ -193,8 +196,8 @@
 }
 
 .dataLabel {
-  font-size: 12px;
-  color: #71767b;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 500;
@@ -240,7 +243,7 @@
 /* Divider */
 .divider {
   height: 1px;
-  background: #2f3336;
+  background: rgba(255, 255, 255, 0.15);
   margin: 4px 0;
 }
 
@@ -283,30 +286,12 @@
 
 /* Back button */
 .backBtn {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 10;
-  background: rgba(0, 0, 0, 0.85);
-  border: 1px solid #2f3336;
-  border-radius: 9999px;
-  color: #e7e9ea;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 8px 20px;
-  cursor: pointer;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: background 0.15s, border-color 0.15s;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  display: none;
 }
 
 .backBtn:hover {
-  background: rgba(29, 155, 240, 0.1);
-  border-color: rgba(29, 155, 240, 0.3);
+  background: transparent;
+  border-color: transparent;
 }
 
 /* Legend (unused) */
@@ -317,7 +302,7 @@
 /* Responsive */
 @media (max-width: 768px) {
   .logo {
-    top: 8px;
+    top: 10px;
     left: 16px;
     width: 48px;
     height: 48px;
@@ -325,10 +310,13 @@
 
   .controls {
     top: auto;
-    bottom: 16px;
+    bottom: 14px;
     left: 16px;
     flex-direction: row;
     gap: 12px;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.18);
   }
 
   .controlRow {
@@ -351,16 +339,13 @@
   }
 
   .backBtn {
-    top: 16px;
-    right: 16px;
-    font-size: 12px;
-    padding: 6px 14px;
+    display: none;
   }
 }
 
 @media (max-width: 480px) {
   .logo {
-    top: 8px;
+    top: 10px;
     left: 16px;
     width: 44px;
     height: 44px;
