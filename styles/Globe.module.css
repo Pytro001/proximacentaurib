@@ -390,7 +390,7 @@
 }
 
 .countdownText {
-  font-size: 38px;
+  font-size: 32px;
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
@@ -407,7 +407,7 @@
 }
 
 .countdownNum {
-  font-size: 38px;
+  font-size: 32px;
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
@@ -416,7 +416,7 @@
 }
 
 .countdownLabel {
-  font-size: 38px;
+  font-size: 32px;
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
   color: #fff;
