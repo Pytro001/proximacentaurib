@@ -34,18 +34,60 @@
   z-index: 1;
 }
 
-/* Controls panel (bottom left) */
-.controls {
+/* Controls area (bottom left) */
+.controlsWrap {
   position: fixed;
-  top: 16px;
-  left: 96px;
+  bottom: 16px;
+  left: 16px;
   z-index: 24;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  min-width: 160px;
+  background: rgba(0, 0, 0, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.infoStrip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.infoCard {
+  display: flex;
   align-items: center;
-  gap: 18px;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 160px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+}
+
+.infoCardLabel {
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.infoCardValue {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #fff;
 }
 
 .controlsTitle {
@@ -55,15 +97,18 @@
 .controlRow {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
 }
 
 .controlLabel {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.82);
-  min-width: 0;
+  min-width: 86px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 /* Toggle switch (X.com style) */
@@ -113,11 +158,17 @@
 
 /* Satellite count badge */
 .badge {
-  display: none;
-}
-
-.badgeDot {
-  display: none;
+  display: inline-block;
+  width: fit-content;
+  padding: 5px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.84);
+  background: rgba(0, 0, 0, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
 }
 
 /* Info panel (right side slide-in) */
@@ -308,15 +359,39 @@
     height: 48px;
   }
 
+  .controlsWrap {
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    gap: 8px;
+  }
+
   .controls {
-    top: auto;
-    bottom: 14px;
-    left: 16px;
-    flex-direction: row;
-    gap: 12px;
-    padding: 8px 10px;
-    background: rgba(0, 0, 0, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    min-width: 0;
+    width: 100%;
+    padding: 10px;
+  }
+
+  .infoStrip {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .infoCard {
+    min-width: 0;
+    width: 100%;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .infoCardLabel {
+    font-size: 9px;
+  }
+
+  .infoCardValue {
+    font-size: 11px;
   }
 
   .controlRow {
@@ -349,5 +424,9 @@
     left: 16px;
     width: 44px;
     height: 44px;
+  }
+
+  .infoStrip {
+    grid-template-columns: 1fr;
   }
 }

@@ -8,6 +8,7 @@ interface ControlsPanelProps {
   showNightSide: boolean;
   setShowNightSide: (v: boolean) => void;
   satelliteCount: number;
+  launchSiteCount: number;
 }
 
 function Toggle({
@@ -43,28 +44,44 @@ export default function ControlsPanel({
   showNightSide,
   setShowNightSide,
   satelliteCount,
+  launchSiteCount,
 }: ControlsPanelProps) {
   return (
-    <div className={styles.controls}>
-      <h3 className={styles.controlsTitle}>Layers</h3>
-      <Toggle
-        label="Satellites"
-        checked={showSatellites}
-        onChange={setShowSatellites}
-      />
-      <Toggle
-        label="Launches"
-        checked={showLaunches}
-        onChange={setShowLaunches}
-      />
-      <Toggle
-        label="Night side"
-        checked={showNightSide}
-        onChange={setShowNightSide}
-      />
+    <div className={styles.controlsWrap}>
+      <div className={styles.controls}>
+        <h3 className={styles.controlsTitle}>Layers</h3>
+        <Toggle
+          label="Satellites"
+          checked={showSatellites}
+          onChange={setShowSatellites}
+        />
+        <Toggle
+          label="Launches"
+          checked={showLaunches}
+          onChange={setShowLaunches}
+        />
+        <Toggle
+          label="Night side"
+          checked={showNightSide}
+          onChange={setShowNightSide}
+        />
+      </div>
+      <div className={styles.infoStrip}>
+        <div className={styles.infoCard}>
+          <span className={styles.infoCardLabel}>Tracked satellites</span>
+          <span className={styles.infoCardValue}>{satelliteCount}</span>
+        </div>
+        <div className={styles.infoCard}>
+          <span className={styles.infoCardLabel}>Launch sites</span>
+          <span className={styles.infoCardValue}>{launchSiteCount}</span>
+        </div>
+        <div className={styles.infoCard}>
+          <span className={styles.infoCardLabel}>Day/night mode</span>
+          <span className={styles.infoCardValue}>{showNightSide ? 'ON' : 'OFF'}</span>
+        </div>
+      </div>
       {showSatellites && satelliteCount > 0 && (
         <div className={styles.badge}>
-          <span className={styles.badgeDot} />
           {satelliteCount} tracked
         </div>
       )}

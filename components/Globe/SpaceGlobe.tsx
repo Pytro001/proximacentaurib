@@ -632,6 +632,7 @@ export default function SpaceGlobe() {
         showNightSide={showNightSide}
         setShowNightSide={setShowNightSide}
         satelliteCount={getSatelliteCount()}
+        launchSiteCount={launchPointsData.length}
       />
 
       <InfoPanel
