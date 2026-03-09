@@ -547,6 +547,17 @@ export default function SpaceGlobe() {
     }));
   }, [showLaunches, launches]);
 
+  const upcomingLaunches = useMemo(() => {
+    const now = Date.now();
+    return [...launches]
+      .filter((l) => {
+        const ts = Date.parse(l.net);
+        return Number.isFinite(ts) && ts >= now;
+      })
+      .sort((a, b) => Date.parse(a.net) - Date.parse(b.net))
+      .slice(0, 16);
+  }, [launches]);
+
   const nightPolygonsData = useMemo(() => {
     if (!nightPolygon || dayNightMaterial) return [];
     return [nightPolygon];
@@ -638,6 +649,7 @@ export default function SpaceGlobe() {
       <InfoPanel
         satellite={selectedSatellite}
         launches={selectedLaunches}
+        upcomingLaunches={upcomingLaunches}
         onClose={handleClosePanel}
       />
     </>

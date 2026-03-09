@@ -5,6 +5,7 @@ import { Launch, formatLaunchDate, getLaunchStatusColor } from '../../lib/launch
 interface InfoPanelProps {
   satellite: SatellitePosition | null;
   launches: Launch[] | null;
+  upcomingLaunches: Launch[];
   onClose: () => void;
 }
 
@@ -169,20 +170,47 @@ function LaunchLocationInfo({ launches }: { launches: Launch[] }) {
   );
 }
 
-export default function InfoPanel({ satellite, launches, onClose }: InfoPanelProps) {
-  const isOpen = !!(satellite || (launches && launches.length > 0));
-  const title = satellite?.name || (launches?.length ? `Launch site: ${launches[0]?.padLocation || launches[0]?.padName || 'Unknown'} (${launches.length} upcoming)` : '');
+function UpcomingLaunchesInfo({ launches }: { launches: Launch[] }) {
+  return (
+    <div className={styles.infoPanelBody}>
+      <div className={styles.dataField}>
+        <span className={styles.dataLabel}>Upcoming launches</span>
+        <span className={styles.dataValueMono}>{launches.length}</span>
+      </div>
+      <div className={styles.divider} />
+      <div style={{ maxHeight: 'calc(100vh - 170px)', overflowY: 'auto' }}>
+        {launches.map((launch) => (
+          <LaunchInfo key={launch.id} launch={launch} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function InfoPanel({ satellite, launches, upcomingLaunches, onClose }: InfoPanelProps) {
+  const hasLaunchSelection = !!(launches && launches.length > 0);
+  const hasSatelliteSelection = !!satellite;
+  const isOpen = hasSatelliteSelection || hasLaunchSelection || upcomingLaunches.length > 0;
+  const title = satellite?.name
+    || (hasLaunchSelection
+      ? `Launch site: ${launches?.[0]?.padLocation || launches?.[0]?.padName || 'Unknown'} (${launches?.length || 0} upcoming)`
+      : `Upcoming launches (${upcomingLaunches.length})`);
 
   return (
     <div className={`${styles.infoPanel} ${isOpen ? styles.infoPanelOpen : ''}`}>
       <div className={styles.infoPanelHeader}>
         <h2 className={styles.infoPanelTitle}>{title}</h2>
-        <button className={styles.closeBtn} onClick={onClose}>
-          ✕
-        </button>
+        {(hasSatelliteSelection || hasLaunchSelection) && (
+          <button className={styles.closeBtn} onClick={onClose}>
+            ✕
+          </button>
+        )}
       </div>
       {satellite && <SatelliteInfo sat={satellite} />}
-      {launches && launches.length > 0 && <LaunchLocationInfo launches={launches} />}
+      {!satellite && hasLaunchSelection && launches && <LaunchLocationInfo launches={launches} />}
+      {!satellite && !hasLaunchSelection && upcomingLaunches.length > 0 && (
+        <UpcomingLaunchesInfo launches={upcomingLaunches} />
+      )}
     </div>
   );
 }
