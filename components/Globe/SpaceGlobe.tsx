@@ -121,8 +121,73 @@ function getSatMaterial(category: string): THREE.MeshBasicMaterial {
   return satMaterialCache[color];
 }
 
+const ISS_NORAD_ID = 25544;
+
+function createISSObject(): THREE.Group {
+  const group = new THREE.Group();
+  const whiteMat = new THREE.MeshBasicMaterial({ color: '#e0e0e0' });
+  const blueMat = new THREE.MeshBasicMaterial({ color: '#1d9bf0' });
+  const goldMat = new THREE.MeshBasicMaterial({ color: '#ffd54f' });
+
+  // Central truss (long horizontal spine)
+  const truss = new THREE.Mesh(
+    new THREE.BoxGeometry(2.2, 0.12, 0.12),
+    whiteMat
+  );
+  group.add(truss);
+
+  // Node modules (central hub - 3 cylinders)
+  const nodeGeom = new THREE.CylinderGeometry(0.15, 0.15, 0.2, 8);
+  const node1 = new THREE.Mesh(nodeGeom, whiteMat);
+  node1.position.set(0, 0, 0);
+  group.add(node1);
+  const node2 = new THREE.Mesh(nodeGeom.clone(), whiteMat);
+  node2.position.set(0.3, 0.15, 0);
+  node2.rotation.z = Math.PI / 6;
+  group.add(node2);
+  const node3 = new THREE.Mesh(nodeGeom.clone(), whiteMat);
+  node3.position.set(-0.3, 0.12, 0);
+  node3.rotation.z = -Math.PI / 6;
+  group.add(node3);
+
+  // Solar array wings (4 pairs along truss - ISS has 8 arrays)
+  const wingGeom = new THREE.BoxGeometry(0.08, 0.9, 0.5);
+  const positions = [-1.0, -0.5, 0.5, 1.0];
+  positions.forEach((x) => {
+    const wingL = new THREE.Mesh(wingGeom, blueMat);
+    wingL.position.set(x, 0.45, 0);
+    wingL.rotation.x = Math.PI / 2;
+    group.add(wingL);
+    const wingR = new THREE.Mesh(wingGeom.clone(), blueMat);
+    wingR.position.set(x, -0.45, 0);
+    wingR.rotation.x = -Math.PI / 2;
+    group.add(wingR);
+  });
+
+  // Lab module (larger cylinder)
+  const labGeom = new THREE.CylinderGeometry(0.2, 0.2, 0.6, 8);
+  const lab = new THREE.Mesh(labGeom, whiteMat);
+  lab.position.set(0.6, 0.25, 0);
+  lab.rotation.z = -Math.PI / 4;
+  group.add(lab);
+
+  // Cupola / dome (small)
+  const cupola = new THREE.Mesh(
+    new THREE.SphereGeometry(0.12, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2),
+    goldMat
+  );
+  cupola.position.set(0.5, 0.35, 0.1);
+  group.add(cupola);
+
+  return group;
+}
+
 function createSatObject(d: object): THREE.Group {
   const sat = d as SatellitePosition;
+  if (sat.noradId === ISS_NORAD_ID || (sat.category === 'Station' && /^ISS\s*\(ZARYA\)/i.test(sat.name))) {
+    return createISSObject();
+  }
+
   const group = new THREE.Group();
   const mat = getSatMaterial(sat.category);
 
