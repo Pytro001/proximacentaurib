@@ -86,7 +86,7 @@ export default async function handler(
       const providerUrl = typeof l.launch_service_provider?.url === 'string'
         ? l.launch_service_provider.url
         : undefined;
-      if (providerUrl && !externalLinks.some((x) => x.url === providerUrl)) {
+      if (providerUrl && !externalLinks.some((x) => x.url === providerUrl) && !/spacex\.com|x\.com\/spacex/i.test(providerUrl)) {
         externalLinks.unshift({
           url: providerUrl,
           title: `${l.launch_service_provider?.name || 'Provider'} website`,

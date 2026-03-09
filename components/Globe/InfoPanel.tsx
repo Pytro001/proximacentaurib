@@ -10,6 +10,16 @@ interface InfoPanelProps {
   onClose: () => void;
 }
 
+
+function locationOnly(s: string): string {
+  if (!s) return s;
+  const parts = s.split(' · ').map((p) => p.trim()).filter(Boolean);
+  if (parts.length <= 1) return s;
+  const rockets = /^(Falcon 9|Falcon Heavy|Starship|Atlas V|Delta IV|Soyuz|Ariane|Long March|Electron|Firefly|Vulcan|New Glenn|SLS|Space Shuttle)$/i;
+  const loc = parts.find((p) => !rockets.test(p));
+  return loc || parts[parts.length - 1];
+}
+
 function SatelliteInfo({ sat }: { sat: SatellitePosition }) {
   return (
     <div className={styles.infoPanelBody}>
@@ -87,14 +97,23 @@ function CountdownDisplay({ net }: { net: string }) {
     const t = setInterval(() => setCd(getCountdown(net)), 1000);
     return () => clearInterval(t);
   }, [net]);
-  if (cd.past) return <span className={styles.countdownText}>Liftoff!</span>;
-  const parts = [
-    cd.days > 0 && `${cd.days}d`,
-    `${String(cd.hours).padStart(2, '0')}h`,
-    `${String(cd.mins).padStart(2, '0')}m`,
-    `${String(cd.secs).padStart(2, '0')}s`,
-  ].filter(Boolean);
-  return <span className={styles.countdownText}>{parts.join(' ')}</span>;
+  if (cd.past) return <span className={styles.countdownText}>LIFTOFF</span>;
+  return (
+    <div className={styles.countdownUnits}>
+      {cd.days > 0 && (
+        <>
+          <span className={styles.countdownNum}>{cd.days}</span>
+          <span className={styles.countdownLabel}>D</span>
+        </>
+      )}
+      <span className={styles.countdownNum}>{String(cd.hours).padStart(2, '0')}</span>
+      <span className={styles.countdownLabel}>H</span>
+      <span className={styles.countdownNum}>{String(cd.mins).padStart(2, '0')}</span>
+      <span className={styles.countdownLabel}>M</span>
+      <span className={styles.countdownNum}>{String(cd.secs).padStart(2, '0')}</span>
+      <span className={styles.countdownLabel}>S</span>
+    </div>
+  );
 }
 
 function LaunchInfo({
@@ -114,8 +133,7 @@ function LaunchInfo({
     <div className={styles.launchCard}>
       <button className={styles.launchHeaderButton} onClick={onToggle} type="button">
         <div className={styles.launchCardHeader}>
-        {isNext && <span className={styles.nextBadge}>NEXT</span>}
-        <span className={styles.launchName}>{launch.name}</span>
+<span className={styles.launchName}>{launch.name}</span>
         <span className={styles.expandIcon}>{isExpanded ? '−' : '+'}</span>
         </div>
       </button>
@@ -126,10 +144,9 @@ function LaunchInfo({
       ) : (
         <div className={styles.launchDate}>{formatLaunchDate(launch.net)}</div>
       )}
-      <div className={styles.launchMeta}>
-        <span>{launch.rocket}</span>
-        {launch.padLocation && <span> · {launch.padLocation}</span>}
-      </div>
+      {launch.padLocation && (
+        <div className={styles.launchMeta}>{locationOnly(launch.padLocation)}</div>
+      )}
       {isExpanded && (
         <div className={styles.launchDetails}>
           <div className={styles.dataField}>
@@ -140,9 +157,7 @@ function LaunchInfo({
             <div className={styles.dataField}>
               <span className={styles.dataLabel}>Mission</span>
               <span className={styles.dataValue}>
-                {launch.missionDescription.length > 180
-                  ? `${launch.missionDescription.slice(0, 180)}...`
-                  : launch.missionDescription}
+                {launch.missionDescription.split(/[.!?]/)[0]?.trim() || launch.missionDescription.slice(0, 120)}
               </span>
             </div>
           )}
@@ -150,7 +165,10 @@ function LaunchInfo({
       )}
       {isExpanded && launch.vidUrls && launch.vidUrls.length > 0 && (
         <div className={styles.videoLinks}>
-          {launch.vidUrls.slice(0, 2).map((v, i) => {
+          {launch.vidUrls
+            .filter((v) => !/go for launch/i.test(v.title || ''))
+            .slice(0, 2)
+            .map((v, i) => {
             const isYt = (v.source || v.url || '').toLowerCase().includes('youtube');
             const label = v.title || (v.isLive ? 'Livestream' : (isYt ? 'YouTube' : 'Watch'));
             return (
@@ -163,7 +181,10 @@ function LaunchInfo({
       )}
       {isExpanded && launch.externalLinks && launch.externalLinks.length > 0 && (
         <div className={styles.videoLinks}>
-          {launch.externalLinks.slice(0, 2).map((link, i) => (
+          {launch.externalLinks
+            .filter((link) => !/spacex\.com|x\.com\/spacex/i.test(link.url))
+            .slice(0, 2)
+            .map((link, i) => (
             <a key={`ext-${i}`} href={link.url} target="_blank" rel="noopener noreferrer" className={styles.videoLink}>
               <span>🌐</span> {link.title}
             </a>
@@ -195,7 +216,7 @@ function LaunchCards({ launches }: { launches: Launch[] }) {
 }
 
 function LaunchLocationInfo({ launches }: { launches: Launch[] }) {
-  const locationName = launches[0]?.padLocation || launches[0]?.padName || 'Launch site';
+  const locationName = locationOnly(launches[0]?.padLocation || launches[0]?.padName || 'Launch site');
 
   return (
     <div className={styles.infoPanelBody}>
@@ -220,7 +241,7 @@ export default function InfoPanel({ satellite, launches, upcomingLaunches, onClo
   const title = satellite?.name
     || (hasLaunchSelection
       ? `${launches?.[0]?.padLocation || launches?.[0]?.padName || 'Launch site'}`
-      : `Upcoming · ${upcomingLaunches.length}`);
+      : `Upcoming ${upcomingLaunches.length}`);
 
   return (
     <div className={`${styles.infoPanel} ${isOpen ? styles.infoPanelOpen : ''}`}>
