@@ -15,7 +15,7 @@
   top: 16px;
   left: 20px;
   z-index: 25;
-  height: 28px;
+  height: 38px;
   display: block;
   opacity: 0.95;
 }
@@ -233,7 +233,7 @@
   color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
   width: 28px;
-  height: 28px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -304,7 +304,7 @@
   color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
   width: 28px;
-  height: 28px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -617,7 +617,7 @@
   .logo {
     top: 12px;
     left: 16px;
-    height: 24px;
+    height: 32px;
   }
 
   .controlsWrap {
@@ -684,7 +684,7 @@
 
 @media (max-width: 480px) {
   .logo {
-    height: 22px;
+    height: 28px;
   }
 
   .infoStrip {
