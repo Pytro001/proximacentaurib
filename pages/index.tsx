@@ -1,5 +1,4 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import styles from '../styles/Globe.module.css';
 
@@ -31,9 +30,6 @@ export default function Home() {
       </Head>
 
       <div className={styles.page}>
-        <Link href="/" className={styles.logo}>
-          <img src="/logo-peak.png" alt="PEAK Logo" />
-        </Link>
         <SpaceGlobe />
       </div>
     </>
