@@ -211,15 +211,20 @@
 }
 
 .infoPanelContent {
+  display: grid;
+  grid-template-rows: 1fr;
   overflow: hidden;
-  max-height: calc(100vh - 120px);
-  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  transition: grid-template-rows 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .infoPanelContentCollapsed {
-  max-height: 0;
-  opacity: 0;
-  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.infoPanelContent > * {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .expandBtn {
