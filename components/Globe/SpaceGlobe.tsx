@@ -338,7 +338,7 @@ export default function SpaceGlobe() {
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedSatellite, setSelectedSatellite] = useState<SatellitePosition | null>(null);
   const [selectedLaunches, setSelectedLaunches] = useState<Launch[] | null>(null);
-  const [showUpcomingPanel, setShowUpcomingPanel] = useState(true);
+  const [showUpcomingPanel, setShowUpcomingPanel] = useState(false);
   const [nightPolygon, setNightPolygon] = useState<any>(null);
   const [dayNightMaterial, setDayNightMaterial] = useState<THREE.ShaderMaterial | null>(null);
   const sunPosRef = useRef<THREE.Vector2>(new THREE.Vector2());
@@ -597,6 +597,25 @@ export default function SpaceGlobe() {
   return (
     <>
       {isLoading && (
+      <header className={styles.topNav}>
+        <div className={styles.topNavInner}>
+          <div className={styles.logo}>
+            <img src="/logo-proxima.png" alt="PROXIMA" />
+          </div>
+          <button
+            className={styles.navUpcomingBtn}
+            type="button"
+            onClick={() => {
+              setSelectedSatellite(null);
+              setSelectedLaunches(null);
+              setShowUpcomingPanel(true);
+            }}
+          >
+            Upcoming
+          </button>
+        </div>
+      </header>
+
         <div className={styles.loading}>
           <div className={styles.spinner} />
           <p className={styles.loadingText}>Loading orbital data...</p>

@@ -30,13 +30,6 @@ export default function Home() {
       </Head>
 
       <div className={styles.page}>
-        <header className={styles.topNav}>
-          <div className={styles.topNavInner}>
-            <div className={styles.logo}>
-              <img src="/logo-proxima.png" alt="PROXIMA" />
-            </div>
-          </div>
-        </header>
         <SpaceGlobe />
       </div>
     </>
