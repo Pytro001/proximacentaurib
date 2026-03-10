@@ -18,12 +18,14 @@
   height: 38px;
   display: block;
   opacity: 0.95;
+  background: transparent;
 }
 
 .logo img {
   height: 100%;
   width: auto;
   object-fit: contain;
+  mix-blend-mode: lighten;
 }
 
 /* Globe wrapper */
