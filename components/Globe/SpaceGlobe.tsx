@@ -648,6 +648,7 @@ export default function SpaceGlobe() {
 
       <div className={styles.globeWrap}>
         <GlobeGL
+          key={selectedGlobeId}
           ref={globeRef}
           width={dimensions.width}
           height={dimensions.height}
