@@ -597,29 +597,30 @@ export default function SpaceGlobe() {
   return (
     <>
       {isLoading && (
-      <header className={styles.topNav}>
-        <div className={styles.topNavInner}>
-          <div className={styles.logo}>
-            <img src="/logo-proxima.png" alt="PROXIMA" />
+        <>
+          <header className={styles.topNav}>
+            <div className={styles.topNavInner}>
+              <div className={styles.logo}>
+                <img src="/logo-proxima.png" alt="PROXIMA" />
+              </div>
+              <button
+                className={styles.navUpcomingBtn}
+                type="button"
+                onClick={() => {
+                  setSelectedSatellite(null);
+                  setSelectedLaunches(null);
+                  setShowUpcomingPanel(true);
+                }}
+              >
+                Upcoming
+              </button>
+            </div>
+          </header>
+          <div className={styles.loading}>
+            <div className={styles.spinner} />
+            <p className={styles.loadingText}>Loading orbital data...</p>
           </div>
-          <button
-            className={styles.navUpcomingBtn}
-            type="button"
-            onClick={() => {
-              setSelectedSatellite(null);
-              setSelectedLaunches(null);
-              setShowUpcomingPanel(true);
-            }}
-          >
-            Upcoming
-          </button>
-        </div>
-      </header>
-
-        <div className={styles.loading}>
-          <div className={styles.spinner} />
-          <p className={styles.loadingText}>Loading orbital data...</p>
-        </div>
+        </>
       )}
 
       <div className={styles.globeWrap}>
