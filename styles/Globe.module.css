@@ -44,6 +44,41 @@
   object-fit: contain;
 }
 
+/* Globe nav (planet switcher) */
+.globeNav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.globeNavBtn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.globeNavBtn:hover {
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.globeNavBtnActive {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
 /* Globe wrapper */
 .globeWrap {
   position: absolute;
@@ -625,6 +660,16 @@
 
   .logo {
     height: 28px;
+  }
+
+  .globeNav {
+    gap: 2px;
+  }
+
+  .globeNavBtn,
+  .globeNavBtnActive {
+    padding: 4px 8px;
+    font-size: 10px;
   }
 
   .controlsWrap {

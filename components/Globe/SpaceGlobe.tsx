@@ -86,6 +86,14 @@ const DAY_URL = 'https://upload.wikimedia.org/wikipedia/commons/0/04/Solarsystem
 const NIGHT_URL = 'https://upload.wikimedia.org/wikipedia/commons/b/b3/Solarsystemscope_texture_8k_earth_nightmap.jpg';
 const DAY_BUMP_URL = '//unpkg.com/three-globe/example/img/earth-topology.png';
 
+const GLOBE_CONFIGS = [
+  { id: 'earth', label: 'Earth', textureUrl: DAY_URL, nightUrl: NIGHT_URL, bumpUrl: DAY_BUMP_URL, useDayNight: true, showEarthData: true },
+  { id: 'moon', label: 'Moon', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d1/Solarsystemscope_texture_8k_moon.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
+  { id: 'mars', label: 'Mars', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Solarsystemscope_texture_8k_mars.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
+  { id: 'venus', label: 'Venus', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1c/Solarsystemscope_texture_8k_venus_surface.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
+  { id: 'proximab', label: 'Proxima b', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1c/Solarsystemscope_texture_8k_venus_surface.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
+] as const;
+
 const GlobeGL = dynamic(() => import('react-globe.gl'), { ssr: false });
 
 const EARTH_RADIUS_KM = 6371;
@@ -339,6 +347,7 @@ export default function SpaceGlobe() {
   const [selectedSatellite, setSelectedSatellite] = useState<SatellitePosition | null>(null);
   const [selectedLaunches, setSelectedLaunches] = useState<Launch[] | null>(null);
   const [showUpcomingPanel, setShowUpcomingPanel] = useState(false);
+  const [selectedGlobeId, setSelectedGlobeId] = useState<string>('earth');
   const [nightPolygon, setNightPolygon] = useState<any>(null);
   const [dayNightMaterial, setDayNightMaterial] = useState<THREE.ShaderMaterial | null>(null);
   const sunPosRef = useRef<THREE.Vector2>(new THREE.Vector2());
@@ -431,7 +440,7 @@ export default function SpaceGlobe() {
   }, [showSatellites]);
 
   useEffect(() => {
-    if (!showNightSide) {
+    if (!showNightSide || selectedGlobeId !== 'earth') {
       setNightPolygon(null);
       setDayNightMaterial(null);
       return;
@@ -462,7 +471,7 @@ export default function SpaceGlobe() {
       fallbackInterval = setInterval(() => setNightPolygon(generateNightPolygon(new Date())), 60000);
     });
     return () => { if (fallbackInterval) clearInterval(fallbackInterval); };
-  }, [showNightSide]);
+  }, [showNightSide, selectedGlobeId]);
 
   useEffect(() => {
     if (!dayNightMaterial || !showNightSide) return;
@@ -589,8 +598,11 @@ export default function SpaceGlobe() {
     return [selectedOrbitPath];
   }, [selectedOrbitPath]);
 
-  const defaultGlobeUrl = DAY_URL;
-  const bumpImageUrl = DAY_BUMP_URL;
+  const currentGlobe = GLOBE_CONFIGS.find((g) => g.id === selectedGlobeId) || GLOBE_CONFIGS[0];
+  const defaultGlobeUrl = currentGlobe.textureUrl;
+  const bumpImageUrl = currentGlobe.bumpUrl;
+  const useDayNight = currentGlobe.useDayNight && selectedGlobeId === 'earth';
+  const showEarthData = currentGlobe.showEarthData;
 
   if (dimensions.width === 0) return null;
 
@@ -601,6 +613,18 @@ export default function SpaceGlobe() {
           <div className={styles.logo}>
             <img src="/logo-proxima.png" alt="PROXIMA" />
           </div>
+          <nav className={styles.globeNav}>
+            {GLOBE_CONFIGS.map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                className={selectedGlobeId === g.id ? styles.globeNavBtnActive : styles.globeNavBtn}
+                onClick={() => setSelectedGlobeId(g.id)}
+              >
+                {g.label}
+              </button>
+            ))}
+          </nav>
           <button
             className={styles.navUpcomingBtn}
             type="button"
@@ -628,16 +652,16 @@ export default function SpaceGlobe() {
           width={dimensions.width}
           height={dimensions.height}
           backgroundColor="rgba(0,0,0,0)"
-          globeImageUrl={dayNightMaterial ? null : defaultGlobeUrl}
-          globeMaterial={dayNightMaterial || undefined}
-          bumpImageUrl={dayNightMaterial ? null : bumpImageUrl}
+          globeImageUrl={useDayNight && dayNightMaterial ? null : defaultGlobeUrl}
+          globeMaterial={useDayNight && dayNightMaterial ? dayNightMaterial : undefined}
+          bumpImageUrl={useDayNight && dayNightMaterial ? undefined : (bumpImageUrl || undefined)}
           showAtmosphere={true}
           atmosphereColor="#1d9bf0"
           atmosphereAltitude={0.15}
           onGlobeReady={handleGlobeReady}
           onZoom={handleZoom}
           // Satellites: 3D objects in orbit (never as ground points)
-          objectsData={satPointsData}
+          objectsData={showEarthData ? satPointsData : []}
           objectLat="lat"
           objectLng="lng"
           objectAltitude={(d: any) => Math.max((d.alt || 400) / EARTH_RADIUS_KM, 0.02)}
@@ -645,7 +669,7 @@ export default function SpaceGlobe() {
           objectLabel={() => ''}
           onObjectClick={handleSatelliteClick}
           // Launch points: one green point per location, click shows all upcoming launches
-          pointsData={launchPointsData}
+          pointsData={showEarthData ? launchPointsData : []}
           pointLat="lat"
           pointLng="lng"
           pointColor={() => '#00c853'}
@@ -654,13 +678,13 @@ export default function SpaceGlobe() {
           pointLabel={() => ''}
           onPointClick={(p: object) => handleLaunchClick(p)}
           // Night side overlay
-          polygonsData={nightPolygonsData}
+          polygonsData={showEarthData ? nightPolygonsData : []}
           polygonCapColor={() => 'rgba(0, 0, 20, 0.5)'}
           polygonSideColor={() => 'rgba(0, 0, 0, 0)'}
           polygonStrokeColor={() => 'rgba(0, 0, 0, 0)'}
           polygonAltitude={0.005}
           // Orbit paths: solid line, no animation
-          pathsData={pathsData}
+          pathsData={showEarthData ? pathsData : []}
           pathPoints="coords"
           pathPointLat="lat"
           pathPointLng="lng"
@@ -675,16 +699,18 @@ export default function SpaceGlobe() {
         />
       </div>
 
-      <ControlsPanel
-        showSatellites={showSatellites}
-        setShowSatellites={setShowSatellites}
-        showLaunches={showLaunches}
-        setShowLaunches={setShowLaunches}
-        showNightSide={showNightSide}
-        setShowNightSide={setShowNightSide}
-        satelliteCount={getSatelliteCount()}
-        launchSiteCount={launchPointsData.length}
-      />
+      {showEarthData && (
+        <ControlsPanel
+          showSatellites={showSatellites}
+          setShowSatellites={setShowSatellites}
+          showLaunches={showLaunches}
+          setShowLaunches={setShowLaunches}
+          showNightSide={showNightSide}
+          setShowNightSide={setShowNightSide}
+          satelliteCount={getSatelliteCount()}
+          launchSiteCount={launchPointsData.length}
+        />
+      )}
 
       <InfoPanel
         satellite={selectedSatellite}
