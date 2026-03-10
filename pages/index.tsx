@@ -30,9 +30,7 @@ export default function Home() {
       </Head>
 
       <div className={styles.page}>
-        <div className={styles.logo}>
-          <img src="/logo-proxima.png" alt="PROXIMA" />
-        </div>
+        <div className={styles.logo} role="img" aria-label="PROXIMA" />
         <SpaceGlobe />
       </div>
     </>
