@@ -97,15 +97,15 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.45);
-  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
 }
 
 .infoCardValue {
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .controlsTitle {
