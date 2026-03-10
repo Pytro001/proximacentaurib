@@ -9,6 +9,23 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Logo top left */
+.logo {
+  position: fixed;
+  top: 16px;
+  left: 20px;
+  z-index: 25;
+  height: 28px;
+  display: block;
+  opacity: 0.95;
+}
+
+.logo img {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+}
+
 /* Globe wrapper */
 .globeWrap {
   position: absolute;
@@ -589,6 +606,12 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .logo {
+    top: 12px;
+    left: 16px;
+    height: 24px;
+  }
+
   .controlsWrap {
     bottom: 12px;
     left: 12px;
@@ -652,6 +675,10 @@
 }
 
 @media (max-width: 480px) {
+  .logo {
+    height: 22px;
+  }
+
   .infoStrip {
     grid-template-columns: 1fr;
   }
