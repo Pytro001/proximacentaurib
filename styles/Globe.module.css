@@ -210,23 +210,6 @@
   border-bottom: none;
 }
 
-.infoPanelContent {
-  display: grid;
-  grid-template-rows: 1fr;
-  overflow: hidden;
-  transition: grid-template-rows 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.infoPanelContentCollapsed {
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.infoPanelContent > * {
-  min-height: 0;
-  overflow: hidden;
-}
-
 .expandBtn {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.1);
