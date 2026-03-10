@@ -270,11 +270,13 @@ export default function InfoPanel({ satellite, launches, upcomingLaunches, showU
           </button>
         ) : null}
       </div>
-      {!isCollapsed && satellite && <SatelliteInfo sat={satellite} />}
-      {!isCollapsed && !satellite && hasLaunchSelection && launches && <LaunchLocationInfo launches={launches} />}
-      {!isCollapsed && !satellite && !hasLaunchSelection && upcomingLaunches.length > 0 && (
-        <UpcomingLaunchesInfo launches={upcomingLaunches} />
-      )}
+      <div className={`${styles.infoPanelContent} ${isCollapsed ? styles.infoPanelContentCollapsed : ''}`}>
+        {satellite && <SatelliteInfo sat={satellite} />}
+        {!satellite && hasLaunchSelection && launches && <LaunchLocationInfo launches={launches} />}
+        {!satellite && !hasLaunchSelection && upcomingLaunches.length > 0 && (
+          <UpcomingLaunchesInfo launches={upcomingLaunches} />
+        )}
+      </div>
     </div>
   );
 }
