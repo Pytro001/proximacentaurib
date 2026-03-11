@@ -21,7 +21,7 @@ import {
 import { getMoonOrbiters, getMarsOrbiters, MOON_RADIUS_KM, MARS_RADIUS_KM } from '../../lib/orbiters';
 import ControlsPanel from './ControlsPanel';
 import InfoPanel from './InfoPanel';
-import SearchResultsPanel from './SearchResultsPanel';
+import SearchResultsPanel, { type SearchResult } from './SearchResultsPanel';
 import styles from '../../styles/Globe.module.css';
 
 function getSubsolarPoint(date: Date): [number, number] {
@@ -586,23 +586,62 @@ export default function SpaceGlobe() {
     setShowUpcomingPanel(false);
   }, []);
 
-  const searchResults = useMemo(
-    () => (searchQuery.trim().length >= 2 ? searchSatellites(searchQuery) : []),
-    [searchQuery]
-  );
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) return [];
+    const lower = q.toLowerCase();
+    const earthResults = searchSatellites(q).map((s) => ({
+      type: 'satellite' as const,
+      noradId: s.noradId,
+      name: s.name,
+      category: s.category,
+    }));
+    const orbiterResults =
+      selectedGlobeId === 'moon' || selectedGlobeId === 'mars'
+        ? orbiterPositions
+            .filter((o) => o.name.toLowerCase().includes(lower))
+            .slice(0, 15)
+            .map((o) => ({
+              type: 'orbiter' as const,
+              id: o.id,
+              name: o.name,
+              category: o.category,
+              lat: o.lat,
+              lng: o.lng,
+              alt: o.alt,
+              body: selectedGlobeId as 'moon' | 'mars',
+            }))
+        : [];
+    return [...earthResults, ...orbiterResults].slice(0, 30);
+  }, [searchQuery, selectedGlobeId, orbiterPositions]);
 
   const handleSearchSelect = useCallback(
-    (noradId: number) => {
-      const sat = satellitePositions.find((s) => s.noradId === noradId);
-      if (sat) {
-        setSelectedSatellite(sat);
-        setSelectedLaunches(null);
-        setShowUpcomingPanel(true);
-        setSearchQuery('');
-        if (selectedGlobeId !== 'earth') setSelectedGlobeId('earth');
+    (result: SearchResult) => {
+      setSearchQuery('');
+      if (result.type === 'satellite') {
+        const sat = satellitePositions.find((s) => s.noradId === result.noradId);
+        if (sat) {
+          setSelectedSatellite(sat);
+          setSelectedLaunches(null);
+          setShowUpcomingPanel(true);
+          if (selectedGlobeId !== 'earth') setSelectedGlobeId('earth');
+          const globe = globeRef.current;
+          if (globe && typeof globe.pointOfView === 'function') {
+            globe.pointOfView({ lat: sat.lat, lng: sat.lng, altitude: 2 }, 800);
+          }
+        }
+      } else {
+        setSelectedGlobeId(result.body);
         const globe = globeRef.current;
         if (globe && typeof globe.pointOfView === 'function') {
-          globe.pointOfView({ lat: sat.lat, lng: sat.lng, altitude: 2 }, 800);
+          const alt =
+            result.body === 'moon'
+              ? Math.max(result.alt / MOON_RADIUS_KM, 0.02)
+              : Math.max(result.alt / MARS_RADIUS_KM, 0.02);
+          globe.pointOfView(
+            { lat: result.lat, lng: result.lng, altitude: 1 + alt },
+            800
+          );
         }
       }
     },
@@ -671,8 +710,10 @@ export default function SpaceGlobe() {
     <>
       <header className={styles.topNav}>
         <div className={styles.topNavInner}>
-          <div className={styles.logo}>
-            <img src="/logo-proxima.png" alt="PROXIMA" />
+          <div className={styles.navLeft}>
+            <div className={styles.logo}>
+              <img src="/logo-proxima.png" alt="PROXIMA" />
+            </div>
           </div>
           <nav className={styles.globeNav}>
             {GLOBE_CONFIGS.map((g) => (
@@ -793,6 +834,7 @@ export default function SpaceGlobe() {
       <SearchResultsPanel
         query={searchQuery}
         results={searchResults}
+        isLoading={isLoading}
         onSelect={handleSearchSelect}
         onClose={() => setSearchQuery('')}
       />

@@ -1,16 +1,21 @@
 import styles from '../../styles/Globe.module.css';
-import type { SatelliteSearchResult } from '../../lib/satellites';
+
+export type SearchResult =
+  | { type: 'satellite'; noradId: number; name: string; category: string }
+  | { type: 'orbiter'; id: string; name: string; category: string; lat: number; lng: number; alt: number; body: 'moon' | 'mars' };
 
 interface SearchResultsPanelProps {
   query: string;
-  results: SatelliteSearchResult[];
-  onSelect: (noradId: number) => void;
+  results: SearchResult[];
+  isLoading?: boolean;
+  onSelect: (result: SearchResult) => void;
   onClose: () => void;
 }
 
 export default function SearchResultsPanel({
   query,
   results,
+  isLoading = false,
   onSelect,
   onClose,
 }: SearchResultsPanelProps) {
@@ -32,15 +37,17 @@ export default function SearchResultsPanel({
         </button>
       </div>
       <div className={styles.searchResultsList}>
-        {results.length === 0 ? (
+        {isLoading ? (
+          <p className={styles.searchResultsEmpty}>Loading satellite data...</p>
+        ) : results.length === 0 ? (
           <p className={styles.searchResultsEmpty}>No satellites found</p>
         ) : (
           results.map((r) => (
             <button
-              key={r.noradId}
+              key={r.type === 'satellite' ? r.noradId : r.id}
               type="button"
               className={styles.searchResultItem}
-              onClick={() => onSelect(r.noradId)}
+              onClick={() => onSelect(r)}
             >
               <span className={styles.searchResultName}>{r.name}</span>
               <span className={styles.searchResultCategory}>{r.category}</span>
