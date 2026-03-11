@@ -92,7 +92,6 @@ const GLOBE_CONFIGS = [
   { id: 'moon', label: 'Moon', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d1/Solarsystemscope_texture_8k_moon.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
   { id: 'mars', label: 'Mars', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Solarsystemscope_texture_8k_mars.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
   { id: 'venus', label: 'Venus', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1c/Solarsystemscope_texture_8k_venus_surface.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
-  { id: 'proximab', label: 'Proxima b', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/27/Solarsystemscope_texture_8k_mercury.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
 ] as const;
 
 const GlobeGL = dynamic(() => import('react-globe.gl'), { ssr: false });
@@ -741,19 +740,17 @@ export default function SpaceGlobe() {
         />
       </div>
 
-      {(showEarthData || showOrbiterPanel) && (
-        <ControlsPanel
-          showSatellites={showSatellites}
-          setShowSatellites={setShowSatellites}
-          showLaunches={showLaunches}
-          setShowLaunches={setShowLaunches}
-          showNightSide={showNightSide}
-          setShowNightSide={setShowNightSide}
-          satelliteCount={showEarthData ? getSatelliteCount() : orbiterPositions.length}
-          launchSiteCount={showEarthData ? launchPointsData.length : 0}
-          mode={showOrbiterPanel ? 'orbiter' : 'earth'}
-        />
-      )}
+      <ControlsPanel
+        showSatellites={showSatellites}
+        setShowSatellites={setShowSatellites}
+        showLaunches={showLaunches}
+        setShowLaunches={setShowLaunches}
+        showNightSide={showNightSide}
+        setShowNightSide={setShowNightSide}
+        satelliteCount={showEarthData ? getSatelliteCount() : orbiterPositions.length}
+        launchSiteCount={showEarthData ? launchPointsData.length : 0}
+        mode={showOrbiterPanel ? 'orbiter' : 'earth'}
+      />
 
       <InfoPanel
         satellite={selectedSatellite}

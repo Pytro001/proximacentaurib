@@ -25,12 +25,10 @@ export default function ControlsPanel({
           <span className={styles.infoCardLabel}>{mode === 'orbiter' ? 'Orbiters' : 'Tracked satellites'}</span>
           <span className={styles.infoCardValue}>{satelliteCount}</span>
         </div>
-        {mode === 'earth' && (
-          <div className={styles.infoCard}>
-            <span className={styles.infoCardLabel}>Launch sites</span>
-            <span className={styles.infoCardValue}>{launchSiteCount}</span>
-          </div>
-        )}
+        <div className={styles.infoCard}>
+          <span className={styles.infoCardLabel}>Launch sites</span>
+          <span className={styles.infoCardValue}>{launchSiteCount}</span>
+        </div>
       </div>
     </div>
   );

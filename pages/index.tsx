@@ -16,7 +16,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Space Globe — Proxima Centauri B</title>
+        <title>Space Globe</title>
         <meta
           name="description"
           content="Real-time 3D globe tracking satellites, rocket launches, and orbital paths"
