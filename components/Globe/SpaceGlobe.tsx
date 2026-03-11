@@ -93,7 +93,6 @@ const GLOBE_CONFIGS = [
   { id: 'earth', label: 'Earth', textureUrl: DAY_URL, nightUrl: NIGHT_URL, bumpUrl: DAY_BUMP_URL, useDayNight: true, showEarthData: true },
   { id: 'moon', label: 'Moon', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d1/Solarsystemscope_texture_8k_moon.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
   { id: 'mars', label: 'Mars', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Solarsystemscope_texture_8k_mars.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
-  { id: 'venus', label: 'Venus', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1c/Solarsystemscope_texture_8k_venus_surface.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
 ] as const;
 
 const GlobeGL = dynamic(() => import('react-globe.gl'), { ssr: false });
