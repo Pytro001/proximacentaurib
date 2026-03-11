@@ -70,12 +70,13 @@ export default async function handler(
         l.mission?.wiki_url || null,
         l.rocket?.configuration?.wiki_url || null,
       ];
+      const isApiUrl = (u: string) => /thespacedevs\.com|lldev\.thespacedevs\.com/i.test(u);
       const linkSeen = new Set<string>();
       const externalLinks = rawLinks
         .map((x: any) => {
           const url = typeof x === 'string' ? x : (x?.url || '');
           const title = typeof x === 'object' && x?.title ? x.title : '';
-          if (!url || linkSeen.has(url)) return null;
+          if (!url || linkSeen.has(url) || isApiUrl(url)) return null;
           linkSeen.add(url);
           return {
             url,
@@ -83,13 +84,13 @@ export default async function handler(
           };
         })
         .filter(Boolean) as { url: string; title: string }[];
-      const providerUrl = typeof l.launch_service_provider?.url === 'string'
-        ? l.launch_service_provider.url
-        : undefined;
+      const lsp = l.launch_service_provider;
+      const providerUrlRaw = typeof lsp?.info_url === 'string' ? lsp.info_url : (typeof lsp?.url === 'string' ? lsp.url : undefined);
+      const providerUrl = providerUrlRaw && !isApiUrl(providerUrlRaw) ? providerUrlRaw : undefined;
       if (providerUrl && !externalLinks.some((x) => x.url === providerUrl) && !/spacex\.com|x\.com\/spacex/i.test(providerUrl)) {
         externalLinks.unshift({
           url: providerUrl,
-          title: `${l.launch_service_provider?.name || 'Provider'} website`,
+          title: `${lsp?.name || 'Provider'} website`,
         });
       }
       return {
