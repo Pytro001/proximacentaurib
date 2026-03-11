@@ -379,11 +379,11 @@
 /* Info panel (right side) */
 .infoPanel {
   position: fixed;
-  top: 24px;
+  top: 72px;
   right: 16px;
   bottom: auto;
   width: 340px;
-  max-height: calc(100vh - 48px);
+  max-height: calc(100vh - 88px);
   max-width: calc(100vw - 32px);
   z-index: 26;
   background: rgba(8, 8, 10, 0.92);
