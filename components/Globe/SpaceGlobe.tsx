@@ -10,6 +10,7 @@ import {
   propagatePositions,
   computeOrbitPath,
   getSatelliteCount,
+  searchSatellites,
 } from '../../lib/satellites';
 import {
   Launch,
@@ -20,6 +21,7 @@ import {
 import { getMoonOrbiters, getMarsOrbiters, MOON_RADIUS_KM, MARS_RADIUS_KM } from '../../lib/orbiters';
 import ControlsPanel from './ControlsPanel';
 import InfoPanel from './InfoPanel';
+import SearchResultsPanel from './SearchResultsPanel';
 import styles from '../../styles/Globe.module.css';
 
 function getSubsolarPoint(date: Date): [number, number] {
@@ -363,6 +365,7 @@ export default function SpaceGlobe() {
   const [selectedLaunches, setSelectedLaunches] = useState<Launch[] | null>(null);
   const [showUpcomingPanel, setShowUpcomingPanel] = useState(false);
   const [selectedGlobeId, setSelectedGlobeId] = useState<string>('earth');
+  const [searchQuery, setSearchQuery] = useState('');
   const [orbiterPositions, setOrbiterPositions] = useState<Array<{ id: string; name: string; lat: number; lng: number; alt: number; category: string }>>([]);
   const [nightPolygon, setNightPolygon] = useState<any>(null);
   const [dayNightMaterial, setDayNightMaterial] = useState<THREE.ShaderMaterial | null>(null);
@@ -584,6 +587,29 @@ export default function SpaceGlobe() {
     setShowUpcomingPanel(false);
   }, []);
 
+  const searchResults = useMemo(
+    () => (searchQuery.trim().length >= 2 ? searchSatellites(searchQuery) : []),
+    [searchQuery]
+  );
+
+  const handleSearchSelect = useCallback(
+    (noradId: number) => {
+      const sat = satellitePositions.find((s) => s.noradId === noradId);
+      if (sat) {
+        setSelectedSatellite(sat);
+        setSelectedLaunches(null);
+        setShowUpcomingPanel(true);
+        setSearchQuery('');
+        if (selectedGlobeId !== 'earth') setSelectedGlobeId('earth');
+        const globe = globeRef.current;
+        if (globe && typeof globe.pointOfView === 'function') {
+          globe.pointOfView({ lat: sat.lat, lng: sat.lng, altitude: 2 }, 800);
+        }
+      }
+    },
+    [satellitePositions, selectedGlobeId]
+  );
+
   const satPointsData = useMemo(() => {
     if (!showSatellites) return [];
     return satellitePositions;
@@ -661,17 +687,30 @@ export default function SpaceGlobe() {
               </button>
             ))}
           </nav>
-          <button
-            className={styles.navUpcomingBtn}
-            type="button"
-            onClick={() => {
-              setSelectedSatellite(null);
-              setSelectedLaunches(null);
-              setShowUpcomingPanel(true);
-            }}
-          >
-            Upcoming
-          </button>
+          <div className={styles.navRight}>
+            <div className={styles.searchInputWrap}>
+              <span className={styles.searchIcon} aria-hidden>⌕</span>
+              <input
+                type="search"
+                className={styles.searchInput}
+                placeholder="Search satellites..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Search satellites"
+              />
+            </div>
+            <button
+              className={styles.navUpcomingBtn}
+              type="button"
+              onClick={() => {
+                setSelectedSatellite(null);
+                setSelectedLaunches(null);
+                setShowUpcomingPanel(true);
+              }}
+            >
+              Upcoming
+            </button>
+          </div>
         </div>
       </header>
 
@@ -750,6 +789,13 @@ export default function SpaceGlobe() {
         satelliteCount={showEarthData ? getSatelliteCount() : orbiterPositions.length}
         launchSiteCount={showEarthData ? launchPointsData.length : 0}
         mode={showOrbiterPanel ? 'orbiter' : 'earth'}
+      />
+
+      <SearchResultsPanel
+        query={searchQuery}
+        results={searchResults}
+        onSelect={handleSearchSelect}
+        onClose={() => setSearchQuery('')}
       />
 
       <InfoPanel

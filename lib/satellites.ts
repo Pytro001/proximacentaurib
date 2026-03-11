@@ -198,3 +198,18 @@ export function computeOrbitPath(
 export function getSatelliteCount(): number {
   return parsedSatellites.length;
 }
+
+export interface SatelliteSearchResult {
+  name: string;
+  noradId: number;
+  category: string;
+}
+
+export function searchSatellites(query: string, limit = 30): SatelliteSearchResult[] {
+  if (!query || query.trim().length < 2) return [];
+  const q = query.trim().toLowerCase();
+  return parsedSatellites
+    .filter((s) => s.name.toLowerCase().includes(q))
+    .map((s) => ({ name: s.name, noradId: s.noradId, category: s.category }))
+    .slice(0, limit);
+}
