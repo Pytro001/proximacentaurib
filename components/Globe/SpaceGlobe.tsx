@@ -596,22 +596,30 @@ export default function SpaceGlobe() {
       name: s.name,
       category: s.category,
     }));
-    const orbiterResults =
-      selectedGlobeId === 'moon' || selectedGlobeId === 'mars'
-        ? orbiterPositions
-            .filter((o) => o.name.toLowerCase().includes(lower))
-            .slice(0, 15)
-            .map((o) => ({
-              type: 'orbiter' as const,
-              id: o.id,
-              name: o.name,
-              category: o.category,
-              lat: o.lat,
-              lng: o.lng,
-              alt: o.alt,
-              body: selectedGlobeId as 'moon' | 'mars',
-            }))
-        : [];
+    const moonOrbiters = selectedGlobeId === 'moon' ? orbiterPositions : getMoonOrbiters(new Date());
+    const marsOrbiters = selectedGlobeId === 'mars' ? orbiterPositions : getMarsOrbiters(new Date());
+    const orbiterResults = [
+      ...moonOrbiters.filter((o) => o.name.toLowerCase().includes(lower)).map((o) => ({
+        type: 'orbiter' as const,
+        id: o.id,
+        name: o.name,
+        category: o.category,
+        lat: o.lat,
+        lng: o.lng,
+        alt: o.alt,
+        body: 'moon' as const,
+      })),
+      ...marsOrbiters.filter((o) => o.name.toLowerCase().includes(lower)).map((o) => ({
+        type: 'orbiter' as const,
+        id: o.id,
+        name: o.name,
+        category: o.category,
+        lat: o.lat,
+        lng: o.lng,
+        alt: o.alt,
+        body: 'mars' as const,
+      })),
+    ].slice(0, 15);
     return [...earthResults, ...orbiterResults].slice(0, 30);
   }, [searchQuery, selectedGlobeId, orbiterPositions]);
 
@@ -632,17 +640,17 @@ export default function SpaceGlobe() {
         }
       } else {
         setSelectedGlobeId(result.body);
-        const globe = globeRef.current;
-        if (globe && typeof globe.pointOfView === 'function') {
-          const alt =
-            result.body === 'moon'
-              ? Math.max(result.alt / MOON_RADIUS_KM, 0.02)
-              : Math.max(result.alt / MARS_RADIUS_KM, 0.02);
-          globe.pointOfView(
-            { lat: result.lat, lng: result.lng, altitude: 1 + alt },
-            800
-          );
-        }
+        const alt =
+          result.body === 'moon'
+            ? Math.max(result.alt / MOON_RADIUS_KM, 0.02)
+            : Math.max(result.alt / MARS_RADIUS_KM, 0.02);
+        const targetPov = { lat: result.lat, lng: result.lng, altitude: 1 + alt };
+        setTimeout(() => {
+          const globe = globeRef.current;
+          if (globe && typeof globe.pointOfView === 'function') {
+            globe.pointOfView(targetPov, 800);
+          }
+        }, 600);
       }
     },
     [satellitePositions, selectedGlobeId]
@@ -829,6 +837,7 @@ export default function SpaceGlobe() {
         satelliteCount={showEarthData ? getSatelliteCount() : orbiterPositions.length}
         launchSiteCount={showEarthData ? launchPointsData.length : 0}
         mode={showOrbiterPanel ? 'orbiter' : 'earth'}
+        globeId={selectedGlobeId}
       />
 
       <SearchResultsPanel
