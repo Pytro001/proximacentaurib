@@ -9,24 +9,28 @@ interface ControlsPanelProps {
   setShowNightSide: (v: boolean) => void;
   satelliteCount: number;
   launchSiteCount: number;
+  mode?: 'earth' | 'orbiter';
 }
 
 export default function ControlsPanel({
   satelliteCount,
   launchSiteCount,
+  mode = 'earth',
   ..._rest
 }: ControlsPanelProps) {
   return (
     <div className={styles.controlsWrap}>
       <div className={styles.infoStrip}>
         <div className={styles.infoCard}>
-          <span className={styles.infoCardLabel}>Tracked satellites</span>
+          <span className={styles.infoCardLabel}>{mode === 'orbiter' ? 'Orbiters' : 'Tracked satellites'}</span>
           <span className={styles.infoCardValue}>{satelliteCount}</span>
         </div>
-        <div className={styles.infoCard}>
-          <span className={styles.infoCardLabel}>Launch sites</span>
-          <span className={styles.infoCardValue}>{launchSiteCount}</span>
-        </div>
+        {mode === 'earth' && (
+          <div className={styles.infoCard}>
+            <span className={styles.infoCardLabel}>Launch sites</span>
+            <span className={styles.infoCardValue}>{launchSiteCount}</span>
+          </div>
+        )}
       </div>
     </div>
   );

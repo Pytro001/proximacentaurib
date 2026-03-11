@@ -17,6 +17,7 @@ import {
   fetchSatelliteData,
   getLaunchStatusColor,
 } from '../../lib/launches';
+import { getMoonOrbiters, getMarsOrbiters, MOON_RADIUS_KM, MARS_RADIUS_KM } from '../../lib/orbiters';
 import ControlsPanel from './ControlsPanel';
 import InfoPanel from './InfoPanel';
 import styles from '../../styles/Globe.module.css';
@@ -91,7 +92,7 @@ const GLOBE_CONFIGS = [
   { id: 'moon', label: 'Moon', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d1/Solarsystemscope_texture_8k_moon.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
   { id: 'mars', label: 'Mars', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Solarsystemscope_texture_8k_mars.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
   { id: 'venus', label: 'Venus', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1c/Solarsystemscope_texture_8k_venus_surface.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
-  { id: 'proximab', label: 'Proxima b', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1c/Solarsystemscope_texture_8k_venus_surface.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
+  { id: 'proximab', label: 'Proxima b', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/27/Solarsystemscope_texture_8k_mercury.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
 ] as const;
 
 const GlobeGL = dynamic(() => import('react-globe.gl'), { ssr: false });
@@ -298,6 +299,21 @@ function createSatObject(d: object): THREE.Group {
   return group;
 }
 
+function createOrbiterObject(d: object): THREE.Group {
+  const group = new THREE.Group();
+  const mat = getSatMaterial('Science');
+  const s = 0.4;
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.4 * s, 0.4 * s, 0.4 * s), mat);
+  group.add(body);
+  const panelL = new THREE.Mesh(new THREE.BoxGeometry(0.6 * s, 0.02 * s, 0.3 * s), panelMaterial!);
+  panelL.position.set(-0.4 * s, 0, 0);
+  group.add(panelL);
+  const panelR = new THREE.Mesh(new THREE.BoxGeometry(0.6 * s, 0.02 * s, 0.3 * s), panelMaterial!);
+  panelR.position.set(0.4 * s, 0, 0);
+  group.add(panelR);
+  return group;
+}
+
 function generateNightPolygon(date: Date) {
   const [sunLng, sunLat] = getSubsolarPoint(date);
   const sunLatRad = (sunLat * Math.PI) / 180;
@@ -348,6 +364,7 @@ export default function SpaceGlobe() {
   const [selectedLaunches, setSelectedLaunches] = useState<Launch[] | null>(null);
   const [showUpcomingPanel, setShowUpcomingPanel] = useState(false);
   const [selectedGlobeId, setSelectedGlobeId] = useState<string>('earth');
+  const [orbiterPositions, setOrbiterPositions] = useState<Array<{ id: string; name: string; lat: number; lng: number; alt: number; category: string }>>([]);
   const [nightPolygon, setNightPolygon] = useState<any>(null);
   const [dayNightMaterial, setDayNightMaterial] = useState<THREE.ShaderMaterial | null>(null);
   const sunPosRef = useRef<THREE.Vector2>(new THREE.Vector2());
@@ -438,6 +455,20 @@ export default function SpaceGlobe() {
 
     return () => cancelAnimationFrame(rafId);
   }, [showSatellites]);
+
+  useEffect(() => {
+    if (selectedGlobeId !== 'moon' && selectedGlobeId !== 'mars') {
+      setOrbiterPositions([]);
+      return;
+    }
+    const tick = () => {
+      const now = new Date();
+      setOrbiterPositions(selectedGlobeId === 'moon' ? getMoonOrbiters(now) : getMarsOrbiters(now));
+    };
+    tick();
+    const id = setInterval(tick, 2000);
+    return () => clearInterval(id);
+  }, [selectedGlobeId]);
 
   useEffect(() => {
     if (!showNightSide || selectedGlobeId !== 'earth') {
@@ -559,6 +590,11 @@ export default function SpaceGlobe() {
     return satellitePositions;
   }, [showSatellites, satellitePositions]);
 
+  const orbiterPointsData = useMemo(() => {
+    if (selectedGlobeId !== 'moon' && selectedGlobeId !== 'mars') return [];
+    return orbiterPositions;
+  }, [selectedGlobeId, orbiterPositions]);
+
   const launchPointsData = useMemo(() => {
     if (!showLaunches || launches.length === 0) return [];
     const key = (l: Launch) => `${(l.lat ?? 0).toFixed(2)}_${(l.lng ?? 0).toFixed(2)}`;
@@ -603,6 +639,7 @@ export default function SpaceGlobe() {
   const bumpImageUrl = currentGlobe.bumpUrl;
   const useDayNight = currentGlobe.useDayNight && selectedGlobeId === 'earth';
   const showEarthData = currentGlobe.showEarthData;
+  const showOrbiterPanel = selectedGlobeId === 'moon' || selectedGlobeId === 'mars';;
 
   if (dimensions.width === 0) return null;
 
@@ -661,14 +698,18 @@ export default function SpaceGlobe() {
           atmosphereAltitude={0.15}
           onGlobeReady={handleGlobeReady}
           onZoom={handleZoom}
-          // Satellites: 3D objects in orbit (never as ground points)
-          objectsData={showEarthData ? satPointsData : []}
+          // Satellites / orbiters: 3D objects in orbit
+          objectsData={showEarthData ? satPointsData : orbiterPointsData}
           objectLat="lat"
           objectLng="lng"
-          objectAltitude={(d: any) => Math.max((d.alt || 400) / EARTH_RADIUS_KM, 0.02)}
-          objectThreeObject={createSatObject}
+          objectAltitude={(d: any) => {
+            if (selectedGlobeId === 'moon') return Math.max((d.alt || 50) / MOON_RADIUS_KM, 0.02);
+            if (selectedGlobeId === 'mars') return Math.max((d.alt || 300) / MARS_RADIUS_KM, 0.02);
+            return Math.max((d.alt || 400) / EARTH_RADIUS_KM, 0.02);
+          }}
+          objectThreeObject={showEarthData ? createSatObject : createOrbiterObject}
           objectLabel={() => ''}
-          onObjectClick={handleSatelliteClick}
+          onObjectClick={showEarthData ? handleSatelliteClick : undefined}
           // Launch points: one green point per location, click shows all upcoming launches
           pointsData={showEarthData ? launchPointsData : []}
           pointLat="lat"
@@ -700,7 +741,7 @@ export default function SpaceGlobe() {
         />
       </div>
 
-      {showEarthData && (
+      {(showEarthData || showOrbiterPanel) && (
         <ControlsPanel
           showSatellites={showSatellites}
           setShowSatellites={setShowSatellites}
@@ -708,8 +749,9 @@ export default function SpaceGlobe() {
           setShowLaunches={setShowLaunches}
           showNightSide={showNightSide}
           setShowNightSide={setShowNightSide}
-          satelliteCount={getSatelliteCount()}
-          launchSiteCount={launchPointsData.length}
+          satelliteCount={showEarthData ? getSatelliteCount() : orbiterPositions.length}
+          launchSiteCount={showEarthData ? launchPointsData.length : 0}
+          mode={showOrbiterPanel ? 'orbiter' : 'earth'}
         />
       )}
 
