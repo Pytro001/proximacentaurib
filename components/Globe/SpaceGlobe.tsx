@@ -879,7 +879,7 @@ export default function SpaceGlobe() {
           polygonStrokeColor={() => 'rgba(0, 0, 0, 0)'}
           polygonAltitude={0.005}
           // Orbit paths: solid line, no animation
-          pathsData={showEarthData ? pathsData : []}
+          pathsData={pathsData}
           pathPoints="coords"
           pathPointLat="lat"
           pathPointLng="lng"
