@@ -13,12 +13,6 @@ interface ControlsPanelProps {
   globeId?: string;
 }
 
-function getOrbiterLabel(globeId: string): string {
-  if (globeId === 'moon') return 'Moon orbiters';
-  if (globeId === 'mars') return 'Mars orbiters';
-  return 'Orbiters';
-}
-
 export default function ControlsPanel({
   satelliteCount,
   launchSiteCount,
@@ -30,7 +24,7 @@ export default function ControlsPanel({
     <div className={styles.controlsWrap}>
       <div className={styles.infoStrip}>
         <div className={styles.infoCard}>
-          <span className={styles.infoCardLabel}>{mode === 'orbiter' ? getOrbiterLabel(globeId) : 'Tracked satellites'}</span>
+          <span className={styles.infoCardLabel}>Tracked satellites</span>
           <span className={styles.infoCardValue}>{satelliteCount}</span>
         </div>
         <div className={styles.infoCard}>

@@ -300,13 +300,17 @@ function createSatObject(d: object): THREE.Group {
   return group;
 }
 
-function createOrbiterObject(d: object): THREE.Group {
-  const orb = d as { category?: string };
-  const cat = orb.category || 'Science';
-  const mat = getSatMaterial(cat);
+const orbiterBodyMaterial = typeof window !== 'undefined'
+  ? new THREE.MeshBasicMaterial({ color: '#c0c0c0' })
+  : null;
+const orbiterAntennaMaterial = typeof window !== 'undefined'
+  ? new THREE.MeshBasicMaterial({ color: '#a0a0a0' })
+  : null;
+
+function createOrbiterObject(_d: object): THREE.Group {
   const s = 1.8;
   const group = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.35 * s, 0.35 * s, 0.35 * s), mat);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.35 * s, 0.35 * s, 0.35 * s), orbiterBodyMaterial!);
   group.add(body);
   const panelL = new THREE.Mesh(new THREE.BoxGeometry(0.8 * s, 0.03 * s, 0.4 * s), panelMaterial!);
   panelL.position.set(-0.55 * s, 0, 0);
@@ -314,7 +318,7 @@ function createOrbiterObject(d: object): THREE.Group {
   const panelR = new THREE.Mesh(new THREE.BoxGeometry(0.8 * s, 0.03 * s, 0.4 * s), panelMaterial!);
   panelR.position.set(0.55 * s, 0, 0);
   group.add(panelR);
-  const antenna = new THREE.Mesh(new THREE.ConeGeometry(0.08 * s, 0.22 * s, 6), mat);
+  const antenna = new THREE.Mesh(new THREE.ConeGeometry(0.08 * s, 0.22 * s, 6), orbiterAntennaMaterial!);
   antenna.position.set(0, 0.28 * s, 0);
   group.add(antenna);
   return group;
