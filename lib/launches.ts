@@ -86,6 +86,28 @@ export function getLaunchStatusColor(status: string): string {
   return '#8899a6';
 }
 
+export function filterLaunchesByDestination(
+  launches: Launch[],
+  destination: 'earth' | 'moon' | 'mars'
+): Launch[] {
+  if (destination === 'earth') return launches;
+  const text = (l: Launch) =>
+    [l.name, l.mission, l.missionDescription, l.orbitName].join(' ').toLowerCase();
+  if (destination === 'moon') {
+    return launches.filter((l) => {
+      const t = text(l);
+      return /\b(moon|lunar|selene|artemis|clps|griffin|viper|capstone)\b/i.test(t);
+    });
+  }
+  if (destination === 'mars') {
+    return launches.filter((l) => {
+      const t = text(l);
+      return /\b(mars|martian|red planet|exomars|tianwen|hope|maven|odyssey)\b/i.test(t);
+    });
+  }
+  return launches;
+}
+
 export function getCountdown(net: string): { days: number; hours: number; mins: number; secs: number; past: boolean } {
   const target = Date.parse(net);
   const now = Date.now();

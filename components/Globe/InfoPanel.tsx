@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import styles from '../../styles/Globe.module.css';
 import { SatellitePosition } from '../../lib/satellites';
+import { OrbiterPosition } from '../../lib/orbiters';
 import { Launch, formatLaunchDate, getLaunchStatusColor, getCountdown } from '../../lib/launches';
 
 interface InfoPanelProps {
   satellite: SatellitePosition | null;
+  orbiter: OrbiterPosition | null;
   launches: Launch[] | null;
   upcomingLaunches: Launch[];
   showUpcomingPanel?: boolean;
@@ -87,6 +89,55 @@ function SatelliteInfo({ sat }: { sat: SatellitePosition }) {
         <span className={styles.dataLabel}>Position</span>
         <span className={styles.dataValueMono}>
           {sat.lat.toFixed(4)}° N, {sat.lng.toFixed(4)}° E
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function OrbiterInfo({ orb }: { orb: OrbiterPosition }) {
+  const bodyLabel = orb.body === 'moon' ? 'Moon' : 'Mars';
+  const periodHrs = orb.periodMinutes >= 60 ? (orb.periodMinutes / 60).toFixed(1) : orb.periodMinutes.toFixed(1);
+  const periodUnit = orb.periodMinutes >= 60 ? 'hr' : 'min';
+
+  return (
+    <div className={styles.infoPanelBody}>
+      <div className={styles.categoryTag}>{orb.category}</div>
+
+      <div className={styles.dataField}>
+        <span className={styles.dataLabel}>Orbiting</span>
+        <span className={styles.dataValue}>{bodyLabel}</span>
+      </div>
+
+      <div className={styles.divider} />
+
+      <div className={styles.dataField}>
+        <span className={styles.dataLabel}>Altitude</span>
+        <span className={styles.dataValueMono}>
+          {orb.alt.toFixed(1)} km
+        </span>
+      </div>
+
+      <div className={styles.dataField}>
+        <span className={styles.dataLabel}>Inclination</span>
+        <span className={styles.dataValueMono}>
+          {orb.inclinationDeg.toFixed(2)}°
+        </span>
+      </div>
+
+      <div className={styles.dataField}>
+        <span className={styles.dataLabel}>Period</span>
+        <span className={styles.dataValueMono}>
+          {periodHrs} {periodUnit}
+        </span>
+      </div>
+
+      <div className={styles.divider} />
+
+      <div className={styles.dataField}>
+        <span className={styles.dataLabel}>Position</span>
+        <span className={styles.dataValueMono}>
+          {orb.lat.toFixed(4)}° N, {orb.lng.toFixed(4)}° E
         </span>
       </div>
     </div>
@@ -239,16 +290,18 @@ function UpcomingLaunchesInfo({ launches }: { launches: Launch[] }) {
   );
 }
 
-export default function InfoPanel({ satellite, launches, upcomingLaunches, showUpcomingPanel = true, onClose, onExpandUpcoming }: InfoPanelProps) {
+export default function InfoPanel({ satellite, orbiter, launches, upcomingLaunches, showUpcomingPanel = true, onClose, onExpandUpcoming }: InfoPanelProps) {
   const hasLaunchSelection = !!(launches && launches.length > 0);
   const hasSatelliteSelection = !!satellite;
-  const isOpen = hasSatelliteSelection || hasLaunchSelection || (showUpcomingPanel && upcomingLaunches.length > 0);
+  const hasOrbiterSelection = !!orbiter;
+  const isOpen = hasSatelliteSelection || hasOrbiterSelection || hasLaunchSelection || (showUpcomingPanel && upcomingLaunches.length > 0);
   const title = satellite?.name
+    || orbiter?.name
     || (hasLaunchSelection
       ? `${launches?.[0]?.padLocation || launches?.[0]?.padName || 'Launch site'}`
       : `Upcoming ${upcomingLaunches.length}`);
 
-  const isUpcomingOnly = !hasSatelliteSelection && !hasLaunchSelection && upcomingLaunches.length > 0;
+  const isUpcomingOnly = !hasSatelliteSelection && !hasOrbiterSelection && !hasLaunchSelection && upcomingLaunches.length > 0;
 
   return (
     <div className={`${styles.infoPanel} ${isOpen ? styles.infoPanelOpen : ''}`}>
@@ -266,8 +319,9 @@ export default function InfoPanel({ satellite, launches, upcomingLaunches, showU
         )}
       </div>
       {satellite && <SatelliteInfo sat={satellite} />}
-      {!satellite && hasLaunchSelection && launches && <LaunchLocationInfo launches={launches} />}
-      {!satellite && !hasLaunchSelection && upcomingLaunches.length > 0 && (
+      {!satellite && orbiter && <OrbiterInfo orb={orbiter} />}
+      {!satellite && !orbiter && hasLaunchSelection && launches && <LaunchLocationInfo launches={launches} />}
+      {!satellite && !orbiter && !hasLaunchSelection && upcomingLaunches.length > 0 && (
         <UpcomingLaunchesInfo launches={upcomingLaunches} />
       )}
     </div>

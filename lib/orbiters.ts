@@ -13,6 +13,9 @@ export interface OrbiterPosition {
   lng: number;
   alt: number;
   category: string;
+  periodMinutes: number;
+  inclinationDeg: number;
+  body: 'moon' | 'mars';
 }
 
 interface OrbiterDef {
@@ -62,7 +65,17 @@ function propagateOrbiter(def: OrbiterDef, date: Date): OrbiterPosition {
   const lng = (Math.atan2(y, x) * 180) / Math.PI;
   const bodyRadius = def.body === 'moon' ? MOON_RADIUS_KM : MARS_RADIUS_KM;
   const alt = r - bodyRadius;
-  return { id: 'orb-' + def.id, name: def.name, lat, lng, alt, category: def.category };
+  return {
+    id: 'orb-' + def.id,
+    name: def.name,
+    lat,
+    lng,
+    alt,
+    category: def.category,
+    periodMinutes: def.periodMinutes,
+    inclinationDeg: def.inclinationDeg,
+    body: def.body,
+  };
 }
 
 export function getMoonOrbiters(date: Date): OrbiterPosition[] {
@@ -71,6 +84,47 @@ export function getMoonOrbiters(date: Date): OrbiterPosition[] {
 
 export function getMarsOrbiters(date: Date): OrbiterPosition[] {
   return MARS_ORBITERS.map((d) => propagateOrbiter(d, date));
+}
+
+export interface OrbiterOrbitPath {
+  id: string;
+  name: string;
+  category: string;
+  coords: Array<{ lat: number; lng: number; alt: number }>;
+}
+
+export function computeOrbiterPath(
+  orbiterId: string,
+  body: 'moon' | 'mars',
+  steps: number = 180
+): OrbiterOrbitPath | null {
+  const defId = orbiterId.startsWith('orb-') ? orbiterId.slice(4) : orbiterId;
+  const list = body === 'moon' ? MOON_ORBITERS : MARS_ORBITERS;
+  const def = list.find((d) => d.id === defId);
+  if (!def) return null;
+
+  const bodyRadius = body === 'moon' ? MOON_RADIUS_KM : MARS_RADIUS_KM;
+  const coords: Array<{ lat: number; lng: number; alt: number }> = [];
+  const now = Date.now();
+  const periodMs = def.periodMinutes * 60 * 1000;
+  const stepMs = periodMs / steps;
+
+  for (let i = 0; i <= steps; i++) {
+    const date = new Date(now + i * stepMs);
+    const pos = propagateOrbiter(def, date);
+    coords.push({
+      lat: pos.lat,
+      lng: pos.lng,
+      alt: pos.alt / bodyRadius,
+    });
+  }
+
+  return {
+    id: `path-${orbiterId}`,
+    name: def.name,
+    category: def.category,
+    coords,
+  };
 }
 
 export { MOON_RADIUS_KM, MARS_RADIUS_KM };
