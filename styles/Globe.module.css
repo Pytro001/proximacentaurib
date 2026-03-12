@@ -117,7 +117,7 @@
 
 .searchInput {
   width: 240px;
-  padding: 10px 14px 10px 40px;
+  padding: 10px 34px 10px 40px;
   font-size: 14px;
   color: #fff;
   background: rgba(255, 255, 255, 0.06);
@@ -144,6 +144,46 @@
   font-size: 16px;
   color: rgba(255, 255, 255, 0.4);
   pointer-events: none;
+}
+
+.searchClearBtn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s;
+  line-height: 1;
+  padding: 0;
+}
+
+.searchClearBtn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.searchFilterBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1d9bf0;
+  background: rgba(29, 155, 240, 0.12);
+  border: 1px solid rgba(29, 155, 240, 0.25);
+  border-radius: 20px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 /* Search results panel (right side) */

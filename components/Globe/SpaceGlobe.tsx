@@ -625,7 +625,6 @@ export default function SpaceGlobe() {
 
   const handleSearchSelect = useCallback(
     (result: SearchResult) => {
-      setSearchQuery('');
       if (result.type === 'satellite') {
         const sat = satellitePositions.find((s) => s.noradId === result.noradId);
         if (sat) {
@@ -658,13 +657,17 @@ export default function SpaceGlobe() {
 
   const satPointsData = useMemo(() => {
     if (!showSatellites) return [];
-    return satellitePositions;
-  }, [showSatellites, satellitePositions]);
+    const q = searchQuery.trim().toLowerCase();
+    if (q.length < 2) return satellitePositions;
+    return satellitePositions.filter((s) => s.name.toLowerCase().includes(q));
+  }, [showSatellites, satellitePositions, searchQuery]);
 
   const orbiterPointsData = useMemo(() => {
     if (selectedGlobeId !== 'moon' && selectedGlobeId !== 'mars') return [];
-    return orbiterPositions;
-  }, [selectedGlobeId, orbiterPositions]);
+    const q = searchQuery.trim().toLowerCase();
+    if (q.length < 2) return orbiterPositions;
+    return orbiterPositions.filter((o) => o.name.toLowerCase().includes(q));
+  }, [selectedGlobeId, orbiterPositions, searchQuery]);
 
   const launchPointsData = useMemo(() => {
     if (!showLaunches || launches.length === 0) return [];
@@ -746,7 +749,22 @@ export default function SpaceGlobe() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-label="Search satellites"
               />
+              {searchQuery.trim().length >= 2 && (
+                <button
+                  type="button"
+                  className={styles.searchClearBtn}
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
+              )}
             </div>
+            {searchQuery.trim().length >= 2 && showEarthData && (
+              <span className={styles.searchFilterBadge}>
+                {satPointsData.length} found
+              </span>
+            )}
             <button
               className={styles.navUpcomingBtn}
               type="button"
