@@ -1,0 +1,8 @@
+# Copy this file to .github-token and paste your GitHub Personal Access Token
+# 
+# 1. Create a token: https://github.com/settings/tokens
+#    - Classic token, scope: repo (full control)
+# 2. cp .github-token.example .github-token
+# 3. Paste your token as the only line in .github-token (no quotes)
+#
+# .github-token is in .gitignore and will never be committed.

@@ -25,6 +25,9 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# GitHub token for git push (never commit)
+.github-token
+
 # vercel
 .vercel
 
