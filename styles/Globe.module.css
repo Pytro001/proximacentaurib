@@ -966,3 +966,18 @@
     grid-template-columns: 1fr;
   }
 }
+
+.copyright {
+  position: fixed;
+  bottom: 12px;
+  right: 16px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.25);
+  text-decoration: none;
+  z-index: 10;
+  transition: color 0.15s;
+}
+
+.copyright:hover {
+  color: rgba(255, 255, 255, 0.5);
+}

@@ -929,6 +929,15 @@ export default function SpaceGlobe() {
         onClose={handleClosePanel}
         onExpandUpcoming={() => setShowUpcomingPanel(true)}
       />
+
+      <a
+        href="https://konstantinsaifoulline.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={styles.copyright}
+      >
+        © 2026 Konstantin Saifoulline
+      </a>
     </>
   );
 }
