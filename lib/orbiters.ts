@@ -31,18 +31,18 @@ interface OrbiterDef {
 }
 
 const MOON_ORBITERS: OrbiterDef[] = [
-  { id: 'lro', name: 'Lunar Reconnaissance Orbiter (NASA)', body: 'moon', radiusKm: MOON_RADIUS_KM + 50, periodMinutes: 113, inclinationDeg: 90, raanDeg: 0, meanAnomaly0Deg: 0, category: 'Science' },
+  { id: 'lro', name: 'Lunar Reconnaissance Orbiter (NASA)', body: 'moon', radiusKm: MOON_RADIUS_KM + 50, periodMinutes: 113, inclinationDeg: 90, raanDeg: 0, meanAnomaly0Deg: 0, category: 'Earth Observation' },
   { id: 'capstone', name: 'CAPSTONE (NASA / Rocket Lab)', body: 'moon', radiusKm: MOON_RADIUS_KM + 3500, periodMinutes: 6.5 * 24 * 60, inclinationDeg: 90, raanDeg: 0, meanAnomaly0Deg: 45, category: 'Navigation' },
 ];
 
 const MARS_ORBITERS: OrbiterDef[] = [
-  { id: 'odyssey', name: '2001 Mars Odyssey (NASA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 400, periodMinutes: 118, inclinationDeg: 93, raanDeg: 120, meanAnomaly0Deg: 270, category: 'Science' },
+  { id: 'odyssey', name: '2001 Mars Odyssey (NASA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 400, periodMinutes: 118, inclinationDeg: 93, raanDeg: 120, meanAnomaly0Deg: 270, category: 'Communications' },
   { id: 'mars-express', name: 'Mars Express (ESA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 5400, periodMinutes: 420, inclinationDeg: 86, raanDeg: 200, meanAnomaly0Deg: 30, category: 'Science' },
-  { id: 'mro', name: 'Mars Reconnaissance Orbiter (NASA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 300, periodMinutes: 112, inclinationDeg: 93, raanDeg: 0, meanAnomaly0Deg: 0, category: 'Science' },
-  { id: 'maven', name: 'MAVEN (NASA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 4000, periodMinutes: 270, inclinationDeg: 75, raanDeg: 45, meanAnomaly0Deg: 90, category: 'Science' },
+  { id: 'mro', name: 'Mars Reconnaissance Orbiter (NASA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 300, periodMinutes: 112, inclinationDeg: 93, raanDeg: 0, meanAnomaly0Deg: 0, category: 'Earth Observation' },
+  { id: 'maven', name: 'MAVEN (NASA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 4000, periodMinutes: 270, inclinationDeg: 75, raanDeg: 45, meanAnomaly0Deg: 90, category: 'Weather' },
   { id: 'tgo', name: 'ExoMars Trace Gas Orbiter (ESA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 400, periodMinutes: 120, inclinationDeg: 74, raanDeg: 90, meanAnomaly0Deg: 180, category: 'Science' },
-  { id: 'hope', name: 'Hope (UAE)', body: 'mars', radiusKm: MARS_RADIUS_KM + 31500, periodMinutes: 55 * 60, inclinationDeg: 25, raanDeg: 320, meanAnomaly0Deg: 210, category: 'Science' },
-  { id: 'tianwen1', name: 'Tianwen-1 Orbiter (CNSA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 6100, periodMinutes: 470, inclinationDeg: 87, raanDeg: 260, meanAnomaly0Deg: 100, category: 'Science' },
+  { id: 'hope', name: 'Hope (UAE)', body: 'mars', radiusKm: MARS_RADIUS_KM + 31500, periodMinutes: 55 * 60, inclinationDeg: 25, raanDeg: 320, meanAnomaly0Deg: 210, category: 'Weather' },
+  { id: 'tianwen1', name: 'Tianwen-1 Orbiter (CNSA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 6100, periodMinutes: 470, inclinationDeg: 87, raanDeg: 260, meanAnomaly0Deg: 100, category: 'Earth Observation' },
 ];
 
 function propagateOrbiter(def: OrbiterDef, date: Date): OrbiterPosition {

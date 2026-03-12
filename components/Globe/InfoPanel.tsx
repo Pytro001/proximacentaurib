@@ -10,6 +10,7 @@ interface InfoPanelProps {
   launches: Launch[] | null;
   upcomingLaunches: Launch[];
   showUpcomingPanel?: boolean;
+  globeId?: string;
   onClose: () => void;
   onExpandUpcoming?: () => void;
 }
@@ -290,18 +291,19 @@ function UpcomingLaunchesInfo({ launches }: { launches: Launch[] }) {
   );
 }
 
-export default function InfoPanel({ satellite, orbiter, launches, upcomingLaunches, showUpcomingPanel = true, onClose, onExpandUpcoming }: InfoPanelProps) {
+export default function InfoPanel({ satellite, orbiter, launches, upcomingLaunches, showUpcomingPanel = true, globeId = 'earth', onClose, onExpandUpcoming }: InfoPanelProps) {
   const hasLaunchSelection = !!(launches && launches.length > 0);
   const hasSatelliteSelection = !!satellite;
   const hasOrbiterSelection = !!orbiter;
-  const isOpen = hasSatelliteSelection || hasOrbiterSelection || hasLaunchSelection || (showUpcomingPanel && upcomingLaunches.length > 0);
+  const isUpcomingOnly = !hasSatelliteSelection && !hasOrbiterSelection && !hasLaunchSelection && showUpcomingPanel;
+  const isOpen = hasSatelliteSelection || hasOrbiterSelection || hasLaunchSelection || (showUpcomingPanel && (upcomingLaunches.length > 0 || globeId !== 'earth'));
   const title = satellite?.name
     || orbiter?.name
     || (hasLaunchSelection
       ? `${launches?.[0]?.padLocation || launches?.[0]?.padName || 'Launch site'}`
       : `Upcoming ${upcomingLaunches.length}`);
 
-  const isUpcomingOnly = !hasSatelliteSelection && !hasOrbiterSelection && !hasLaunchSelection && upcomingLaunches.length > 0;
+  const bodyLabel = globeId === 'moon' ? 'Moon' : globeId === 'mars' ? 'Mars' : '';
 
   return (
     <div className={`${styles.infoPanel} ${isOpen ? styles.infoPanelOpen : ''}`}>
@@ -323,6 +325,13 @@ export default function InfoPanel({ satellite, orbiter, launches, upcomingLaunch
       {!satellite && !orbiter && hasLaunchSelection && launches && <LaunchLocationInfo launches={launches} />}
       {!satellite && !orbiter && !hasLaunchSelection && upcomingLaunches.length > 0 && (
         <UpcomingLaunchesInfo launches={upcomingLaunches} />
+      )}
+      {isUpcomingOnly && upcomingLaunches.length === 0 && globeId !== 'earth' && (
+        <div className={styles.infoPanelBody}>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>
+            No upcoming {bodyLabel} missions scheduled
+          </p>
+        </div>
       )}
     </div>
   );

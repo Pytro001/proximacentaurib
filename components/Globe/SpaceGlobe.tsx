@@ -921,6 +921,7 @@ export default function SpaceGlobe() {
         launches={selectedLaunches}
         upcomingLaunches={upcomingLaunches}
         showUpcomingPanel={showUpcomingPanel}
+        globeId={selectedGlobeId}
         onClose={handleClosePanel}
         onExpandUpcoming={() => setShowUpcomingPanel(true)}
       />
