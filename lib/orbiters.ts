@@ -28,17 +28,22 @@ interface OrbiterDef {
 }
 
 const MOON_ORBITERS: OrbiterDef[] = [
-  { id: 'lro', name: 'LRO', body: 'moon', radiusKm: MOON_RADIUS_KM + 50, periodMinutes: 113, inclinationDeg: 90, raanDeg: 0, meanAnomaly0Deg: 0, category: 'Science' },
-  { id: 'capstone', name: 'CAPSTONE', body: 'moon', radiusKm: MOON_RADIUS_KM + 6000, periodMinutes: 6.5 * 24 * 60, inclinationDeg: 90, raanDeg: 0, meanAnomaly0Deg: 45, category: 'Science' },
-  { id: 'danuri', name: 'Danuri', body: 'moon', radiusKm: MOON_RADIUS_KM + 100, periodMinutes: 120, inclinationDeg: 90, raanDeg: 30, meanAnomaly0Deg: 120, category: 'Science' },
-  { id: 'chandrayaan3', name: 'Chandrayaan-3', body: 'moon', radiusKm: MOON_RADIUS_KM + 150, periodMinutes: 128, inclinationDeg: 90, raanDeg: 60, meanAnomaly0Deg: 200, category: 'Science' },
+  { id: 'lro', name: 'LRO (NASA)', body: 'moon', radiusKm: MOON_RADIUS_KM + 50, periodMinutes: 113, inclinationDeg: 90, raanDeg: 0, meanAnomaly0Deg: 0, category: 'Science' },
+  { id: 'chandrayaan2', name: 'Chandrayaan-2 (ISRO)', body: 'moon', radiusKm: MOON_RADIUS_KM + 100, periodMinutes: 118, inclinationDeg: 90, raanDeg: 55, meanAnomaly0Deg: 160, category: 'Science' },
+  { id: 'danuri', name: 'Danuri / KPLO (KARI)', body: 'moon', radiusKm: MOON_RADIUS_KM + 100, periodMinutes: 120, inclinationDeg: 90, raanDeg: 30, meanAnomaly0Deg: 120, category: 'Science' },
+  { id: 'capstone', name: 'CAPSTONE (NASA)', body: 'moon', radiusKm: MOON_RADIUS_KM + 3500, periodMinutes: 6.5 * 24 * 60, inclinationDeg: 90, raanDeg: 0, meanAnomaly0Deg: 45, category: 'Navigation' },
+  { id: 'queqiao2', name: 'Queqiao-2 (CNSA)', body: 'moon', radiusKm: MOON_RADIUS_KM + 8600, periodMinutes: 24 * 60, inclinationDeg: 63, raanDeg: 140, meanAnomaly0Deg: 0, category: 'Communications' },
+  { id: 'artemis-p1', name: 'ARTEMIS P1 (NASA)', body: 'moon', radiusKm: MOON_RADIUS_KM + 15000, periodMinutes: 26 * 60, inclinationDeg: 10, raanDeg: 180, meanAnomaly0Deg: 90, category: 'Science' },
+  { id: 'artemis-p2', name: 'ARTEMIS P2 (NASA)', body: 'moon', radiusKm: MOON_RADIUS_KM + 15000, periodMinutes: 26 * 60, inclinationDeg: 10, raanDeg: 180, meanAnomaly0Deg: 270, category: 'Science' },
 ];
 
 const MARS_ORBITERS: OrbiterDef[] = [
-  { id: 'mro', name: 'MRO', body: 'mars', radiusKm: MARS_RADIUS_KM + 300, periodMinutes: 112, inclinationDeg: 93, raanDeg: 0, meanAnomaly0Deg: 0, category: 'Science' },
-  { id: 'maven', name: 'MAVEN', body: 'mars', radiusKm: MARS_RADIUS_KM + 4000, periodMinutes: 262, inclinationDeg: 75, raanDeg: 45, meanAnomaly0Deg: 90, category: 'Science' },
-  { id: 'tgo', name: 'TGO', body: 'mars', radiusKm: MARS_RADIUS_KM + 400, periodMinutes: 120, inclinationDeg: 74, raanDeg: 90, meanAnomaly0Deg: 180, category: 'Science' },
-  { id: 'odyssey', name: 'Odyssey', body: 'mars', radiusKm: MARS_RADIUS_KM + 400, periodMinutes: 118, inclinationDeg: 93, raanDeg: 120, meanAnomaly0Deg: 270, category: 'Science' },
+  { id: 'mro', name: 'MRO (NASA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 300, periodMinutes: 112, inclinationDeg: 93, raanDeg: 0, meanAnomaly0Deg: 0, category: 'Science' },
+  { id: 'odyssey', name: 'Mars Odyssey (NASA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 400, periodMinutes: 118, inclinationDeg: 93, raanDeg: 120, meanAnomaly0Deg: 270, category: 'Science' },
+  { id: 'tgo', name: 'ExoMars TGO (ESA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 400, periodMinutes: 120, inclinationDeg: 74, raanDeg: 90, meanAnomaly0Deg: 180, category: 'Science' },
+  { id: 'mars-express', name: 'Mars Express (ESA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 5400, periodMinutes: 420, inclinationDeg: 86, raanDeg: 200, meanAnomaly0Deg: 30, category: 'Science' },
+  { id: 'tianwen1', name: 'Tianwen-1 (CNSA)', body: 'mars', radiusKm: MARS_RADIUS_KM + 6100, periodMinutes: 470, inclinationDeg: 87, raanDeg: 260, meanAnomaly0Deg: 100, category: 'Science' },
+  { id: 'hope', name: 'Hope / Al-Amal (UAE)', body: 'mars', radiusKm: MARS_RADIUS_KM + 31500, periodMinutes: 55 * 60, inclinationDeg: 25, raanDeg: 320, meanAnomaly0Deg: 210, category: 'Science' },
 ];
 
 function propagateOrbiter(def: OrbiterDef, date: Date): OrbiterPosition {

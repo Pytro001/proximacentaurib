@@ -300,17 +300,22 @@ function createSatObject(d: object): THREE.Group {
 }
 
 function createOrbiterObject(d: object): THREE.Group {
+  const orb = d as { category?: string };
   const group = new THREE.Group();
-  const mat = getSatMaterial('Science');
-  const s = 0.4;
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.4 * s, 0.4 * s, 0.4 * s), mat);
+  const cat = orb.category || 'Science';
+  const mat = getSatMaterial(cat);
+  const s = 1.8;
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.35 * s, 0.35 * s, 0.35 * s), mat);
   group.add(body);
-  const panelL = new THREE.Mesh(new THREE.BoxGeometry(0.6 * s, 0.02 * s, 0.3 * s), panelMaterial!);
-  panelL.position.set(-0.4 * s, 0, 0);
+  const panelL = new THREE.Mesh(new THREE.BoxGeometry(0.8 * s, 0.03 * s, 0.4 * s), panelMaterial!);
+  panelL.position.set(-0.55 * s, 0, 0);
   group.add(panelL);
-  const panelR = new THREE.Mesh(new THREE.BoxGeometry(0.6 * s, 0.02 * s, 0.3 * s), panelMaterial!);
-  panelR.position.set(0.4 * s, 0, 0);
+  const panelR = new THREE.Mesh(new THREE.BoxGeometry(0.8 * s, 0.03 * s, 0.4 * s), panelMaterial!);
+  panelR.position.set(0.55 * s, 0, 0);
   group.add(panelR);
+  const antenna = new THREE.Mesh(new THREE.ConeGeometry(0.08 * s, 0.22 * s, 6), mat);
+  antenna.position.set(0, 0.28 * s, 0);
+  group.add(antenna);
   return group;
 }
 
@@ -807,8 +812,8 @@ export default function SpaceGlobe() {
           objectLat="lat"
           objectLng="lng"
           objectAltitude={(d: any) => {
-            if (selectedGlobeId === 'moon') return Math.max((d.alt || 50) / MOON_RADIUS_KM, 0.02);
-            if (selectedGlobeId === 'mars') return Math.max((d.alt || 300) / MARS_RADIUS_KM, 0.02);
+            if (selectedGlobeId === 'moon') return Math.max((d.alt || 50) / MOON_RADIUS_KM, 0.06);
+            if (selectedGlobeId === 'mars') return Math.max((d.alt || 300) / MARS_RADIUS_KM, 0.06);
             return Math.max((d.alt || 400) / EARTH_RADIUS_KM, 0.02);
           }}
           objectThreeObject={showEarthData ? createSatObject : createOrbiterObject}
