@@ -300,6 +300,26 @@ function createSatObject(d: object): THREE.Group {
   return group;
 }
 
+function createOrbiterObject(d: object): THREE.Group {
+  const orb = d as { category?: string };
+  const cat = orb.category || 'Science';
+  const mat = getSatMaterial(cat);
+  const s = 1.8;
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.35 * s, 0.35 * s, 0.35 * s), mat);
+  group.add(body);
+  const panelL = new THREE.Mesh(new THREE.BoxGeometry(0.8 * s, 0.03 * s, 0.4 * s), panelMaterial!);
+  panelL.position.set(-0.55 * s, 0, 0);
+  group.add(panelL);
+  const panelR = new THREE.Mesh(new THREE.BoxGeometry(0.8 * s, 0.03 * s, 0.4 * s), panelMaterial!);
+  panelR.position.set(0.55 * s, 0, 0);
+  group.add(panelR);
+  const antenna = new THREE.Mesh(new THREE.ConeGeometry(0.08 * s, 0.22 * s, 6), mat);
+  antenna.position.set(0, 0.28 * s, 0);
+  group.add(antenna);
+  return group;
+}
+
 function generateNightPolygon(date: Date) {
   const [sunLng, sunLat] = getSubsolarPoint(date);
   const sunLatRad = (sunLat * Math.PI) / 180;
@@ -840,7 +860,7 @@ export default function SpaceGlobe() {
             if (selectedGlobeId === 'mars') return Math.max((d.alt || 300) / MARS_RADIUS_KM, 0.06);
             return Math.max((d.alt || 400) / EARTH_RADIUS_KM, 0.02);
           }}
-          objectThreeObject={createSatObject}
+          objectThreeObject={showEarthData ? createSatObject : createOrbiterObject}
           objectLabel={() => ''}
           onObjectClick={showEarthData ? handleSatelliteClick : handleOrbiterClick}
           // Launch points: one green point per location, click shows all upcoming launches
