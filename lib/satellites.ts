@@ -55,12 +55,14 @@ function categorizeByName(name: string): string {
   if (n.includes('HUBBLE') || n.includes('JAMES WEBB') || n.includes('CHANDRA') || n.includes('SPITZER') || n.includes('XMM')) return 'Science';
   if (n.includes('IRIDIUM') || n.includes('ORBCOMM') || n.includes('GLOBALSTAR')) return 'Communications';
   if (n.includes('INTELSAT') || n.includes('SES') || n.includes('TELESAT') || n.includes('EUTELSAT') || n.includes('AMOS')) return 'Communications';
-  if (n.includes('LANDSAT') || n.includes('SENTINEL') || n.includes('SPOT') || n.includes('WORLDVIEW') || n.includes('PLANET')) return 'Earth Observation';
+  if (n.includes('LANDSAT') || n.includes('SENTINEL') || n.includes('SPOT') || n.includes('WORLDVIEW')) return 'Earth Observation';
   if (n.includes('TERRA') || n.includes('AQUA') || n.includes('SUOMI') || n.includes('JPSS')) return 'Earth Observation';
   if (n.includes('PROGRESS') || n.includes('SOYUZ') || n.includes('CYGNUS') || n.includes('DRAGON') || n.includes('TIANZHOU') || n.includes('HTV')) return 'Cargo';
   if (n.includes('SHENZHOU') || n.includes('CREW DRAGON')) return 'Crew';
   if (n.includes('STARLINK') && n.includes('DEB')) return 'Debris';
   if (n.includes('DEB') || n.includes('R/B') || n.includes('Rocket')) return 'Debris';
+  if (/^USA\s*-|^NROL|^KH-|LACROSSE|SBIRS|DSP\s|MILSTAR|AEHF|WGS\s|MUOS|DMSP|KOSMOS|COSMOS|YAOGAN|GAOFEN|JILIN|LUDAN|TIANHUI|ZHIJI/.test(n)) return 'Military';
+  if (n.includes('PLANET') || n.includes('SPIRE') || n.includes('HAWKEYE') || n.includes('ICEYE') || n.includes('CAPELLA') || n.includes('ASTROCAST') || n.includes('KLEOS') || n.includes('GHGSAT') || n.includes('BLACKSKY')) return 'Private';
   return 'Other';
 }
 

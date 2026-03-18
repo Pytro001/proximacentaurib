@@ -117,6 +117,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   Cargo: '#9c27b0',
   Crew: '#2196f3',
   Debris: '#757575',
+  Military: '#b71c1c',
+  Private: '#7b1fa2',
   Other: '#546e7a',
 };
 
