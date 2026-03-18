@@ -822,9 +822,15 @@ export default function SpaceGlobe() {
               className={styles.navUpcomingBtn}
               type="button"
               onClick={() => {
-                setSelectedSatellite(null);
-                setSelectedLaunches(null);
-                setShowUpcomingPanel(true);
+                const isUpcomingOnly = !selectedSatellite && !selectedLaunches && !selectedOrbiter;
+                if (isUpcomingOnly && showUpcomingPanel) {
+                  setShowUpcomingPanel(false);
+                } else {
+                  setSelectedSatellite(null);
+                  setSelectedLaunches(null);
+                  setSelectedOrbiter(null);
+                  setShowUpcomingPanel(true);
+                }
               }}
             >
               Upcoming

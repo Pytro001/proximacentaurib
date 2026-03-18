@@ -314,7 +314,7 @@ export default function InfoPanel({ satellite, orbiter, launches, upcomingLaunch
             <span className={styles.upcomingBadge}>{upcomingLaunches.length}</span>
           )}
         </div>
-        {isOpen && (
+        {isOpen && !isUpcomingOnly && (
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
             −
           </button>
