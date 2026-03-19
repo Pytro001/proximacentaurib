@@ -90,7 +90,7 @@ export function getSatelliteDescription(name: string, category: string): string 
   // Fallback by category
   const fallbacks: Record<string, string> = {
     Station: 'Crewed space station for research and microgravity experiments.',
-    Starlink: 'Broadband internet constellation for global coverage.',
+    Constellation: 'Broadband internet constellation for global coverage.',
     Navigation: 'Satellite navigation for positioning and timing.',
     Weather: 'Weather monitoring and climate observation.',
     Science: 'Space telescope or scientific observatory.',
@@ -99,6 +99,8 @@ export function getSatelliteDescription(name: string, category: string): string 
     Cargo: 'Cargo spacecraft for space station resupply.',
     Crew: 'Crew spacecraft for astronaut transport.',
     Debris: 'Space debris or defunct object.',
+    Military: 'Military or intelligence satellite.',
+    Private: 'Commercial satellite from a private operator.',
     Other: 'Satellite or space object.',
   };
   return fallbacks[category] ?? 'Satellite or space object.';

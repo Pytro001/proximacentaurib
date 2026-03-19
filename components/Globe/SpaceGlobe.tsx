@@ -108,7 +108,7 @@ const panelMaterial = typeof window !== 'undefined'
 
 const CATEGORY_COLORS: Record<string, string> = {
   Station: '#ff6d00',
-  Starlink: '#8899a6',
+  Constellation: '#8899a6',
   Navigation: '#00c853',
   Weather: '#1d9bf0',
   Science: '#e040fb',
@@ -116,9 +116,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Earth Observation': '#4caf50',
   Cargo: '#9c27b0',
   Crew: '#2196f3',
-  Debris: '#757575',
-  Military: '#b71c1c',
-  Private: '#7b1fa2',
+  Debris: '#555555',
+  Military: '#ef5350',
+  Private: '#ce93d8',
   Other: '#546e7a',
 };
 
@@ -262,6 +262,8 @@ function createCSSObject(): THREE.Group {
   return group;
 }
 
+const sharedSphereGeom = typeof window !== 'undefined' ? new THREE.SphereGeometry(0.15, 6, 4) : null;
+
 function createSatObject(d: object): THREE.Group {
   const sat = d as SatellitePosition & { noradId?: number };
   if (sat.noradId === ISS_NORAD_ID || (sat.category === 'Station' && /^ISS\s*\(ZARYA\)/i.test(sat.name))) {
@@ -273,32 +275,8 @@ function createSatObject(d: object): THREE.Group {
 
   const group = new THREE.Group();
   const mat = getSatMaterial(sat.category);
-  const s = 0.5; // smaller scale for regular satellites
-
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.35 * s, 0.35 * s, 0.35 * s), mat);
-  group.add(body);
-
-  const panelL = new THREE.Mesh(
-    new THREE.BoxGeometry(0.8 * s, 0.03 * s, 0.4 * s),
-    panelMaterial!
-  );
-  panelL.position.set(-0.55 * s, 0, 0);
-  group.add(panelL);
-
-  const panelR = new THREE.Mesh(
-    new THREE.BoxGeometry(0.8 * s, 0.03 * s, 0.4 * s),
-    panelMaterial!
-  );
-  panelR.position.set(0.55 * s, 0, 0);
-  group.add(panelR);
-
-  const antenna = new THREE.Mesh(
-    new THREE.ConeGeometry(0.08 * s, 0.22 * s, 6),
-    mat
-  );
-  antenna.position.set(0, 0.28 * s, 0);
-  group.add(antenna);
-
+  const dot = new THREE.Mesh(sharedSphereGeom!, mat);
+  group.add(dot);
   return group;
 }
 

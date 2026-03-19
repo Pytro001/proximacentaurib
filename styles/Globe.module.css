@@ -294,6 +294,36 @@
   gap: 8px;
 }
 
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  max-width: 260px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+}
+
 .controls {
   display: flex;
   flex-direction: column;
@@ -895,6 +925,10 @@
     left: 12px;
     right: 12px;
     gap: 8px;
+  }
+
+  .legend {
+    max-width: 100%;
   }
 
   .controls {

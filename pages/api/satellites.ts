@@ -22,7 +22,15 @@ const CELESTRAK_GROUPS = [
   'starlink',
 ];
 
-const ALL_GROUPS = ['stations', 'visual', 'starlink', 'gps-ops', 'galileo', 'weather', 'geo'];
+const ALL_GROUPS = [
+  'active',
+  'stations', 'starlink', 'oneweb',
+  'gps-ops', 'galileo', 'beidou', 'glonass-ops',
+  'weather', 'geo', 'resource', 'sarsat',
+  'science', 'military',
+  'iridium', 'iridium-NEXT', 'globalstar', 'orbcomm',
+  'intelsat', 'ses', 'amateur',
+];
 
 async function fetchGroup(group: string): Promise<any[]> {
   const url = `https://celestrak.org/NORAD/elements/gp.php?GROUP=${group}&FORMAT=json`;
