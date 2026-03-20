@@ -50,9 +50,14 @@ export async function fetchLaunches(): Promise<Launch[]> {
   }
 }
 
-export async function fetchSatelliteData(): Promise<any[]> {
+export type SatelliteCatalogMode = 'lite' | 'full';
+
+export async function fetchSatelliteData(
+  catalog: SatelliteCatalogMode = 'lite'
+): Promise<any[]> {
+  const group = catalog === 'full' ? 'all' : 'lite';
   try {
-    const res = await fetch(`${getApiBase()}/api/satellites?group=all`);
+    const res = await fetch(`${getApiBase()}/api/satellites?group=${group}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {

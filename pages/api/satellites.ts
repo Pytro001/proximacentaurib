@@ -8,6 +8,7 @@ interface CacheEntry {
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 let cache: CacheEntry | null = null;
 let cacheAll: CacheEntry | null = null;
+let cacheLite: CacheEntry | null = null;
 
 const CELESTRAK_GROUPS = [
   'stations',
@@ -73,6 +74,34 @@ export default async function handler(
     } catch (error) {
       console.error('Satellite API (all) error:', error);
       if (cacheAll) return res.status(200).json(cacheAll.data);
+      return res.status(500).json({ error: 'Failed to fetch satellite data' });
+    }
+  }
+
+  if (group === 'lite') {
+    if (cacheLite && Date.now() - cacheLite.timestamp < CACHE_TTL) {
+      return res.status(200).json(cacheLite.data);
+    }
+    try {
+      const results = await Promise.allSettled(CELESTRAK_GROUPS.map((g) => fetchGroup(g)));
+      const byNorad = new Map<number, any>();
+      for (const r of results) {
+        if (r.status === 'fulfilled' && Array.isArray(r.value)) {
+          for (const rec of r.value) {
+            const id = typeof rec.NORAD_CAT_ID === 'string'
+              ? parseInt(rec.NORAD_CAT_ID, 10)
+              : rec.NORAD_CAT_ID;
+            if (id && !byNorad.has(id)) byNorad.set(id, rec);
+          }
+        }
+      }
+      const data = Array.from(byNorad.values());
+      cacheLite = { data, timestamp: Date.now() };
+      res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
+      return res.status(200).json(data);
+    } catch (error) {
+      console.error('Satellite API (lite) error:', error);
+      if (cacheLite) return res.status(200).json(cacheLite.data);
       return res.status(500).json({ error: 'Failed to fetch satellite data' });
     }
   }

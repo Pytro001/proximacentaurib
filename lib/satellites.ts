@@ -78,8 +78,17 @@ function categorizeByName(name: string): string {
 
 let parsedSatellites: ParsedSatellite[] = [];
 
-export function parseSatelliteData(records: satellite.OMMJsonObject[]): void {
+export interface ParseSatelliteOptions {
+  /** When true (default), skip debris and rocket-body clutter to reduce load. */
+  excludeDebris?: boolean;
+}
+
+export function parseSatelliteData(
+  records: satellite.OMMJsonObject[],
+  options?: ParseSatelliteOptions
+): void {
   parsedSatellites = [];
+  const excludeDebris = options?.excludeDebris !== false;
 
   const limit = records.length;
 
@@ -103,11 +112,14 @@ export function parseSatelliteData(records: satellite.OMMJsonObject[]): void {
         ? parseInt(rec.NORAD_CAT_ID, 10)
         : rec.NORAD_CAT_ID;
 
+      const category = categorizeByName(rec.OBJECT_NAME);
+      if (excludeDebris && category === 'Debris') continue;
+
       parsedSatellites.push({
         name: rec.OBJECT_NAME,
         noradId,
         satrec,
-        category: categorizeByName(rec.OBJECT_NAME),
+        category,
         inclination,
         eccentricity,
         period,
