@@ -394,52 +394,88 @@ export default function SpaceGlobe() {
 
   useEffect(() => {
     const el = globeStageRef.current;
-    if (!el) return;
-    let startX = 0;
-    let startY = 0;
-    let tracking = false;
+    if (!el || dimensions.width === 0) return;
 
-    const onStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) return;
-      tracking = true;
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-    };
+    const n = GLOBE_CONFIGS.length;
 
-    const onEnd = (e: TouchEvent) => {
-      if (!tracking) return;
-      tracking = false;
-      if (e.changedTouches.length !== 1) return;
-      const dx = e.changedTouches[0].clientX - startX;
-      const dy = e.changedTouches[0].clientY - startY;
+    const applyHorizontalSwipe = (dx: number, dy: number) => {
       if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) <= Math.abs(dy)) return;
-
       setSelectedGlobeId((prevId) => {
         const idx = GLOBE_CONFIGS.findIndex((g) => g.id === prevId);
         if (idx < 0) return prevId;
         if (dx < 0) {
-          const next = Math.min(idx + 1, GLOBE_CONFIGS.length - 1);
-          return GLOBE_CONFIGS[next].id;
+          return GLOBE_CONFIGS[(idx + 1) % n].id;
         }
-        const prev = Math.max(idx - 1, 0);
-        return GLOBE_CONFIGS[prev].id;
+        return GLOBE_CONFIGS[(idx - 1 + n) % n].id;
       });
     };
 
-    const onCancel = () => {
-      tracking = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchTracking = false;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      touchTracking = true;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
     };
 
-    const opts: AddEventListenerOptions = { capture: true, passive: true };
-    el.addEventListener('touchstart', onStart, opts);
-    el.addEventListener('touchend', onEnd, opts);
-    el.addEventListener('touchcancel', onCancel, opts);
-    return () => {
-      el.removeEventListener('touchstart', onStart, opts);
-      el.removeEventListener('touchend', onEnd, opts);
-      el.removeEventListener('touchcancel', onCancel, opts);
+    const onTouchEnd = (e: TouchEvent) => {
+      if (!touchTracking) return;
+      touchTracking = false;
+      if (e.changedTouches.length !== 1) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      applyHorizontalSwipe(dx, dy);
     };
-  }, []);
+
+    const onTouchCancel = () => {
+      touchTracking = false;
+    };
+
+    let pointerId: number | null = null;
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return;
+      if (!e.isPrimary || e.button !== 0) return;
+      pointerId = e.pointerId;
+      pointerStartX = e.clientX;
+      pointerStartY = e.clientY;
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return;
+      if (pointerId === null || e.pointerId !== pointerId) return;
+      pointerId = null;
+      const dx = e.clientX - pointerStartX;
+      const dy = e.clientY - pointerStartY;
+      applyHorizontalSwipe(dx, dy);
+    };
+
+    const onPointerCancel = (e: PointerEvent) => {
+      if (pointerId !== null && e.pointerId === pointerId) pointerId = null;
+    };
+
+    const touchOpts: AddEventListenerOptions = { capture: true, passive: true };
+    const pointerOpts: AddEventListenerOptions = { capture: true };
+    el.addEventListener('touchstart', onTouchStart, touchOpts);
+    el.addEventListener('touchend', onTouchEnd, touchOpts);
+    el.addEventListener('touchcancel', onTouchCancel, touchOpts);
+    el.addEventListener('pointerdown', onPointerDown, pointerOpts);
+    el.addEventListener('pointerup', onPointerUp, pointerOpts);
+    el.addEventListener('pointercancel', onPointerCancel, pointerOpts);
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart, touchOpts);
+      el.removeEventListener('touchend', onTouchEnd, touchOpts);
+      el.removeEventListener('touchcancel', onTouchCancel, touchOpts);
+      el.removeEventListener('pointerdown', onPointerDown, pointerOpts);
+      el.removeEventListener('pointerup', onPointerUp, pointerOpts);
+      el.removeEventListener('pointercancel', onPointerCancel, pointerOpts);
+    };
+  }, [dimensions.width, dimensions.height]);
 
   const ensureFullCatalog = useCallback(async () => {
     if (catalogCacheRef.current) return catalogCacheRef.current;
@@ -874,10 +910,14 @@ export default function SpaceGlobe() {
         </nav>
       </div>
 
-      {launchDataLoading && (
+      {(launchDataLoading || satellitesLoading) && (
         <div className={styles.loading}>
           <div className={styles.spinner} />
-          <p className={styles.loadingText}>Loading launch schedule...</p>
+          <p className={styles.loadingText}>
+            {launchDataLoading
+              ? 'Loading launch schedule...'
+              : 'Updating satellites...'}
+          </p>
         </div>
       )}
 
