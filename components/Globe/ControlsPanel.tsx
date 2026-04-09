@@ -20,25 +20,17 @@ export default function ControlsPanel({
   return (
     <div className={styles.controlsWrap}>
       {mode !== 'orbiter' && (
-        <div className={styles.satOrbitRow}>
+        <div className={styles.satToggleRow}>
           <button
             type="button"
-            className={`${styles.satOrbitBtn} ${satellitesEnabled ? styles.satOrbitBtnOn : ''}`}
+            className={`${styles.satToggleBtn} ${satellitesEnabled ? styles.satToggleBtnOn : ''}`}
             aria-pressed={satellitesEnabled}
-            aria-label={satellitesEnabled ? 'Satellite orbit view on' : 'Satellite orbit view off'}
-            title="Show orbiting satellites on the globe. Loads the full CelesTrak catalog (heavier). Off by default for faster startup."
+            aria-label={satellitesEnabled ? 'Satellites on' : 'Satellites off'}
+            title="Load and show Earth satellites on the globe (full catalog; heavier). Off by default."
             disabled={satellitesLoading}
             onClick={() => onSatellitesEnabledChange(!satellitesEnabled)}
           >
-            <svg className={styles.satOrbitIcon} viewBox="0 0 24 24" aria-hidden>
-              <g fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="10" width="5" height="4" rx="1" />
-                <rect x="16" y="10" width="5" height="4" rx="1" />
-                <rect x="10" y="10.5" width="4" height="3" rx="0.75" />
-                <path d="M12 6v3.5M12 14.5V18M2 12h2M20 12h2" />
-              </g>
-            </svg>
-            <span className={styles.satOrbitHint}>Orbit</span>
+            Satellite
           </button>
           {satellitesLoading && <span className={styles.satToggleSpinner} aria-hidden />}
         </div>

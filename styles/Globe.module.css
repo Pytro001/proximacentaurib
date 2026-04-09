@@ -333,11 +333,6 @@
   .controlsWrap {
     bottom: calc(12px + min(38vh, 400px));
   }
-
-  .copyright {
-    left: 12px;
-    right: auto;
-  }
 }
 
 @media (max-width: 768px) {
@@ -365,72 +360,51 @@
   gap: 10px;
 }
 
-.satOrbitRow {
+.satToggleRow {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
-  padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
 }
 
-.satOrbitBtn {
+.satToggleBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 10px 16px;
+  min-height: 40px;
+  padding: 0 16px;
   margin: 0;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(255, 255, 255, 0.75);
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   font-family: inherit;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.2s;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 
-.satOrbitBtn:hover {
-  color: rgba(255, 255, 255, 0.9);
-  border-color: rgba(255, 255, 255, 0.22);
+.satToggleBtn:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.28);
   background: rgba(255, 255, 255, 0.08);
 }
 
-.satOrbitBtn:focus-visible {
+.satToggleBtn:focus-visible {
   outline: 2px solid rgba(29, 155, 240, 0.7);
   outline-offset: 2px;
 }
 
-.satOrbitBtnOn {
-  color: #7ec8f5;
-  border-color: rgba(29, 155, 240, 0.55);
-  background: rgba(29, 155, 240, 0.14);
-  box-shadow:
-    0 0 0 1px rgba(29, 155, 240, 0.25),
-    0 0 20px rgba(29, 155, 240, 0.18);
+.satToggleBtnOn {
+  color: #b8e6ff;
+  border-color: rgba(29, 155, 240, 0.6);
+  background: rgba(29, 155, 240, 0.15);
 }
 
-.satOrbitBtn:disabled {
+.satToggleBtn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-  box-shadow: none;
-}
-
-.satOrbitIcon {
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-}
-
-.satOrbitHint {
-  line-height: 1;
 }
 
 .satToggleSpinner {
@@ -588,25 +562,6 @@
   display: inline-flex;
   align-items: center;
 }
-
-.upcomingBadge {
-  position: absolute;
-  top: -10px;
-  right: -24px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #fff;
-  background: #1d9bf0;
-  border-radius: 9999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-}
-
 
 .closeBtn {
   background: transparent;
@@ -864,47 +819,46 @@
 }
 
 .countdownBlock {
-  padding: 6px 10px;
-  margin: 6px 0;
-  text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
+  margin: 8px 0 4px;
+  padding: 0;
+  text-align: left;
+  border: none;
   background: transparent;
 }
 
 .countdownText {
-  font-size: 16px;
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 900;
+  font-size: 14px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.95);
-  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.88);
+  letter-spacing: 0;
 }
 
 .countdownUnits {
   display: flex;
   align-items: baseline;
-  justify-content: center;
-  gap: 2px;
+  justify-content: flex-start;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
 .countdownNum {
-  font-size: 16px;
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 900;
+  font-size: 14px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.95);
-  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0;
 }
 
 .countdownLabel {
-  font-size: 16px;
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: -0.01em;
-  margin-right: 2px;
+  font-size: 11px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.02em;
+  margin-right: 4px;
 }
 
 .launchDate {
@@ -1154,19 +1108,13 @@
 .copyright {
   position: fixed;
   bottom: 12px;
-  right: 16px;
+  left: 16px;
+  right: auto;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.25);
   text-decoration: none;
-  z-index: 10;
+  z-index: 27;
   transition: color 0.15s;
-}
-
-@media (min-width: 900px) {
-  .copyright {
-    left: auto;
-    right: calc(380px + 20px);
-  }
 }
 
 .copyright:hover {

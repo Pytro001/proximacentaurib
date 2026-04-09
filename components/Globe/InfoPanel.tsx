@@ -422,7 +422,7 @@ export default function InfoPanel({
     || orbiter?.name
     || (hasLaunchSelection
       ? `${launches?.[0]?.padLocation || launches?.[0]?.padName || 'Launch site'}`
-      : `Upcoming ${upcomingLaunches.length}`);
+      : 'Upcoming');
 
   const bodyLabel = globeId === 'moon' ? 'Moon' : globeId === 'mars' ? 'Mars' : '';
 
@@ -431,9 +431,6 @@ export default function InfoPanel({
       <div className={styles.infoPanelHeader}>
         <div className={styles.infoPanelTitleWrap}>
           <h2 className={styles.infoPanelTitle}>{isUpcomingOnly ? 'Upcoming' : title}</h2>
-          {isUpcomingOnly && upcomingLaunches.length > 0 && (
-            <span className={styles.upcomingBadge}>{upcomingLaunches.length}</span>
-          )}
         </div>
         {!isUpcomingOnly && (
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
