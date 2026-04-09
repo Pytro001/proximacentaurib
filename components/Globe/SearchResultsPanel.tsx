@@ -44,7 +44,7 @@ export default function SearchResultsPanel({
         ) : results.length === 0 ? (
           <p className={styles.searchResultsEmpty}>
             {!satellitesEnabled
-              ? 'No matches. Turn on Satellites (bottom-left) to search Earth orbit, or open Moon/Mars for orbiters.'
+              ? 'No matches. Turn on the bottom-left overlay (satellites on Earth, spacecraft on Moon/Mars) to search.'
               : 'No matches for this search.'}
           </p>
         ) : (

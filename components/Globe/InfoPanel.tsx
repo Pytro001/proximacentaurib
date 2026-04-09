@@ -255,8 +255,8 @@ function LaunchInfo({
 
       <div className={styles.launchFeedMain}>
         <div className={styles.launchCardHeader}>
-          {isNext && <span className={styles.nextBadge}>NEXT</span>}
           <span className={styles.launchName}>{launch.name}</span>
+          {isNext && <span className={styles.nextBadge}>NEXT</span>}
         </div>
         {isNext ? (
           <div className={styles.countdownBlock}>

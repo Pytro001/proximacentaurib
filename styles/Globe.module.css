@@ -53,21 +53,9 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0;
+  gap: 14px;
   margin: 0;
   padding: 0;
-}
-
-.planetPickerItem {
-  display: inline-flex;
-  align-items: center;
-}
-
-.planetPickerSep {
-  margin: 0 6px;
-  color: rgba(255, 255, 255, 0.35);
-  user-select: none;
-  font-size: 14px;
 }
 
 .planetLink,
@@ -316,20 +304,19 @@
     border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  .controlsWrap {
-    bottom: calc(88px + min(38vh, 400px));
-  }
 }
 
-/* Controls area (bottom left) */
+/* Controls area (bottom left): sits just above .copyright on all planets (same offset) */
 .controlsWrap {
   position: fixed;
-  bottom: 88px;
+  /* .copyright: bottom 12px, 12px type ≈15px line; 6px gap */
+  bottom: calc(12px + 15px + 6px);
   left: 16px;
   z-index: 24;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 0;
   max-width: min(280px, calc(100vw - 32px));
 }
 
@@ -388,33 +375,6 @@
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
-}
-
-.statsPlain {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.statsPlainRow {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.statsPlainLabel {
-  font-size: 11px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.42);
-  letter-spacing: 0.02em;
-}
-
-.statsPlainValue {
-  font-size: 15px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  font-variant-numeric: tabular-nums;
 }
 
 .controls {
@@ -745,12 +705,14 @@
 
 .launchCardHeader {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 10px;
   margin-bottom: 8px;
 }
 
 .nextBadge {
+  flex-shrink: 0;
   font-size: 9px;
   font-weight: 700;
   padding: 3px 8px;
@@ -764,7 +726,7 @@
   font-size: 16px;
   font-weight: 600;
   color: #f7f9f9;
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   line-height: 1.35;
   word-wrap: break-word;
@@ -976,7 +938,11 @@
     left: 12px;
     right: 12px;
     max-width: none;
-    gap: 8px;
+    gap: 0;
+  }
+
+  .copyright {
+    left: 12px;
   }
 
   .controls {

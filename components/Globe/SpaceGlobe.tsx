@@ -7,11 +7,9 @@ import {
   SatellitePosition,
   SatelliteOrbitPath,
   clearSatelliteCatalog,
-  countCatalogRecords,
   parseSatelliteData,
   propagatePositions,
   computeOrbitPath,
-  getSatelliteCount,
 } from '../../lib/satellites';
 import {
   Launch,
@@ -351,8 +349,11 @@ function generateNightPolygon(date: Date) {
   };
 }
 
+const SWIPE_MIN_PX = 56;
+
 export default function SpaceGlobe() {
   const globeRef = useRef<GlobeMethods>();
+  const globeStageRef = useRef<HTMLDivElement>(null);
   const catalogCacheRef = useRef<any[] | null>(null);
   const catalogInflightRef = useRef<Promise<any[]> | null>(null);
   const [launchDataLoading, setLaunchDataLoading] = useState(true);
@@ -362,7 +363,6 @@ export default function SpaceGlobe() {
     mars: false,
   });
   const [satellitesLoading, setSatellitesLoading] = useState(false);
-  const [catalogTrackCount, setCatalogTrackCount] = useState<number | null>(null);
   const [highlightPadKey, setHighlightPadKey] = useState<string | null>(null);
   const [satellitePositions, setSatellitePositions] = useState<SatellitePosition[]>([]);
   const [launches, setLaunches] = useState<Launch[]>([]);
@@ -390,6 +390,55 @@ export default function SpaceGlobe() {
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
+  }, []);
+
+  useEffect(() => {
+    const el = globeStageRef.current;
+    if (!el) return;
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      tracking = true;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+
+    const onEnd = (e: TouchEvent) => {
+      if (!tracking) return;
+      tracking = false;
+      if (e.changedTouches.length !== 1) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
+      if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) <= Math.abs(dy)) return;
+
+      setSelectedGlobeId((prevId) => {
+        const idx = GLOBE_CONFIGS.findIndex((g) => g.id === prevId);
+        if (idx < 0) return prevId;
+        if (dx < 0) {
+          const next = Math.min(idx + 1, GLOBE_CONFIGS.length - 1);
+          return GLOBE_CONFIGS[next].id;
+        }
+        const prev = Math.max(idx - 1, 0);
+        return GLOBE_CONFIGS[prev].id;
+      });
+    };
+
+    const onCancel = () => {
+      tracking = false;
+    };
+
+    const opts: AddEventListenerOptions = { capture: true, passive: true };
+    el.addEventListener('touchstart', onStart, opts);
+    el.addEventListener('touchend', onEnd, opts);
+    el.addEventListener('touchcancel', onCancel, opts);
+    return () => {
+      el.removeEventListener('touchstart', onStart, opts);
+      el.removeEventListener('touchend', onEnd, opts);
+      el.removeEventListener('touchcancel', onCancel, opts);
+    };
   }, []);
 
   const ensureFullCatalog = useCallback(async () => {
@@ -436,7 +485,6 @@ export default function SpaceGlobe() {
     clearSatelliteCatalog();
     setSatellitePositions([]);
     setSelectedSatellite(null);
-    setCatalogTrackCount(null);
   }, [overlayEnabled.earth]);
 
   useEffect(() => {
@@ -449,7 +497,6 @@ export default function SpaceGlobe() {
         if (cancelled) return;
         if (satData?.length > 0) {
           parseSatelliteData(satData, { excludeDebris: false });
-          setCatalogTrackCount(countCatalogRecords(satData, { excludeDebris: false }));
           setSatellitePositions(propagatePositions(new Date()));
           setSelectedSatellite(null);
         } else {
@@ -800,27 +847,6 @@ export default function SpaceGlobe() {
   const useDayNight = currentGlobe.useDayNight && selectedGlobeId === 'earth';
   const showEarthData = currentGlobe.showEarthData;
 
-  const trackedSatellitesDisplay = useMemo(() => {
-    if (showEarthData) {
-      if (!overlayEnabled.earth) return 0;
-      if (satellitesLoading && catalogTrackCount != null) return catalogTrackCount;
-      return getSatelliteCount();
-    }
-    if (selectedGlobeId === 'moon') return overlayEnabled.moon ? orbiterPositions.length : 0;
-    if (selectedGlobeId === 'mars') return overlayEnabled.mars ? orbiterPositions.length : 0;
-    return 0;
-  }, [
-    showEarthData,
-    selectedGlobeId,
-    overlayEnabled.earth,
-    overlayEnabled.moon,
-    overlayEnabled.mars,
-    satellitesLoading,
-    catalogTrackCount,
-    orbiterPositions.length,
-    satellitePositions.length,
-  ]);
-
   const isDesktopStage = dimensions.width >= STAGE_BREAKPOINT;
   const mobileSidebarH = Math.min(Math.round(dimensions.height * 0.38), 400);
   const globeWidth = isDesktopStage ? dimensions.width - SIDEBAR_WIDTH_PX : dimensions.width;
@@ -835,17 +861,15 @@ export default function SpaceGlobe() {
           <img src="/logo-proxima.png" alt="PROXIMA" />
         </div>
         <nav className={styles.planetPicker} aria-label="Select planet">
-          {GLOBE_CONFIGS.map((g, i) => (
-            <span key={g.id} className={styles.planetPickerItem}>
-              {i > 0 && <span className={styles.planetPickerSep} aria-hidden>·</span>}
-              <button
-                type="button"
-                className={selectedGlobeId === g.id ? styles.planetLinkActive : styles.planetLink}
-                onClick={() => setSelectedGlobeId(g.id)}
-              >
-                {g.label}
-              </button>
-            </span>
+          {GLOBE_CONFIGS.map((g) => (
+            <button
+              key={g.id}
+              type="button"
+              className={selectedGlobeId === g.id ? styles.planetLinkActive : styles.planetLink}
+              onClick={() => setSelectedGlobeId(g.id)}
+            >
+              {g.label}
+            </button>
           ))}
         </nav>
       </div>
@@ -858,7 +882,7 @@ export default function SpaceGlobe() {
       )}
 
       <div className={styles.mainStage}>
-        <div className={styles.globeStage}>
+        <div className={styles.globeStage} ref={globeStageRef}>
           <div className={styles.globeWrap}>
             <GlobeGL
               key={selectedGlobeId}
@@ -919,8 +943,6 @@ export default function SpaceGlobe() {
 
           <ControlsPanel
             body={selectedGlobeId as PlanetBodyId}
-            satelliteCount={trackedSatellitesDisplay}
-            launchSiteCount={showEarthData ? launchPointsData.length : 0}
             overlayEnabled={bodyOverlayOn}
             onOverlayEnabledChange={setBodyOverlay}
             overlayLoading={showEarthData ? satellitesLoading : false}
