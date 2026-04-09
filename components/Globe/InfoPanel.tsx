@@ -230,9 +230,9 @@ function LaunchInfo({
         onClick={onToggle}
         onKeyDown={(e) => e.key === 'Enter' && onToggle()}
       >
-        {(launch.image || ytPreviews.length > 0 || xPreviewsShown.length > 0) && (
+        {((isExpanded && launch.image) || ytPreviews.length > 0 || xPreviewsShown.length > 0) && (
           <div className={styles.launchMediaStrip}>
-            {launch.image && (
+            {isExpanded && launch.image && (
               <div className={styles.launchMediaHero}>
                 <img src={launch.image} alt="" className={styles.launchHeroImg} loading="lazy" />
               </div>
@@ -443,7 +443,11 @@ export default function InfoPanel({
   const hasSatelliteSelection = !!satellite;
   const hasOrbiterSelection = !!orbiter;
   const isUpcomingOnly = !hasSatelliteSelection && !hasOrbiterSelection && !hasLaunchSelection && showUpcomingPanel;
-  const isOpen = hasSatelliteSelection || hasOrbiterSelection || hasLaunchSelection || (showUpcomingPanel && (upcomingLaunches.length > 0 || globeId !== 'earth'));
+  const isOpen =
+    hasSatelliteSelection
+    || hasOrbiterSelection
+    || hasLaunchSelection
+    || isUpcomingOnly;
   const title = satellite?.name
     || orbiter?.name
     || (hasLaunchSelection
@@ -467,21 +471,25 @@ export default function InfoPanel({
           </button>
         )}
       </div>
-      {satellite && <SatelliteInfo sat={satellite} />}
-      {!satellite && orbiter && <OrbiterInfo orb={orbiter} />}
-      {!satellite && !orbiter && hasLaunchSelection && launches && (
-        <LaunchLocationInfo launches={launches} onShowLaunchOnGlobe={onShowLaunchOnGlobe} />
-      )}
-      {!satellite && !orbiter && !hasLaunchSelection && upcomingLaunches.length > 0 && (
-        <UpcomingLaunchesInfo launches={upcomingLaunches} onShowLaunchOnGlobe={onShowLaunchOnGlobe} />
-      )}
-      {isUpcomingOnly && upcomingLaunches.length === 0 && globeId !== 'earth' && (
-        <div className={styles.infoPanelBody}>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>
-            No upcoming {bodyLabel} missions scheduled
-          </p>
-        </div>
-      )}
+      <div className={styles.infoPanelScroll}>
+        {satellite && <SatelliteInfo sat={satellite} />}
+        {!satellite && orbiter && <OrbiterInfo orb={orbiter} />}
+        {!satellite && !orbiter && hasLaunchSelection && launches && (
+          <LaunchLocationInfo launches={launches} onShowLaunchOnGlobe={onShowLaunchOnGlobe} />
+        )}
+        {!satellite && !orbiter && !hasLaunchSelection && upcomingLaunches.length > 0 && (
+          <UpcomingLaunchesInfo launches={upcomingLaunches} onShowLaunchOnGlobe={onShowLaunchOnGlobe} />
+        )}
+        {isUpcomingOnly && upcomingLaunches.length === 0 && (
+          <div className={styles.infoPanelBody}>
+            <p className={styles.upcomingEmptyMessage}>
+              {globeId === 'earth'
+                ? 'No upcoming launches in the current schedule. Check back later or try another destination tab.'
+                : `No upcoming ${bodyLabel} missions scheduled in the filtered list.`}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

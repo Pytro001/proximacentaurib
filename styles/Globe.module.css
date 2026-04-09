@@ -43,6 +43,8 @@
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
+  flex: 1;
+  min-width: 0;
 }
 
 /* Logo */
@@ -113,10 +115,16 @@
 
 .searchInputWrap {
   position: relative;
+  flex: 1;
+  min-width: 0;
+  max-width: 360px;
 }
 
 .searchInput {
-  width: 240px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 140px;
+  max-width: 360px;
   padding: 10px 34px 10px 40px;
   font-size: 14px;
   color: #fff;
@@ -294,24 +302,70 @@
   gap: 8px;
 }
 
-.satelliteToggleRow {
+.satOrbitRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   min-width: 160px;
-  padding: 8px 10px;
+  padding: 6px 10px;
   background: #000;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
 }
 
-.satelliteToggleLabel {
+.satOrbitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: inherit;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.08em;
+  transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.2s;
+}
+
+.satOrbitBtn:hover {
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.satOrbitBtn:focus-visible {
+  outline: 2px solid rgba(29, 155, 240, 0.7);
+  outline-offset: 2px;
+}
+
+.satOrbitBtnOn {
+  color: #7ec8f5;
+  border-color: rgba(29, 155, 240, 0.55);
+  background: rgba(29, 155, 240, 0.14);
+  box-shadow:
+    0 0 0 1px rgba(29, 155, 240, 0.25),
+    0 0 20px rgba(29, 155, 240, 0.18);
+}
+
+.satOrbitBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.satOrbitIcon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.satOrbitHint {
+  line-height: 1;
 }
 
 .satToggleSpinner {
@@ -322,57 +376,6 @@
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
-}
-
-.toggle {
-  position: relative;
-  width: 34px;
-  height: 16px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.toggleInput {
-  opacity: 0;
-  width: 0;
-  height: 0;
-  position: absolute;
-}
-
-.toggleSlider {
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.toggleSlider::before {
-  content: '';
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  left: 3px;
-  bottom: 2px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  transition: transform 0.2s, background 0.2s;
-}
-
-.toggleInput:checked + .toggleSlider {
-  background: rgba(29, 155, 240, 0.25);
-  border-color: rgba(29, 155, 240, 0.55);
-}
-
-.toggleInput:checked + .toggleSlider::before {
-  transform: translateX(16px);
-  background: #fff;
-}
-
-.toggleInput:disabled + .toggleSlider {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 .legend {
@@ -491,9 +494,18 @@
   transform: translateX(calc(100% + 20px)) scale(0.96);
   opacity: 0.85;
   transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease-out;
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+}
+
+.infoPanelScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .infoPanelOpen {
@@ -621,8 +633,15 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: calc(100vh - 160px);
-  overflow-y: auto;
+}
+
+.upcomingEmptyMessage {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  padding: 24px 0 8px;
 }
 
 .launchCard {
@@ -1049,11 +1068,6 @@
   border-color: transparent;
 }
 
-/* Legend (unused) */
-.legend { display: none; }
-.legendItem { display: none; }
-.legendDot { display: none; }
-
 /* Responsive */
 @media (max-width: 768px) {
   .topNav {
@@ -1084,9 +1098,15 @@
     gap: 8px;
   }
 
+  .searchInputWrap {
+    max-width: none;
+    min-width: 0;
+  }
+
   .searchInput {
-    width: 120px;
-    padding: 8px 10px 8px 32px;
+    min-width: 140px;
+    max-width: none;
+    padding: 8px 30px 8px 32px;
     font-size: 12px;
   }
 
@@ -1139,8 +1159,8 @@
     width: 100vw;
     top: auto;
     bottom: 0;
-    height: 55vh;
-    max-height: none;
+    height: min(55vh, 520px);
+    max-height: min(55vh, 520px);
     right: 0;
     border-radius: 16px 16px 0 0;
     transform: translateY(100%);

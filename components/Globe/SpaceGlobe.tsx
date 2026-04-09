@@ -7,6 +7,7 @@ import {
   SatellitePosition,
   SatelliteOrbitPath,
   clearSatelliteCatalog,
+  countCatalogRecords,
   parseSatelliteData,
   propagatePositions,
   computeOrbitPath,
@@ -347,15 +348,18 @@ function generateNightPolygon(date: Date) {
 
 export default function SpaceGlobe() {
   const globeRef = useRef<GlobeMethods>();
+  const catalogCacheRef = useRef<any[] | null>(null);
+  const catalogInflightRef = useRef<Promise<any[]> | null>(null);
   const [launchDataLoading, setLaunchDataLoading] = useState(true);
   const [loadSatellites, setLoadSatellites] = useState(false);
   const [satellitesLoading, setSatellitesLoading] = useState(false);
+  const [catalogTrackCount, setCatalogTrackCount] = useState<number | null>(null);
   const [highlightPadKey, setHighlightPadKey] = useState<string | null>(null);
   const [satellitePositions, setSatellitePositions] = useState<SatellitePosition[]>([]);
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedSatellite, setSelectedSatellite] = useState<SatellitePosition | null>(null);
   const [selectedLaunches, setSelectedLaunches] = useState<Launch[] | null>(null);
-  const [showUpcomingPanel, setShowUpcomingPanel] = useState(false);
+  const [showUpcomingPanel, setShowUpcomingPanel] = useState(true);
   const [selectedGlobeId, setSelectedGlobeId] = useState<string>('earth');
   const [searchQuery, setSearchQuery] = useState('');
   const [orbiterPositions, setOrbiterPositions] = useState<OrbiterPosition[]>([]);
@@ -380,6 +384,38 @@ export default function SpaceGlobe() {
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, []);
+
+  const ensureFullCatalog = useCallback(async () => {
+    if (catalogCacheRef.current) return catalogCacheRef.current;
+    if (!catalogInflightRef.current) {
+      catalogInflightRef.current = (async () => {
+        try {
+          const d = await fetchSatelliteData('full');
+          const data = Array.isArray(d) ? d : [];
+          catalogCacheRef.current = data;
+          return data;
+        } finally {
+          catalogInflightRef.current = null;
+        }
+      })();
+    }
+    return catalogInflightRef.current;
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    ensureFullCatalog()
+      .then((data) => {
+        if (cancelled) return;
+        setCatalogTrackCount(countCatalogRecords(data, { excludeDebris: false }));
+      })
+      .catch(() => {
+        if (!cancelled) setCatalogTrackCount(0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ensureFullCatalog]);
 
   useEffect(() => {
     let cancelled = false;
@@ -416,10 +452,11 @@ export default function SpaceGlobe() {
     (async () => {
       setSatellitesLoading(true);
       try {
-        const satData = await fetchSatelliteData('full');
+        const satData = await ensureFullCatalog();
         if (cancelled) return;
         if (satData?.length > 0) {
           parseSatelliteData(satData, { excludeDebris: false });
+          setCatalogTrackCount(countCatalogRecords(satData, { excludeDebris: false }));
           setSatellitePositions(propagatePositions(new Date()));
           setSelectedSatellite(null);
         } else {
@@ -435,7 +472,7 @@ export default function SpaceGlobe() {
     return () => {
       cancelled = true;
     };
-  }, [loadSatellites]);
+  }, [loadSatellites, ensureFullCatalog]);
 
   useEffect(() => {
     if (!loadSatellites || selectedGlobeId !== 'earth') return;
@@ -859,6 +896,22 @@ export default function SpaceGlobe() {
   const showEarthData = currentGlobe.showEarthData;
   const showOrbiterPanel = selectedGlobeId === 'moon' || selectedGlobeId === 'mars';
 
+  const trackedSatellitesDisplay = useMemo(() => {
+    if (!showEarthData) return orbiterPositions.length;
+    if (loadSatellites) {
+      if (satellitesLoading && catalogTrackCount != null) return catalogTrackCount;
+      return getSatelliteCount();
+    }
+    return catalogTrackCount ?? 0;
+  }, [
+    showEarthData,
+    loadSatellites,
+    satellitesLoading,
+    catalogTrackCount,
+    orbiterPositions.length,
+    satellitePositions.length,
+  ]);
+
   if (dimensions.width === 0) return null;
 
   return (
@@ -888,14 +941,20 @@ export default function SpaceGlobe() {
               <input
                 type="search"
                 className={styles.searchInput}
-                placeholder={
+                placeholder="Search spacecraft…"
+                title={
                   loadSatellites
-                    ? 'Search satellites & orbiters...'
-                    : 'Search orbiters (enable Satellites for Earth)...'
+                    ? 'Searches Earth satellites and Moon/Mars orbiters (type at least 2 characters).'
+                    : 'Earth satellite search is off. Turn on the satellite control (bottom-left) to search the catalog, or search orbiters from Moon/Mars.'
+                }
+                aria-description={
+                  loadSatellites
+                    ? 'Matches satellites and orbiters after two or more characters.'
+                    : 'Enable satellites to search Earth orbit; Moon and Mars orbiters are still searchable.'
                 }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                aria-label="Search"
+                aria-label="Search spacecraft"
               />
               {searchQuery.trim().length >= 2 && (
                 <button
@@ -1004,7 +1063,7 @@ export default function SpaceGlobe() {
       </div>
 
       <ControlsPanel
-        satelliteCount={showEarthData ? getSatelliteCount() : orbiterPositions.length}
+        satelliteCount={trackedSatellitesDisplay}
         launchSiteCount={showEarthData ? launchPointsData.length : 0}
         mode={showOrbiterPanel ? 'orbiter' : 'earth'}
         satellitesEnabled={loadSatellites}

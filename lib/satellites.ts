@@ -87,6 +87,29 @@ export function clearSatelliteCatalog(): void {
   parsedSatellites = [];
 }
 
+/** Count objects that would be kept by parseSatelliteData without mutating the catalog. */
+export function countCatalogRecords(
+  records: satellite.OMMJsonObject[],
+  options?: ParseSatelliteOptions
+): number {
+  if (!records.length) return 0;
+  const excludeDebris = options?.excludeDebris !== false;
+  let count = 0;
+  for (let i = 0; i < records.length; i++) {
+    const rec = records[i];
+    if (!rec.OBJECT_NAME || !rec.EPOCH) continue;
+    try {
+      satellite.json2satrec(rec);
+      const category = categorizeByName(rec.OBJECT_NAME);
+      if (excludeDebris && category === 'Debris') continue;
+      count++;
+    } catch {
+      // skip invalid records
+    }
+  }
+  return count;
+}
+
 export function parseSatelliteData(
   records: satellite.OMMJsonObject[],
   options?: ParseSatelliteOptions
