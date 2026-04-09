@@ -16,7 +16,6 @@ import {
   Launch,
   fetchLaunches,
   fetchSatelliteData,
-  type SatelliteCatalogMode,
   getLaunchStatusColor,
   filterLaunchesByDestination,
 } from '../../lib/launches';
@@ -87,9 +86,10 @@ const DAY_NIGHT_FRAG = `
   }
 `;
 
-/* ~2k assets from three-globe (lighter than 8k Wikimedia maps for GPU + memory). */
-const DAY_URL = 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
-const NIGHT_URL = 'https://unpkg.com/three-globe/example/img/earth-night.jpg';
+const DAY_URL =
+  'https://upload.wikimedia.org/wikipedia/commons/0/04/Solarsystemscope_texture_8k_earth_daymap.jpg';
+const NIGHT_URL =
+  'https://upload.wikimedia.org/wikipedia/commons/b/b3/Solarsystemscope_texture_8k_earth_nightmap.jpg';
 const DAY_BUMP_URL = 'https://unpkg.com/three-globe/example/img/earth-topology.png';
 
 const GLOBE_CONFIGS = [
@@ -347,9 +347,6 @@ function generateNightPolygon(date: Date) {
 export default function SpaceGlobe() {
   const globeRef = useRef<GlobeMethods>();
   const [isLoading, setIsLoading] = useState(true);
-  const [showSatellites, setShowSatellites] = useState(true);
-  const [showLaunches, setShowLaunches] = useState(true);
-  const [showNightSide, setShowNightSide] = useState(true);
   const [satellitePositions, setSatellitePositions] = useState<SatellitePosition[]>([]);
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedSatellite, setSelectedSatellite] = useState<SatellitePosition | null>(null);
@@ -364,8 +361,6 @@ export default function SpaceGlobe() {
   const sunPosRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const [globeReady, setGlobeReady] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [satelliteCatalog, setSatelliteCatalog] = useState<SatelliteCatalogMode>('lite');
-
   const rendererConfig = useMemo(
     () => ({
       antialias: true,
@@ -389,14 +384,14 @@ export default function SpaceGlobe() {
       setIsLoading(true);
       try {
         const [satData, launchData] = await Promise.all([
-          fetchSatelliteData(satelliteCatalog),
+          fetchSatelliteData('full'),
           fetchLaunches(),
         ]);
 
         if (cancelled) return;
 
         if (satData?.length > 0) {
-          parseSatelliteData(satData, { excludeDebris: satelliteCatalog !== 'full' });
+          parseSatelliteData(satData, { excludeDebris: false });
           setSatellitePositions(propagatePositions(new Date()));
           setSelectedSatellite(null);
           setShowUpcomingPanel(false);
@@ -419,10 +414,10 @@ export default function SpaceGlobe() {
     return () => {
       cancelled = true;
     };
-  }, [satelliteCatalog]);
+  }, []);
 
   useEffect(() => {
-    if (!showSatellites || selectedGlobeId !== 'earth') return;
+    if (selectedGlobeId !== 'earth') return;
 
     let rafId: number;
     let lastPropTime = 0;
@@ -472,7 +467,7 @@ export default function SpaceGlobe() {
     rafId = requestAnimationFrame(tick);
 
     return () => cancelAnimationFrame(rafId);
-  }, [showSatellites, selectedGlobeId]);
+  }, [selectedGlobeId]);
 
   useEffect(() => {
     if (selectedGlobeId === 'earth') {
@@ -497,7 +492,7 @@ export default function SpaceGlobe() {
   }, [selectedGlobeId]);
 
   useEffect(() => {
-    if (!showNightSide || selectedGlobeId !== 'earth') {
+    if (selectedGlobeId !== 'earth') {
       setNightPolygon(null);
       setDayNightMaterial(null);
       return;
@@ -530,10 +525,10 @@ export default function SpaceGlobe() {
       fallbackInterval = setInterval(() => setNightPolygon(generateNightPolygon(new Date())), 60000);
     });
     return () => { if (fallbackInterval) clearInterval(fallbackInterval); };
-  }, [showNightSide, selectedGlobeId]);
+  }, [selectedGlobeId]);
 
   useEffect(() => {
-    if (!dayNightMaterial || !showNightSide) return;
+    if (!dayNightMaterial) return;
     const updateSun = () => {
       const [lng, lat] = getSubsolarPoint(new Date());
       dayNightMaterial.uniforms.sunPosition.value.set(lng, lat);
@@ -541,7 +536,7 @@ export default function SpaceGlobe() {
     updateSun();
     const sunInterval = setInterval(updateSun, 30000);
     return () => clearInterval(sunInterval);
-  }, [dayNightMaterial, showNightSide]);
+  }, [dayNightMaterial]);
 
   useEffect(() => {
     if (!dayNightMaterial) return;
@@ -739,11 +734,10 @@ export default function SpaceGlobe() {
   );
 
   const satPointsData = useMemo(() => {
-    if (!showSatellites) return [];
     const q = searchQuery.trim().toLowerCase();
     if (q.length < 2) return satellitePositions;
     return satellitePositions.filter((s) => s.name.toLowerCase().includes(q));
-  }, [showSatellites, satellitePositions, searchQuery]);
+  }, [satellitePositions, searchQuery]);
 
   const orbiterPointsData = useMemo(() => {
     if (selectedGlobeId !== 'moon' && selectedGlobeId !== 'mars') return [];
@@ -753,7 +747,7 @@ export default function SpaceGlobe() {
   }, [selectedGlobeId, orbiterPositions, searchQuery]);
 
   const launchPointsData = useMemo(() => {
-    if (!showLaunches || launches.length === 0) return [];
+    if (launches.length === 0) return [];
     const key = (l: Launch) => `${(l.lat ?? 0).toFixed(2)}_${(l.lng ?? 0).toFixed(2)}`;
     const byLoc = new Map<string, Launch[]>();
     for (const l of launches) {
@@ -768,7 +762,7 @@ export default function SpaceGlobe() {
       launches: launchList,
       locationName: launchList[0].padLocation || launchList[0].padName || 'Launch site',
     }));
-  }, [showLaunches, launches]);
+  }, [launches]);
 
   const upcomingLaunches = useMemo(() => {
     const now = Date.now();
@@ -798,7 +792,7 @@ export default function SpaceGlobe() {
   const bumpImageUrl = currentGlobe.bumpUrl;
   const useDayNight = currentGlobe.useDayNight && selectedGlobeId === 'earth';
   const showEarthData = currentGlobe.showEarthData;
-  const showOrbiterPanel = selectedGlobeId === 'moon' || selectedGlobeId === 'mars';;
+  const showOrbiterPanel = selectedGlobeId === 'moon' || selectedGlobeId === 'mars';
 
   if (dimensions.width === 0) return null;
 
@@ -938,18 +932,9 @@ export default function SpaceGlobe() {
       </div>
 
       <ControlsPanel
-        showSatellites={showSatellites}
-        setShowSatellites={setShowSatellites}
-        showLaunches={showLaunches}
-        setShowLaunches={setShowLaunches}
-        showNightSide={showNightSide}
-        setShowNightSide={setShowNightSide}
-        satelliteCatalog={satelliteCatalog}
-        setSatelliteCatalog={setSatelliteCatalog}
         satelliteCount={showEarthData ? getSatelliteCount() : orbiterPositions.length}
         launchSiteCount={showEarthData ? launchPointsData.length : 0}
         mode={showOrbiterPanel ? 'orbiter' : 'earth'}
-        globeId={selectedGlobeId}
       />
 
       <SearchResultsPanel

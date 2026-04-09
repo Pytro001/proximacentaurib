@@ -1,19 +1,9 @@
-import type { SatelliteCatalogMode } from '../../lib/launches';
 import styles from '../../styles/Globe.module.css';
 
 interface ControlsPanelProps {
-  showSatellites: boolean;
-  setShowSatellites: (v: boolean) => void;
-  showLaunches: boolean;
-  setShowLaunches: (v: boolean) => void;
-  showNightSide: boolean;
-  setShowNightSide: (v: boolean) => void;
-  satelliteCatalog: SatelliteCatalogMode;
-  setSatelliteCatalog: (v: SatelliteCatalogMode) => void;
   satelliteCount: number;
   launchSiteCount: number;
   mode?: 'earth' | 'orbiter';
-  globeId?: string;
 }
 
 const LEGEND_ITEMS: [string, string][] = [
@@ -35,16 +25,7 @@ const LEGEND_ITEMS: [string, string][] = [
 export default function ControlsPanel({
   satelliteCount,
   launchSiteCount,
-  satelliteCatalog,
-  setSatelliteCatalog,
   mode = 'earth',
-  globeId = 'earth',
-  showSatellites,
-  setShowSatellites,
-  showLaunches,
-  setShowLaunches,
-  showNightSide,
-  setShowNightSide,
 }: ControlsPanelProps) {
   return (
     <div className={styles.controlsWrap}>
@@ -58,60 +39,6 @@ export default function ControlsPanel({
           <span className={styles.infoCardValue}>{launchSiteCount}</span>
         </div>
       </div>
-      {globeId === 'earth' && mode !== 'orbiter' && (
-        <div className={styles.controlsOptions}>
-          <div className={styles.controlRow}>
-            <span className={styles.controlLabel}>Satellites</span>
-            <label className={styles.toggle} title="Show orbiting objects">
-              <input
-                type="checkbox"
-                className={styles.toggleInput}
-                checked={showSatellites}
-                onChange={(e) => setShowSatellites(e.target.checked)}
-              />
-              <span className={styles.toggleSlider} />
-            </label>
-          </div>
-          <div className={styles.controlRow}>
-            <span className={styles.controlLabel}>Launches</span>
-            <label className={styles.toggle} title="Launch site markers">
-              <input
-                type="checkbox"
-                className={styles.toggleInput}
-                checked={showLaunches}
-                onChange={(e) => setShowLaunches(e.target.checked)}
-              />
-              <span className={styles.toggleSlider} />
-            </label>
-          </div>
-          <div className={styles.controlRow}>
-            <span className={styles.controlLabel}>Night side</span>
-            <label className={styles.toggle} title="Day/night or night overlay">
-              <input
-                type="checkbox"
-                className={styles.toggleInput}
-                checked={showNightSide}
-                onChange={(e) => setShowNightSide(e.target.checked)}
-              />
-              <span className={styles.toggleSlider} />
-            </label>
-          </div>
-          <div className={styles.controlRow}>
-            <span className={styles.controlLabel} title="All CelesTrak groups + debris (heavier)">
-              Full catalog
-            </span>
-            <label className={styles.toggle}>
-              <input
-                type="checkbox"
-                className={styles.toggleInput}
-                checked={satelliteCatalog === 'full'}
-                onChange={(e) => setSatelliteCatalog(e.target.checked ? 'full' : 'lite')}
-              />
-              <span className={styles.toggleSlider} />
-            </label>
-          </div>
-        </div>
-      )}
       {mode !== 'orbiter' && (
         <div className={styles.legend}>
           {LEGEND_ITEMS.map(([color, label]) => (

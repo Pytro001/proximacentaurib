@@ -376,78 +376,6 @@
   display: none;
 }
 
-.controlsOptions {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.controlRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 2px 0;
-}
-
-.controlLabel {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.7);
-  min-width: 86px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-/* Toggle switch */
-.toggle {
-  position: relative;
-  width: 34px;
-  height: 16px;
-  cursor: pointer;
-}
-
-.toggleInput {
-  opacity: 0;
-  width: 0;
-  height: 0;
-  position: absolute;
-}
-
-.toggleSlider {
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.toggleSlider::before {
-  content: '';
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  left: 3px;
-  bottom: 2px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  transition: transform 0.2s, background 0.2s;
-}
-
-.toggleInput:checked + .toggleSlider {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.toggleInput:checked + .toggleSlider::before {
-  transform: translateX(16px);
-  background: #fff;
-}
-
 /* Satellite count badge */
 .badge {
   display: inline-block;
@@ -966,10 +894,6 @@
 
   .infoCardValue {
     font-size: 11px;
-  }
-
-  .controlRow {
-    padding: 4px 0;
   }
 
   .infoPanel {
