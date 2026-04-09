@@ -349,7 +349,10 @@ function generateNightPolygon(date: Date) {
   };
 }
 
+/** Planet change only on a quick flick — not slow drags that rotate the globe. */
 const SWIPE_MIN_PX = 56;
+const SWIPE_MAX_DURATION_MS = 420;
+const SWIPE_MIN_VELOCITY_PX_PER_MS = 0.25;
 
 export default function SpaceGlobe() {
   const globeRef = useRef<GlobeMethods>();
@@ -398,7 +401,10 @@ export default function SpaceGlobe() {
 
     const n = GLOBE_CONFIGS.length;
 
-    const applyHorizontalSwipe = (dx: number, dy: number) => {
+    const applyHorizontalSwipe = (dx: number, dy: number, durationMs: number) => {
+      if (durationMs > SWIPE_MAX_DURATION_MS) return;
+      const dt = Math.max(durationMs, 1);
+      if (Math.abs(dx) / dt < SWIPE_MIN_VELOCITY_PX_PER_MS) return;
       if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) <= Math.abs(dy)) return;
       setSelectedGlobeId((prevId) => {
         const idx = GLOBE_CONFIGS.findIndex((g) => g.id === prevId);
@@ -410,33 +416,43 @@ export default function SpaceGlobe() {
       });
     };
 
+    /** Touch: listen for end on window so a swipe still counts if the finger lifts outside the stage. */
+    let activeTouchId: number | null = null;
     let touchStartX = 0;
     let touchStartY = 0;
-    let touchTracking = false;
+    let touchStartTime = 0;
 
     const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) return;
-      touchTracking = true;
+      if (e.touches.length !== 1) {
+        activeTouchId = null;
+        return;
+      }
+      activeTouchId = e.touches[0].identifier;
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
+      touchStartTime = performance.now();
     };
 
-    const onTouchEnd = (e: TouchEvent) => {
-      if (!touchTracking) return;
-      touchTracking = false;
-      if (e.changedTouches.length !== 1) return;
-      const dx = e.changedTouches[0].clientX - touchStartX;
-      const dy = e.changedTouches[0].clientY - touchStartY;
-      applyHorizontalSwipe(dx, dy);
+    const onWindowTouchEnd = (e: TouchEvent) => {
+      if (activeTouchId === null) return;
+      const ended = Array.from(e.changedTouches).find((t) => t.identifier === activeTouchId);
+      if (!ended) return;
+      activeTouchId = null;
+      const durationMs = performance.now() - touchStartTime;
+      applyHorizontalSwipe(ended.clientX - touchStartX, ended.clientY - touchStartY, durationMs);
     };
 
-    const onTouchCancel = () => {
-      touchTracking = false;
+    const onWindowTouchCancel = (e: TouchEvent) => {
+      if (activeTouchId === null) return;
+      if (Array.from(e.changedTouches).some((t) => t.identifier === activeTouchId)) {
+        activeTouchId = null;
+      }
     };
 
     let pointerId: number | null = null;
     let pointerStartX = 0;
     let pointerStartY = 0;
+    let pointerStartTime = 0;
 
     const onPointerDown = (e: PointerEvent) => {
       if (e.pointerType === 'touch') return;
@@ -444,38 +460,93 @@ export default function SpaceGlobe() {
       pointerId = e.pointerId;
       pointerStartX = e.clientX;
       pointerStartY = e.clientY;
+      pointerStartTime = performance.now();
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {
+        /* unsupported or already captured */
+      }
     };
 
     const onPointerUp = (e: PointerEvent) => {
       if (e.pointerType === 'touch') return;
       if (pointerId === null || e.pointerId !== pointerId) return;
       pointerId = null;
-      const dx = e.clientX - pointerStartX;
-      const dy = e.clientY - pointerStartY;
-      applyHorizontalSwipe(dx, dy);
+      try {
+        if (typeof el.releasePointerCapture === 'function') {
+          el.releasePointerCapture(e.pointerId);
+        }
+      } catch {
+        /* already released */
+      }
+      applyHorizontalSwipe(
+        e.clientX - pointerStartX,
+        e.clientY - pointerStartY,
+        performance.now() - pointerStartTime,
+      );
     };
 
     const onPointerCancel = (e: PointerEvent) => {
-      if (pointerId !== null && e.pointerId === pointerId) pointerId = null;
+      if (pointerId !== null && e.pointerId === pointerId) {
+        pointerId = null;
+        try {
+          if (typeof el.releasePointerCapture === 'function') {
+            el.releasePointerCapture(e.pointerId);
+          }
+        } catch {
+          /* noop */
+        }
+      }
     };
 
     const touchOpts: AddEventListenerOptions = { capture: true, passive: true };
+    const winTouchOpts: AddEventListenerOptions = { capture: true, passive: true };
     const pointerOpts: AddEventListenerOptions = { capture: true };
     el.addEventListener('touchstart', onTouchStart, touchOpts);
-    el.addEventListener('touchend', onTouchEnd, touchOpts);
-    el.addEventListener('touchcancel', onTouchCancel, touchOpts);
+    window.addEventListener('touchend', onWindowTouchEnd, winTouchOpts);
+    window.addEventListener('touchcancel', onWindowTouchCancel, winTouchOpts);
     el.addEventListener('pointerdown', onPointerDown, pointerOpts);
     el.addEventListener('pointerup', onPointerUp, pointerOpts);
     el.addEventListener('pointercancel', onPointerCancel, pointerOpts);
     return () => {
       el.removeEventListener('touchstart', onTouchStart, touchOpts);
-      el.removeEventListener('touchend', onTouchEnd, touchOpts);
-      el.removeEventListener('touchcancel', onTouchCancel, touchOpts);
+      window.removeEventListener('touchend', onWindowTouchEnd, winTouchOpts);
+      window.removeEventListener('touchcancel', onWindowTouchCancel, winTouchOpts);
       el.removeEventListener('pointerdown', onPointerDown, pointerOpts);
       el.removeEventListener('pointerup', onPointerUp, pointerOpts);
       el.removeEventListener('pointercancel', onPointerCancel, pointerOpts);
     };
   }, [dimensions.width, dimensions.height]);
+
+  /** Arrow keys cycle planets (same as horizontal swipe); skip when typing in a field. */
+  useEffect(() => {
+    const n = GLOBE_CONFIGS.length;
+    const step = (delta: number) => {
+      setSelectedGlobeId((prevId) => {
+        const idx = GLOBE_CONFIGS.findIndex((g) => g.id === prevId);
+        if (idx < 0) return prevId;
+        return GLOBE_CONFIGS[(idx + delta + n) % n].id;
+      });
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target;
+      if (target instanceof HTMLElement) {
+        if (target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        step(1);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        step(-1);
+      }
+    };
+
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const ensureFullCatalog = useCallback(async () => {
     if (catalogCacheRef.current) return catalogCacheRef.current;
