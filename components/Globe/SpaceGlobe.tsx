@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import type { GlobeMethods } from 'react-globe.gl';
 import * as THREE from 'three';
@@ -349,14 +349,17 @@ function generateNightPolygon(date: Date) {
   };
 }
 
-/** Planet change only on a quick flick — not slow drags that rotate the globe. */
-const SWIPE_MIN_PX = 56;
-const SWIPE_MAX_DURATION_MS = 420;
-const SWIPE_MIN_VELOCITY_PX_PER_MS = 0.25;
+type PlanetSlideFrom = '100%' | '-100%';
+
+interface PlanetViewState {
+  id: string;
+  slideFrom: PlanetSlideFrom;
+  /** When false, no slide-in animation (initial Earth view). */
+  hasSwitched: boolean;
+}
 
 export default function SpaceGlobe() {
   const globeRef = useRef<GlobeMethods>();
-  const globeStageRef = useRef<HTMLDivElement>(null);
   const catalogCacheRef = useRef<any[] | null>(null);
   const catalogInflightRef = useRef<Promise<any[]> | null>(null);
   const [launchDataLoading, setLaunchDataLoading] = useState(true);
@@ -366,12 +369,19 @@ export default function SpaceGlobe() {
     mars: false,
   });
   const [satellitesLoading, setSatellitesLoading] = useState(false);
+  /** Bumped after Earth catalog parse succeeds so the RAF interpolation loop re-initializes with populated TLEs. */
+  const [satCatalogGeneration, setSatCatalogGeneration] = useState(0);
   const [highlightPadKey, setHighlightPadKey] = useState<string | null>(null);
   const [satellitePositions, setSatellitePositions] = useState<SatellitePosition[]>([]);
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedSatellite, setSelectedSatellite] = useState<SatellitePosition | null>(null);
   const [selectedLaunches, setSelectedLaunches] = useState<Launch[] | null>(null);
-  const [selectedGlobeId, setSelectedGlobeId] = useState<string>('earth');
+  const [planetView, setPlanetView] = useState<PlanetViewState>({
+    id: 'earth',
+    slideFrom: '100%',
+    hasSwitched: false,
+  });
+  const selectedGlobeId = planetView.id;
   const [orbiterPositions, setOrbiterPositions] = useState<OrbiterPosition[]>([]);
   const [selectedOrbiter, setSelectedOrbiter] = useState<OrbiterPosition | null>(null);
   const [nightPolygon, setNightPolygon] = useState<any>(null);
@@ -395,139 +405,9 @@ export default function SpaceGlobe() {
     return () => window.removeEventListener('resize', update);
   }, []);
 
-  useEffect(() => {
-    const el = globeStageRef.current;
-    if (!el || dimensions.width === 0) return;
-
-    const n = GLOBE_CONFIGS.length;
-
-    const applyHorizontalSwipe = (dx: number, dy: number, durationMs: number) => {
-      if (durationMs > SWIPE_MAX_DURATION_MS) return;
-      const dt = Math.max(durationMs, 1);
-      if (Math.abs(dx) / dt < SWIPE_MIN_VELOCITY_PX_PER_MS) return;
-      if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) <= Math.abs(dy)) return;
-      setSelectedGlobeId((prevId) => {
-        const idx = GLOBE_CONFIGS.findIndex((g) => g.id === prevId);
-        if (idx < 0) return prevId;
-        if (dx < 0) {
-          return GLOBE_CONFIGS[(idx + 1) % n].id;
-        }
-        return GLOBE_CONFIGS[(idx - 1 + n) % n].id;
-      });
-    };
-
-    /** Touch: listen for end on window so a swipe still counts if the finger lifts outside the stage. */
-    let activeTouchId: number | null = null;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTime = 0;
-
-    const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) {
-        activeTouchId = null;
-        return;
-      }
-      activeTouchId = e.touches[0].identifier;
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      touchStartTime = performance.now();
-    };
-
-    const onWindowTouchEnd = (e: TouchEvent) => {
-      if (activeTouchId === null) return;
-      const ended = Array.from(e.changedTouches).find((t) => t.identifier === activeTouchId);
-      if (!ended) return;
-      activeTouchId = null;
-      const durationMs = performance.now() - touchStartTime;
-      applyHorizontalSwipe(ended.clientX - touchStartX, ended.clientY - touchStartY, durationMs);
-    };
-
-    const onWindowTouchCancel = (e: TouchEvent) => {
-      if (activeTouchId === null) return;
-      if (Array.from(e.changedTouches).some((t) => t.identifier === activeTouchId)) {
-        activeTouchId = null;
-      }
-    };
-
-    let pointerId: number | null = null;
-    let pointerStartX = 0;
-    let pointerStartY = 0;
-    let pointerStartTime = 0;
-
-    const onPointerDown = (e: PointerEvent) => {
-      if (e.pointerType === 'touch') return;
-      if (!e.isPrimary || e.button !== 0) return;
-      pointerId = e.pointerId;
-      pointerStartX = e.clientX;
-      pointerStartY = e.clientY;
-      pointerStartTime = performance.now();
-      try {
-        el.setPointerCapture(e.pointerId);
-      } catch {
-        /* unsupported or already captured */
-      }
-    };
-
-    const onPointerUp = (e: PointerEvent) => {
-      if (e.pointerType === 'touch') return;
-      if (pointerId === null || e.pointerId !== pointerId) return;
-      pointerId = null;
-      try {
-        if (typeof el.releasePointerCapture === 'function') {
-          el.releasePointerCapture(e.pointerId);
-        }
-      } catch {
-        /* already released */
-      }
-      applyHorizontalSwipe(
-        e.clientX - pointerStartX,
-        e.clientY - pointerStartY,
-        performance.now() - pointerStartTime,
-      );
-    };
-
-    const onPointerCancel = (e: PointerEvent) => {
-      if (pointerId !== null && e.pointerId === pointerId) {
-        pointerId = null;
-        try {
-          if (typeof el.releasePointerCapture === 'function') {
-            el.releasePointerCapture(e.pointerId);
-          }
-        } catch {
-          /* noop */
-        }
-      }
-    };
-
-    const touchOpts: AddEventListenerOptions = { capture: true, passive: true };
-    const winTouchOpts: AddEventListenerOptions = { capture: true, passive: true };
-    const pointerOpts: AddEventListenerOptions = { capture: true };
-    el.addEventListener('touchstart', onTouchStart, touchOpts);
-    window.addEventListener('touchend', onWindowTouchEnd, winTouchOpts);
-    window.addEventListener('touchcancel', onWindowTouchCancel, winTouchOpts);
-    el.addEventListener('pointerdown', onPointerDown, pointerOpts);
-    el.addEventListener('pointerup', onPointerUp, pointerOpts);
-    el.addEventListener('pointercancel', onPointerCancel, pointerOpts);
-    return () => {
-      el.removeEventListener('touchstart', onTouchStart, touchOpts);
-      window.removeEventListener('touchend', onWindowTouchEnd, winTouchOpts);
-      window.removeEventListener('touchcancel', onWindowTouchCancel, winTouchOpts);
-      el.removeEventListener('pointerdown', onPointerDown, pointerOpts);
-      el.removeEventListener('pointerup', onPointerUp, pointerOpts);
-      el.removeEventListener('pointercancel', onPointerCancel, pointerOpts);
-    };
-  }, [dimensions.width, dimensions.height]);
-
-  /** Arrow keys cycle planets (same as horizontal swipe); skip when typing in a field. */
+  /** Arrow keys cycle planets (no touch / pointer swipe on the globe). */
   useEffect(() => {
     const n = GLOBE_CONFIGS.length;
-    const step = (delta: number) => {
-      setSelectedGlobeId((prevId) => {
-        const idx = GLOBE_CONFIGS.findIndex((g) => g.id === prevId);
-        if (idx < 0) return prevId;
-        return GLOBE_CONFIGS[(idx + delta + n) % n].id;
-      });
-    };
 
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -535,13 +415,22 @@ export default function SpaceGlobe() {
       if (target instanceof HTMLElement) {
         if (target.closest('input, textarea, select, [contenteditable="true"]')) return;
       }
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        step(1);
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        step(-1);
-      }
+      const delta = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (delta === 0) return;
+      e.preventDefault();
+
+      setPlanetView((pv) => {
+        const idx = GLOBE_CONFIGS.findIndex((g) => g.id === pv.id);
+        if (idx < 0) return pv;
+        const nextId = GLOBE_CONFIGS[(idx + delta + n) % n].id;
+        if (nextId === pv.id) return pv;
+        return {
+          ...pv,
+          id: nextId,
+          slideFrom: delta > 0 ? '100%' : '-100%',
+          hasSwitched: true,
+        };
+      });
     };
 
     window.addEventListener('keydown', onKey);
@@ -606,6 +495,7 @@ export default function SpaceGlobe() {
           parseSatelliteData(satData, { excludeDebris: false });
           setSatellitePositions(propagatePositions(new Date()));
           setSelectedSatellite(null);
+          setSatCatalogGeneration((g) => g + 1);
         } else {
           setSatellitePositions([]);
         }
@@ -640,7 +530,9 @@ export default function SpaceGlobe() {
       interpStart = Date.now();
     };
     propagate();
-    setSatellitePositions(prevPositions);
+    if (prevPositions.length > 0) {
+      setSatellitePositions(prevPositions);
+    }
     lastCommitTime = Date.now();
 
     const tick = () => {
@@ -672,7 +564,7 @@ export default function SpaceGlobe() {
     rafId = requestAnimationFrame(tick);
 
     return () => cancelAnimationFrame(rafId);
-  }, [overlayEnabled.earth, selectedGlobeId]);
+  }, [overlayEnabled.earth, selectedGlobeId, satCatalogGeneration]);
 
   useEffect(() => {
     if (selectedGlobeId === 'earth') {
@@ -967,16 +859,19 @@ export default function SpaceGlobe() {
         <div className={styles.logo}>
           <img src="/logo-proxima.png" alt="PROXIMA" />
         </div>
-        <nav className={styles.planetPicker} aria-label="Select planet">
+        <nav
+          className={styles.planetPicker}
+          aria-label="Planet (use Arrow Left and Arrow Right keys to change)"
+          title="Change planet with the ← and → keyboard keys"
+        >
           {GLOBE_CONFIGS.map((g) => (
-            <button
+            <span
               key={g.id}
-              type="button"
               className={selectedGlobeId === g.id ? styles.planetLinkActive : styles.planetLink}
-              onClick={() => setSelectedGlobeId(g.id)}
+              aria-current={selectedGlobeId === g.id ? 'true' : undefined}
             >
               {g.label}
-            </button>
+            </span>
           ))}
         </nav>
       </div>
@@ -993,8 +888,16 @@ export default function SpaceGlobe() {
       )}
 
       <div className={styles.mainStage}>
-        <div className={styles.globeStage} ref={globeStageRef}>
-          <div className={styles.globeWrap}>
+        <div className={styles.globeStage}>
+          <div
+            key={selectedGlobeId}
+            className={`${styles.globeWrap}${planetView.hasSwitched ? ` ${styles.globeWrapPlanetEnter}` : ''}`}
+            style={
+              {
+                ['--globe-slide-from' as string]: planetView.slideFrom,
+              } as CSSProperties
+            }
+          >
             <GlobeGL
               key={selectedGlobeId}
               ref={globeRef}

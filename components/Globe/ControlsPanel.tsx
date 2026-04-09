@@ -1,4 +1,9 @@
+import type { PointerEvent as ReactPointerEvent, TouchEvent as ReactTouchEvent } from 'react';
 import styles from '../../styles/Globe.module.css';
+
+function stopStagePointerBubble(e: ReactPointerEvent | ReactTouchEvent) {
+  e.stopPropagation();
+}
 
 export type PlanetBodyId = 'earth' | 'moon' | 'mars';
 
@@ -20,7 +25,13 @@ export default function ControlsPanel({
   const labelOn = isEarth ? 'Satellites on' : 'Spacecraft on';
 
   return (
-    <div className={styles.controlsWrap}>
+    <div
+      className={styles.controlsWrap}
+      data-globe-controls
+      onPointerDownCapture={stopStagePointerBubble}
+      onPointerUpCapture={stopStagePointerBubble}
+      onTouchStartCapture={stopStagePointerBubble}
+    >
       <div className={styles.satToggleRow}>
         <button
           type="button"

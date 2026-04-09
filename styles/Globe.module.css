@@ -67,13 +67,9 @@
   font-family: inherit;
   font-size: 14px;
   font-weight: 500;
-  cursor: pointer;
+  cursor: default;
   color: rgba(255, 255, 255, 0.5);
   transition: color 0.15s;
-}
-
-.planetLink:hover {
-  color: rgba(255, 255, 255, 0.85);
 }
 
 .planetLinkActive {
@@ -275,6 +271,21 @@
   position: absolute;
   inset: 0;
   z-index: 1;
+}
+
+.globeWrapPlanetEnter {
+  animation: globePlanetEnter 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes globePlanetEnter {
+  from {
+    transform: translateX(var(--globe-slide-from, 100%));
+    opacity: 0.65;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .sidebarColumn {
