@@ -20,45 +20,24 @@
   width: 100%;
 }
 
-/* Top navigation */
-.topNav {
+/* Logo + planet picker (overlay, no bar) */
+.brandCluster {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 72px;
+  top: 16px;
+  left: 20px;
   z-index: 25;
   display: flex;
-  align-items: center;
-  padding: 0 24px;
-  background: #000;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  pointer-events: none;
 }
 
-.topNavInner {
-  width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 16px;
+.brandCluster .logo,
+.brandCluster .planetPicker {
+  pointer-events: auto;
 }
 
-.navLeft {
-  display: flex;
-  align-items: center;
-}
-
-.navRight {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-}
-
-/* Logo */
 .logo {
   height: 40px;
   display: block;
@@ -70,42 +49,49 @@
   object-fit: contain;
 }
 
-/* Globe nav (planet switcher) */
-.globeNav {
+.planetPicker {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 0;
+  margin: 0;
+  padding: 0;
 }
 
-.globeNavBtn {
-  padding: 10px 18px;
+.planetPickerItem {
+  display: inline-flex;
+  align-items: center;
+}
+
+.planetPickerSep {
+  margin: 0 6px;
+  color: rgba(255, 255, 255, 0.35);
+  user-select: none;
+  font-size: 14px;
+}
+
+.planetLink,
+.planetLinkActive {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.15s;
 }
 
-.globeNavBtn:hover {
-  color: rgba(255, 255, 255, 0.8);
-  border-color: rgba(255, 255, 255, 0.25);
+.planetLink:hover {
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.globeNavBtnActive {
-  padding: 10px 18px;
-  font-size: 14px;
+.planetLinkActive {
   font-weight: 600;
   color: #fff;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  cursor: pointer;
 }
-
 
 .searchInputWrap {
   position: relative;
@@ -285,8 +271,8 @@
   flex-direction: row;
   min-height: 0;
   min-width: 0;
-  margin-top: 72px;
-  height: calc(100vh - 72px);
+  margin-top: 0;
+  height: 100vh;
 }
 
 .globeStage {
@@ -331,33 +317,20 @@
   }
 
   .controlsWrap {
-    bottom: calc(12px + min(38vh, 400px));
-  }
-}
-
-@media (max-width: 768px) {
-  .mainStage {
-    margin-top: 64px;
-    height: calc(100vh - 64px);
-  }
-}
-
-@media (max-width: 480px) {
-  .mainStage {
-    margin-top: 56px;
-    height: calc(100vh - 56px);
+    bottom: calc(88px + min(38vh, 400px));
   }
 }
 
 /* Controls area (bottom left) */
 .controlsWrap {
   position: fixed;
-  bottom: 16px;
+  bottom: 88px;
   left: 16px;
   z-index: 24;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-width: min(280px, calc(100vw - 32px));
 }
 
 .satToggleRow {
@@ -743,26 +716,6 @@
   user-select: none;
 }
 
-.launchGlobeBtn {
-  margin: 8px 0 0;
-  padding: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: #1d9bf0;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  align-self: flex-start;
-  font-family: inherit;
-}
-
-.launchGlobeBtn:hover {
-  color: #4dabf5;
-}
-
 .launchEmbedWrap {
   margin: 12px 0 0;
   border-radius: 10px;
@@ -826,39 +779,13 @@
   background: transparent;
 }
 
-.countdownText {
+.countdownNumeric {
   font-size: 14px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: rgba(255, 255, 255, 0.88);
   letter-spacing: 0;
-}
-
-.countdownUnits {
-  display: flex;
-  align-items: baseline;
-  justify-content: flex-start;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.countdownNum {
-  font-size: 14px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.9);
-  letter-spacing: 0;
-}
-
-.countdownLabel {
-  font-size: 11px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.45);
-  letter-spacing: 0.02em;
-  margin-right: 4px;
 }
 
 .launchDate {
@@ -1031,55 +958,24 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .topNav {
-    height: 64px;
-    padding: 0 16px;
-  }
-
-  .topNavInner {
-    gap: 8px;
-    grid-template-columns: 1fr 1fr 1fr;
+  .brandCluster {
+    top: 12px;
+    left: 12px;
   }
 
   .logo {
     height: 32px;
   }
 
-  .globeNav {
-    gap: 4px;
-  }
-
-  .globeNavBtn,
-  .globeNavBtnActive {
-    padding: 6px 10px;
-    font-size: 11px;
-  }
-
-  .navRight {
-    gap: 8px;
-  }
-
-  .searchInputWrap {
-    max-width: none;
-    min-width: 0;
-  }
-
-  .searchInput {
-    min-width: 140px;
-    max-width: none;
-    padding: 8px 30px 8px 32px;
-    font-size: 12px;
-  }
-
-  .searchResultsPanel {
-    width: calc(100vw - 24px);
-    right: 12px;
-    top: 80px;
+  .planetLink,
+  .planetLinkActive {
+    font-size: 13px;
   }
 
   .controlsWrap {
     left: 12px;
     right: 12px;
+    max-width: none;
     gap: 8px;
   }
 
@@ -1095,13 +991,13 @@
 }
 
 @media (max-width: 480px) {
-  .topNav {
-    height: 56px;
-    padding: 0 12px;
-  }
-
   .logo {
     height: 28px;
+  }
+
+  .planetLink,
+  .planetLinkActive {
+    font-size: 12px;
   }
 }
 

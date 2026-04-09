@@ -17,11 +17,10 @@ import {
   Launch,
   fetchLaunches,
   fetchSatelliteData,
-  getLaunchStatusColor,
   filterLaunchesByDestination,
 } from '../../lib/launches';
 import { getMoonOrbiters, getMarsOrbiters, computeOrbiterPath, MOON_RADIUS_KM, MARS_RADIUS_KM, type OrbiterPosition } from '../../lib/orbiters';
-import ControlsPanel from './ControlsPanel';
+import ControlsPanel, { type PlanetBodyId } from './ControlsPanel';
 import InfoPanel from './InfoPanel';
 import styles from '../../styles/Globe.module.css';
 
@@ -109,11 +108,6 @@ const MOON_MARS_INITIAL_ALTITUDE = 2.5;
 
 const EARTH_RADIUS_KM = 6371;
 
-function headerHeightForWidth(width: number): number {
-  if (width <= 480) return 56;
-  if (width <= 768) return 64;
-  return 72;
-}
 const LAUNCH_POINT_SIZE = 0.6;
 
 const satMaterialCache: Record<string, THREE.MeshBasicMaterial> = {};
@@ -362,7 +356,11 @@ export default function SpaceGlobe() {
   const catalogCacheRef = useRef<any[] | null>(null);
   const catalogInflightRef = useRef<Promise<any[]> | null>(null);
   const [launchDataLoading, setLaunchDataLoading] = useState(true);
-  const [loadSatellites, setLoadSatellites] = useState(false);
+  const [overlayEnabled, setOverlayEnabled] = useState<Record<PlanetBodyId, boolean>>({
+    earth: false,
+    moon: false,
+    mars: false,
+  });
   const [satellitesLoading, setSatellitesLoading] = useState(false);
   const [catalogTrackCount, setCatalogTrackCount] = useState<number | null>(null);
   const [highlightPadKey, setHighlightPadKey] = useState<string | null>(null);
@@ -413,21 +411,6 @@ export default function SpaceGlobe() {
 
   useEffect(() => {
     let cancelled = false;
-    ensureFullCatalog()
-      .then((data) => {
-        if (cancelled) return;
-        setCatalogTrackCount(countCatalogRecords(data, { excludeDebris: false }));
-      })
-      .catch(() => {
-        if (!cancelled) setCatalogTrackCount(0);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [ensureFullCatalog]);
-
-  useEffect(() => {
-    let cancelled = false;
     (async () => {
       setLaunchDataLoading(true);
       try {
@@ -449,14 +432,15 @@ export default function SpaceGlobe() {
   }, []);
 
   useEffect(() => {
-    if (loadSatellites) return;
+    if (overlayEnabled.earth) return;
     clearSatelliteCatalog();
     setSatellitePositions([]);
     setSelectedSatellite(null);
-  }, [loadSatellites]);
+    setCatalogTrackCount(null);
+  }, [overlayEnabled.earth]);
 
   useEffect(() => {
-    if (!loadSatellites) return;
+    if (!overlayEnabled.earth) return;
     let cancelled = false;
     (async () => {
       setSatellitesLoading(true);
@@ -481,10 +465,10 @@ export default function SpaceGlobe() {
     return () => {
       cancelled = true;
     };
-  }, [loadSatellites, ensureFullCatalog]);
+  }, [overlayEnabled.earth, ensureFullCatalog]);
 
   useEffect(() => {
-    if (!loadSatellites || selectedGlobeId !== 'earth') return;
+    if (!overlayEnabled.earth || selectedGlobeId !== 'earth') return;
 
     let rafId: number;
     let lastPropTime = 0;
@@ -534,7 +518,7 @@ export default function SpaceGlobe() {
     rafId = requestAnimationFrame(tick);
 
     return () => cancelAnimationFrame(rafId);
-  }, [loadSatellites, selectedGlobeId]);
+  }, [overlayEnabled.earth, selectedGlobeId]);
 
   useEffect(() => {
     if (selectedGlobeId === 'earth') {
@@ -549,14 +533,20 @@ export default function SpaceGlobe() {
       setOrbiterPositions([]);
       return;
     }
+    const body = selectedGlobeId as 'moon' | 'mars';
+    if (!overlayEnabled[body]) {
+      setOrbiterPositions([]);
+      setSelectedOrbiter(null);
+      return;
+    }
     const tick = () => {
       const now = new Date();
-      setOrbiterPositions(selectedGlobeId === 'moon' ? getMoonOrbiters(now) : getMarsOrbiters(now));
+      setOrbiterPositions(body === 'moon' ? getMoonOrbiters(now) : getMarsOrbiters(now));
     };
     tick();
     const id = setInterval(tick, 2000);
     return () => clearInterval(id);
-  }, [selectedGlobeId]);
+  }, [selectedGlobeId, overlayEnabled.moon, overlayEnabled.mars]);
 
   useEffect(() => {
     if (selectedGlobeId !== 'earth') {
@@ -721,34 +711,6 @@ export default function SpaceGlobe() {
     []
   );
 
-  const handleShowLaunchOnGlobe = useCallback(
-    (launch: Launch) => {
-      if (launch.lat == null || launch.lng == null) return;
-      setSelectedGlobeId('earth');
-      const pk = `${launch.lat.toFixed(3)}_${launch.lng.toFixed(3)}`;
-      setHighlightPadKey(pk);
-      setSelectedSatellite(null);
-      setSelectedOrbiter(null);
-
-      const atPad = launches.filter(
-        (l) =>
-          l.lat != null &&
-          l.lng != null &&
-          l.lat.toFixed(3) === launch.lat!.toFixed(3) &&
-          l.lng.toFixed(3) === launch.lng!.toFixed(3)
-      );
-      setSelectedLaunches(atPad.length > 0 ? atPad : [launch]);
-
-      requestAnimationFrame(() => {
-        const globe = globeRef.current;
-        if (globe && typeof globe.pointOfView === 'function') {
-          globe.pointOfView({ lat: launch.lat!, lng: launch.lng!, altitude: 0.72 }, 1400);
-        }
-      });
-    },
-    [launches]
-  );
-
   const handleClosePanel = useCallback(() => {
     setHighlightPadKey(null);
     setSelectedSatellite(null);
@@ -756,12 +718,35 @@ export default function SpaceGlobe() {
     setSelectedLaunches(null);
   }, []);
 
+  const setBodyOverlay = useCallback((enabled: boolean) => {
+    const id = selectedGlobeId as PlanetBodyId;
+    setOverlayEnabled((prev) => ({ ...prev, [id]: enabled }));
+  }, [selectedGlobeId]);
+
+  const bodyOverlayOn = overlayEnabled[selectedGlobeId as PlanetBodyId];
+
   const satPointsData = useMemo(() => satellitePositions, [satellitePositions]);
 
   const orbiterPointsData = useMemo(() => {
     if (selectedGlobeId !== 'moon' && selectedGlobeId !== 'mars') return [];
     return orbiterPositions;
   }, [selectedGlobeId, orbiterPositions]);
+
+  const globeObjectsData = useMemo(() => {
+    if (selectedGlobeId === 'earth') {
+      return overlayEnabled.earth ? satPointsData : [];
+    }
+    if (selectedGlobeId === 'moon') return overlayEnabled.moon ? orbiterPointsData : [];
+    if (selectedGlobeId === 'mars') return overlayEnabled.mars ? orbiterPointsData : [];
+    return [];
+  }, [
+    selectedGlobeId,
+    overlayEnabled.earth,
+    overlayEnabled.moon,
+    overlayEnabled.mars,
+    satPointsData,
+    orbiterPointsData,
+  ]);
 
   const launchPointsData = useMemo(() => {
     if (launches.length === 0) return [];
@@ -814,18 +799,22 @@ export default function SpaceGlobe() {
   const bumpImageUrl = currentGlobe.bumpUrl;
   const useDayNight = currentGlobe.useDayNight && selectedGlobeId === 'earth';
   const showEarthData = currentGlobe.showEarthData;
-  const showOrbiterPanel = selectedGlobeId === 'moon' || selectedGlobeId === 'mars';
 
   const trackedSatellitesDisplay = useMemo(() => {
-    if (!showEarthData) return orbiterPositions.length;
-    if (loadSatellites) {
+    if (showEarthData) {
+      if (!overlayEnabled.earth) return 0;
       if (satellitesLoading && catalogTrackCount != null) return catalogTrackCount;
       return getSatelliteCount();
     }
-    return catalogTrackCount ?? 0;
+    if (selectedGlobeId === 'moon') return overlayEnabled.moon ? orbiterPositions.length : 0;
+    if (selectedGlobeId === 'mars') return overlayEnabled.mars ? orbiterPositions.length : 0;
+    return 0;
   }, [
     showEarthData,
-    loadSatellites,
+    selectedGlobeId,
+    overlayEnabled.earth,
+    overlayEnabled.moon,
+    overlayEnabled.mars,
     satellitesLoading,
     catalogTrackCount,
     orbiterPositions.length,
@@ -833,38 +822,33 @@ export default function SpaceGlobe() {
   ]);
 
   const isDesktopStage = dimensions.width >= STAGE_BREAKPOINT;
-  const headerH = headerHeightForWidth(dimensions.width);
-  const belowHeader = dimensions.height - headerH;
-  const mobileSidebarH = Math.min(Math.round(belowHeader * 0.38), 400);
+  const mobileSidebarH = Math.min(Math.round(dimensions.height * 0.38), 400);
   const globeWidth = isDesktopStage ? dimensions.width - SIDEBAR_WIDTH_PX : dimensions.width;
-  const globeHeight = isDesktopStage ? dimensions.height : belowHeader - mobileSidebarH;
+  const globeHeight = isDesktopStage ? dimensions.height : dimensions.height - mobileSidebarH;
 
   if (dimensions.width === 0) return null;
 
   return (
     <div className={styles.spaceRoot}>
-      <header className={styles.topNav}>
-        <div className={styles.topNavInner}>
-          <div className={styles.navLeft}>
-            <div className={styles.logo}>
-              <img src="/logo-proxima.png" alt="PROXIMA" />
-            </div>
-          </div>
-          <nav className={styles.globeNav}>
-            {GLOBE_CONFIGS.map((g) => (
+      <div className={styles.brandCluster}>
+        <div className={styles.logo}>
+          <img src="/logo-proxima.png" alt="PROXIMA" />
+        </div>
+        <nav className={styles.planetPicker} aria-label="Select planet">
+          {GLOBE_CONFIGS.map((g, i) => (
+            <span key={g.id} className={styles.planetPickerItem}>
+              {i > 0 && <span className={styles.planetPickerSep} aria-hidden>·</span>}
               <button
-                key={g.id}
                 type="button"
-                className={selectedGlobeId === g.id ? styles.globeNavBtnActive : styles.globeNavBtn}
+                className={selectedGlobeId === g.id ? styles.planetLinkActive : styles.planetLink}
                 onClick={() => setSelectedGlobeId(g.id)}
               >
                 {g.label}
               </button>
-            ))}
-          </nav>
-          <div className={styles.navRight} aria-hidden="true" />
-        </div>
-      </header>
+            </span>
+          ))}
+        </nav>
+      </div>
 
       {launchDataLoading && (
         <div className={styles.loading}>
@@ -892,7 +876,7 @@ export default function SpaceGlobe() {
               atmosphereAltitude={0.15}
               onGlobeReady={handleGlobeReady}
               onZoom={handleZoom}
-              objectsData={showEarthData ? satPointsData : orbiterPointsData}
+              objectsData={globeObjectsData}
               objectLat="lat"
               objectLng="lng"
               objectAltitude={(d: any) => {
@@ -934,12 +918,12 @@ export default function SpaceGlobe() {
           </div>
 
           <ControlsPanel
+            body={selectedGlobeId as PlanetBodyId}
             satelliteCount={trackedSatellitesDisplay}
             launchSiteCount={showEarthData ? launchPointsData.length : 0}
-            mode={showOrbiterPanel ? 'orbiter' : 'earth'}
-            satellitesEnabled={loadSatellites}
-            onSatellitesEnabledChange={setLoadSatellites}
-            satellitesLoading={satellitesLoading}
+            overlayEnabled={bodyOverlayOn}
+            onOverlayEnabledChange={setBodyOverlay}
+            overlayLoading={showEarthData ? satellitesLoading : false}
           />
         </div>
 
@@ -951,7 +935,6 @@ export default function SpaceGlobe() {
             upcomingLaunches={upcomingLaunches}
             globeId={selectedGlobeId}
             onClose={handleClosePanel}
-            onShowLaunchOnGlobe={handleShowLaunchOnGlobe}
           />
         </aside>
       </div>

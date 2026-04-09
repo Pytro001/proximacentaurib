@@ -2,7 +2,7 @@ import { useState, useEffect, type MouseEvent } from 'react';
 import styles from '../../styles/Globe.module.css';
 import { SatellitePosition } from '../../lib/satellites';
 import { OrbiterPosition } from '../../lib/orbiters';
-import { Launch, formatLaunchDate, getLaunchStatusColor, getCountdown } from '../../lib/launches';
+import { Launch, formatLaunchDate, getCountdown } from '../../lib/launches';
 import {
   youtubeVideoId,
   youtubeThumbnailUrl,
@@ -16,7 +16,6 @@ interface InfoPanelProps {
   upcomingLaunches: Launch[];
   globeId?: string;
   onClose: () => void;
-  onShowLaunchOnGlobe?: (launch: Launch) => void;
 }
 
 
@@ -149,44 +148,46 @@ function OrbiterInfo({ orb }: { orb: OrbiterPosition }) {
   );
 }
 
+function formatNumericCountdown(cd: ReturnType<typeof getCountdown>): string {
+  if (cd.past) return '00:00:00';
+  const h = String(cd.hours).padStart(2, '0');
+  const m = String(cd.mins).padStart(2, '0');
+  const s = String(cd.secs).padStart(2, '0');
+  if (cd.days > 0) return `${cd.days}:${h}:${m}:${s}`;
+  return `${h}:${m}:${s}`;
+}
+
 function CountdownDisplay({ net }: { net: string }) {
   const [cd, setCd] = useState(() => getCountdown(net));
   useEffect(() => {
     const t = setInterval(() => setCd(getCountdown(net)), 1000);
     return () => clearInterval(t);
   }, [net]);
-  if (cd.past) return <span className={styles.countdownText}>LIFTOFF</span>;
-  return (
-    <div className={styles.countdownUnits}>
-      {cd.days > 0 && (
-        <>
-          <span className={styles.countdownNum}>{cd.days}</span>
-          <span className={styles.countdownLabel}>D</span>
-        </>
-      )}
-      <span className={styles.countdownNum}>{String(cd.hours).padStart(2, '0')}</span>
-      <span className={styles.countdownLabel}>H</span>
-      <span className={styles.countdownNum}>{String(cd.mins).padStart(2, '0')}</span>
-      <span className={styles.countdownLabel}>M</span>
-      <span className={styles.countdownNum}>{String(cd.secs).padStart(2, '0')}</span>
-      <span className={styles.countdownLabel}>S</span>
-    </div>
-  );
+  return <span className={styles.countdownNumeric}>{formatNumericCountdown(cd)}</span>;
+}
+
+function includeVidEntry(v: { title?: string; url: string }): boolean {
+  if (/go for launch/i.test(v.title || '')) return false;
+  if (/wikipedia\.org/i.test(v.url)) return false;
+  return true;
+}
+
+function includeExternalLink(link: { title?: string; url: string }): boolean {
+  if (/spacex\.com|x\.com\/spacex/i.test(link.url)) return false;
+  if (/wikipedia\.org/i.test(link.url)) return false;
+  return true;
 }
 
 function LaunchInfo({
   launch,
   isNext,
-  onShowLaunchOnGlobe,
 }: {
   launch: Launch;
   isNext?: boolean;
-  onShowLaunchOnGlobe?: (launch: Launch) => void;
 }) {
-  const statusColor = getLaunchStatusColor(launch.status);
   const [inlineYoutubeId, setInlineYoutubeId] = useState<string | null>(null);
 
-  const vids = (launch.vidUrls || []).filter((v) => !/go for launch/i.test(v.title || ''));
+  const vids = (launch.vidUrls || []).filter(includeVidEntry);
   const ytPreviews = vids
     .map((v) => ({ v, id: youtubeVideoId(v.url) }))
     .filter((x): x is { v: (typeof vids)[0]; id: string } => !!x.id)
@@ -198,7 +199,7 @@ function LaunchInfo({
     xUrlSeen.add(v.url);
     xPreviews.push({ url: v.url, title: v.title, isLive: v.isLive });
   }
-  for (const link of launch.externalLinks || []) {
+  for (const link of (launch.externalLinks || []).filter(includeExternalLink)) {
     if (videoPreviewKind(link.url) !== 'x' || xUrlSeen.has(link.url)) continue;
     xUrlSeen.add(link.url);
     xPreviews.push({ url: link.url, title: link.title });
@@ -274,19 +275,6 @@ function LaunchInfo({
         </div>
       </div>
 
-      {launch.lat != null && launch.lng != null && onShowLaunchOnGlobe && (
-        <button
-          type="button"
-          className={styles.launchGlobeBtn}
-          onClick={(e) => {
-            e.stopPropagation();
-            onShowLaunchOnGlobe(launch);
-          }}
-        >
-          Globe
-        </button>
-      )}
-
       {inlineYoutubeId && (
         <div className={styles.launchEmbedWrap} onClick={(e) => e.stopPropagation()}>
           <iframe
@@ -300,10 +288,6 @@ function LaunchInfo({
       )}
 
       <div className={styles.detailBlock}>
-        <div className={styles.dataField}>
-          <span className={styles.dataLabel}>Status</span>
-          <span className={styles.dataValue} style={{ color: statusColor }}>{launch.status}</span>
-        </div>
         {!!launch.orbitName && (
           <div className={styles.dataField}>
             <span className={styles.dataLabel}>Target orbit</span>
@@ -319,10 +303,10 @@ function LaunchInfo({
           </div>
         )}
       </div>
-      {launch.vidUrls && launch.vidUrls.length > 0 && (
+      {launch.vidUrls && launch.vidUrls.some(includeVidEntry) && (
         <div className={styles.videoLinks} onClick={(e) => e.stopPropagation()}>
           {launch.vidUrls
-            .filter((v) => !/go for launch/i.test(v.title || ''))
+            .filter(includeVidEntry)
             .slice(0, 4)
             .map((v, i) => {
             const kind = videoPreviewKind(v.url);
@@ -337,10 +321,10 @@ function LaunchInfo({
           })}
         </div>
       )}
-      {launch.externalLinks && launch.externalLinks.length > 0 && (
+      {launch.externalLinks && launch.externalLinks.some(includeExternalLink) && (
         <div className={styles.videoLinks} onClick={(e) => e.stopPropagation()}>
           {launch.externalLinks
-            .filter((link) => !/spacex\.com|x\.com\/spacex/i.test(link.url))
+            .filter(includeExternalLink)
             .slice(0, 4)
             .map((link, i) => (
             <a key={`ext-${i}`} href={link.url} target="_blank" rel="noopener noreferrer" className={styles.videoLink}>
@@ -353,54 +337,31 @@ function LaunchInfo({
   );
 }
 
-function LaunchCards({
-  launches,
-  onShowLaunchOnGlobe,
-}: {
-  launches: Launch[];
-  onShowLaunchOnGlobe?: (launch: Launch) => void;
-}) {
+function LaunchCards({ launches }: { launches: Launch[] }) {
   return (
     <div className={styles.launchList}>
       {launches.map((launch, i) => (
-        <LaunchInfo
-          key={launch.id}
-          launch={launch}
-          isNext={i === 0}
-          onShowLaunchOnGlobe={onShowLaunchOnGlobe}
-        />
+        <LaunchInfo key={launch.id} launch={launch} isNext={i === 0} />
       ))}
     </div>
   );
 }
 
-function LaunchLocationInfo({
-  launches,
-  onShowLaunchOnGlobe,
-}: {
-  launches: Launch[];
-  onShowLaunchOnGlobe?: (launch: Launch) => void;
-}) {
+function LaunchLocationInfo({ launches }: { launches: Launch[] }) {
   const locationName = locationOnly(launches[0]?.padLocation || launches[0]?.padName || 'Launch site');
 
   return (
     <div className={styles.infoPanelBody}>
       <div className={styles.siteLabel}>{locationName}</div>
-      <LaunchCards launches={launches} onShowLaunchOnGlobe={onShowLaunchOnGlobe} />
+      <LaunchCards launches={launches} />
     </div>
   );
 }
 
-function UpcomingLaunchesInfo({
-  launches,
-  onShowLaunchOnGlobe,
-}: {
-  launches: Launch[];
-  onShowLaunchOnGlobe?: (launch: Launch) => void;
-}) {
+function UpcomingLaunchesInfo({ launches }: { launches: Launch[] }) {
   return (
     <div className={styles.infoPanelBody}>
-      <LaunchCards launches={launches} onShowLaunchOnGlobe={onShowLaunchOnGlobe} />
+      <LaunchCards launches={launches} />
     </div>
   );
 }
@@ -412,7 +373,6 @@ export default function InfoPanel({
   upcomingLaunches,
   globeId = 'earth',
   onClose,
-  onShowLaunchOnGlobe,
 }: InfoPanelProps) {
   const hasLaunchSelection = !!(launches && launches.length > 0);
   const hasSatelliteSelection = !!satellite;
@@ -442,10 +402,10 @@ export default function InfoPanel({
         {satellite && <SatelliteInfo sat={satellite} />}
         {!satellite && orbiter && <OrbiterInfo orb={orbiter} />}
         {!satellite && !orbiter && hasLaunchSelection && launches && (
-          <LaunchLocationInfo launches={launches} onShowLaunchOnGlobe={onShowLaunchOnGlobe} />
+          <LaunchLocationInfo launches={launches} />
         )}
         {!satellite && !orbiter && !hasLaunchSelection && upcomingLaunches.length > 0 && (
-          <UpcomingLaunchesInfo launches={upcomingLaunches} onShowLaunchOnGlobe={onShowLaunchOnGlobe} />
+          <UpcomingLaunchesInfo launches={upcomingLaunches} />
         )}
         {isUpcomingOnly && upcomingLaunches.length === 0 && (
           <div className={styles.infoPanelBody}>
