@@ -1,8 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type MouseEvent } from 'react';
 import styles from '../../styles/Globe.module.css';
 import { SatellitePosition } from '../../lib/satellites';
 import { OrbiterPosition } from '../../lib/orbiters';
 import { Launch, formatLaunchDate, getLaunchStatusColor, getCountdown } from '../../lib/launches';
+import {
+  youtubeVideoId,
+  youtubeThumbnailUrl,
+  videoPreviewKind,
+} from '../../lib/launchMedia';
 
 interface InfoPanelProps {
   satellite: SatellitePosition | null;
@@ -13,6 +18,7 @@ interface InfoPanelProps {
   globeId?: string;
   onClose: () => void;
   onExpandUpcoming?: () => void;
+  onShowLaunchOnGlobe?: (launch: Launch) => void;
 }
 
 
@@ -175,46 +181,156 @@ function LaunchInfo({
   isNext,
   isExpanded,
   onToggle,
+  onShowLaunchOnGlobe,
 }: {
   launch: Launch;
   isNext?: boolean;
   isExpanded: boolean;
   onToggle: () => void;
+  onShowLaunchOnGlobe?: (launch: Launch) => void;
 }) {
   const statusColor = getLaunchStatusColor(launch.status);
+  const [inlineYoutubeId, setInlineYoutubeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isExpanded) setInlineYoutubeId(null);
+  }, [isExpanded]);
+
+  const vids = (launch.vidUrls || []).filter((v) => !/go for launch/i.test(v.title || ''));
+  const ytPreviews = vids
+    .map((v) => ({ v, id: youtubeVideoId(v.url) }))
+    .filter((x): x is { v: (typeof vids)[0]; id: string } => !!x.id)
+    .slice(0, 3);
+  const xUrlSeen = new Set<string>();
+  const xPreviews: { url: string; title?: string; isLive?: boolean }[] = [];
+  for (const v of vids) {
+    if (videoPreviewKind(v.url) !== 'x' || xUrlSeen.has(v.url)) continue;
+    xUrlSeen.add(v.url);
+    xPreviews.push({ url: v.url, title: v.title, isLive: v.isLive });
+  }
+  for (const link of launch.externalLinks || []) {
+    if (videoPreviewKind(link.url) !== 'x' || xUrlSeen.has(link.url)) continue;
+    xUrlSeen.add(link.url);
+    xPreviews.push({ url: link.url, title: link.title });
+  }
+  const xPreviewsShown = xPreviews.slice(0, 2);
+
+  const openYtInline = (id: string, e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setInlineYoutubeId((cur) => (cur === id ? null : id));
+    if (!isExpanded) onToggle();
+  };
 
   return (
-    <div
-      className={styles.launchCard}
-      role="button"
-      tabIndex={0}
-      onClick={onToggle}
-      onKeyDown={(e) => e.key === 'Enter' && onToggle()}
-    >
-      <div className={styles.launchCardHeader}>
-        <span className={styles.launchName}>{launch.name}</span>
-      </div>
-      {isNext ? (
-        <div className={styles.countdownBlock}>
-          <CountdownDisplay net={launch.net} />
+    <div className={styles.launchCard}>
+      <div
+        className={styles.launchCardMain}
+        role="button"
+        tabIndex={0}
+        onClick={onToggle}
+        onKeyDown={(e) => e.key === 'Enter' && onToggle()}
+      >
+        {(launch.image || ytPreviews.length > 0 || xPreviewsShown.length > 0) && (
+          <div className={styles.launchMediaStrip}>
+            {launch.image && (
+              <div className={styles.launchMediaHero}>
+                <img src={launch.image} alt="" className={styles.launchHeroImg} loading="lazy" />
+              </div>
+            )}
+            {ytPreviews.map(({ v, id }) => (
+              <button
+                key={v.url}
+                type="button"
+                className={styles.launchYtThumb}
+                onClick={(e) => openYtInline(id, e)}
+                title={v.title || 'YouTube'}
+              >
+                <img src={youtubeThumbnailUrl(id)} alt="" loading="lazy" />
+                <span className={styles.launchYtPlay}>▶</span>
+              </button>
+            ))}
+            {xPreviewsShown.map((v) => (
+              <a
+                key={v.url}
+                href={v.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.launchXThumb}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className={styles.launchXMark}>𝕏</span>
+                <span className={styles.launchXLabel}>
+                  {v.isLive ? 'Live on X' : v.title?.slice(0, 40) || 'Open on X'}
+                </span>
+              </a>
+            ))}
+          </div>
+        )}
+
+        <div className={styles.launchCardHeader}>
+          {isNext && <span className={styles.nextBadge}>NEXT</span>}
+          <span className={styles.launchName}>{launch.name}</span>
+          <span className={styles.expandIcon} aria-hidden>{isExpanded ? '▼' : '▶'}</span>
         </div>
-      ) : (
-        <div className={styles.launchDate}>{formatLaunchDate(launch.net)}</div>
+        {isNext ? (
+          <div className={styles.countdownBlock}>
+            <CountdownDisplay net={launch.net} />
+          </div>
+        ) : (
+          <div className={styles.launchDate}>{formatLaunchDate(launch.net)}</div>
+        )}
+        {launch.padLocation && (
+          <div className={styles.launchMeta}>{locationOnly(launch.padLocation)}</div>
+        )}
+        <div className={styles.launchQuickFacts}>
+          <span>{launch.rocket}</span>
+          <span className={styles.launchQuickDot}>·</span>
+          <span>{launch.provider}</span>
+        </div>
+      </div>
+
+      {launch.lat != null && launch.lng != null && onShowLaunchOnGlobe && (
+        <button
+          type="button"
+          className={styles.launchGlobeBtn}
+          onClick={(e) => {
+            e.stopPropagation();
+            onShowLaunchOnGlobe(launch);
+          }}
+        >
+          Globe
+        </button>
       )}
-      {launch.padLocation && (
-        <div className={styles.launchMeta}>{locationOnly(launch.padLocation)}</div>
+
+      {inlineYoutubeId && (
+        <div className={styles.launchEmbedWrap} onClick={(e) => e.stopPropagation()}>
+          <iframe
+            title="Webcast"
+            src={`https://www.youtube.com/embed/${inlineYoutubeId}`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className={styles.launchEmbedIframe}
+          />
+        </div>
       )}
+
       {isExpanded && (
         <div className={styles.launchDetails}>
           <div className={styles.dataField}>
             <span className={styles.dataLabel}>Status</span>
             <span className={styles.dataValue} style={{ color: statusColor }}>{launch.status}</span>
           </div>
+          {!!launch.orbitName && (
+            <div className={styles.dataField}>
+              <span className={styles.dataLabel}>Target orbit</span>
+              <span className={styles.dataValue}>{launch.orbitName}</span>
+            </div>
+          )}
           {!!launch.missionDescription && (
             <div className={styles.dataField}>
               <span className={styles.dataLabel}>Mission</span>
               <span className={styles.dataValue}>
-                {launch.missionDescription.split(/[.!?]/)[0]?.trim() || launch.missionDescription.slice(0, 120)}
+                {launch.missionDescription.split(/[.!?]/)[0]?.trim() || launch.missionDescription.slice(0, 160)}
               </span>
             </div>
           )}
@@ -224,13 +340,15 @@ function LaunchInfo({
         <div className={styles.videoLinks} onClick={(e) => e.stopPropagation()}>
           {launch.vidUrls
             .filter((v) => !/go for launch/i.test(v.title || ''))
-            .slice(0, 2)
+            .slice(0, 4)
             .map((v, i) => {
-            const isYt = (v.source || v.url || '').toLowerCase().includes('youtube');
-            const label = v.title || (v.isLive ? 'Livestream' : (isYt ? 'YouTube' : 'Watch'));
+            const kind = videoPreviewKind(v.url);
+            const isYt = kind === 'youtube';
+            const label =
+              v.title || (v.isLive ? 'Livestream' : (isYt ? 'YouTube' : kind === 'x' ? 'X' : 'Watch'));
             return (
               <a key={i} href={v.url} target="_blank" rel="noopener noreferrer" className={styles.videoLink}>
-                <span>{isYt ? '▶' : '🔗'}</span> {label}
+                <span>{isYt ? '▶' : kind === 'x' ? '𝕏' : '🔗'}</span> {label}
               </a>
             );
           })}
@@ -240,7 +358,7 @@ function LaunchInfo({
         <div className={styles.videoLinks} onClick={(e) => e.stopPropagation()}>
           {launch.externalLinks
             .filter((link) => !/spacex\.com|x\.com\/spacex/i.test(link.url))
-            .slice(0, 2)
+            .slice(0, 4)
             .map((link, i) => (
             <a key={`ext-${i}`} href={link.url} target="_blank" rel="noopener noreferrer" className={styles.videoLink}>
               <span>🌐</span> {link.title}
@@ -252,7 +370,13 @@ function LaunchInfo({
   );
 }
 
-function LaunchCards({ launches }: { launches: Launch[] }) {
+function LaunchCards({
+  launches,
+  onShowLaunchOnGlobe,
+}: {
+  launches: Launch[];
+  onShowLaunchOnGlobe?: (launch: Launch) => void;
+}) {
   const [expandedId, setExpandedId] = useState<string | null>(launches[0]?.id || null);
   useEffect(() => {
     setExpandedId(launches[0]?.id || null);
@@ -266,32 +390,55 @@ function LaunchCards({ launches }: { launches: Launch[] }) {
           isNext={i === 0}
           isExpanded={expandedId === launch.id}
           onToggle={() => setExpandedId(expandedId === launch.id ? null : launch.id)}
+          onShowLaunchOnGlobe={onShowLaunchOnGlobe}
         />
       ))}
     </div>
   );
 }
 
-function LaunchLocationInfo({ launches }: { launches: Launch[] }) {
+function LaunchLocationInfo({
+  launches,
+  onShowLaunchOnGlobe,
+}: {
+  launches: Launch[];
+  onShowLaunchOnGlobe?: (launch: Launch) => void;
+}) {
   const locationName = locationOnly(launches[0]?.padLocation || launches[0]?.padName || 'Launch site');
 
   return (
     <div className={styles.infoPanelBody}>
       <div className={styles.siteLabel}>{locationName}</div>
-      <LaunchCards launches={launches} />
+      <LaunchCards launches={launches} onShowLaunchOnGlobe={onShowLaunchOnGlobe} />
     </div>
   );
 }
 
-function UpcomingLaunchesInfo({ launches }: { launches: Launch[] }) {
+function UpcomingLaunchesInfo({
+  launches,
+  onShowLaunchOnGlobe,
+}: {
+  launches: Launch[];
+  onShowLaunchOnGlobe?: (launch: Launch) => void;
+}) {
   return (
     <div className={styles.infoPanelBody}>
-      <LaunchCards launches={launches} />
+      <LaunchCards launches={launches} onShowLaunchOnGlobe={onShowLaunchOnGlobe} />
     </div>
   );
 }
 
-export default function InfoPanel({ satellite, orbiter, launches, upcomingLaunches, showUpcomingPanel = true, globeId = 'earth', onClose, onExpandUpcoming }: InfoPanelProps) {
+export default function InfoPanel({
+  satellite,
+  orbiter,
+  launches,
+  upcomingLaunches,
+  showUpcomingPanel = true,
+  globeId = 'earth',
+  onClose,
+  onExpandUpcoming,
+  onShowLaunchOnGlobe,
+}: InfoPanelProps) {
   const hasLaunchSelection = !!(launches && launches.length > 0);
   const hasSatelliteSelection = !!satellite;
   const hasOrbiterSelection = !!orbiter;
@@ -322,9 +469,11 @@ export default function InfoPanel({ satellite, orbiter, launches, upcomingLaunch
       </div>
       {satellite && <SatelliteInfo sat={satellite} />}
       {!satellite && orbiter && <OrbiterInfo orb={orbiter} />}
-      {!satellite && !orbiter && hasLaunchSelection && launches && <LaunchLocationInfo launches={launches} />}
+      {!satellite && !orbiter && hasLaunchSelection && launches && (
+        <LaunchLocationInfo launches={launches} onShowLaunchOnGlobe={onShowLaunchOnGlobe} />
+      )}
       {!satellite && !orbiter && !hasLaunchSelection && upcomingLaunches.length > 0 && (
-        <UpcomingLaunchesInfo launches={upcomingLaunches} />
+        <UpcomingLaunchesInfo launches={upcomingLaunches} onShowLaunchOnGlobe={onShowLaunchOnGlobe} />
       )}
       {isUpcomingOnly && upcomingLaunches.length === 0 && globeId !== 'earth' && (
         <div className={styles.infoPanelBody}>

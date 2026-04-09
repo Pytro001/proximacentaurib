@@ -83,6 +83,10 @@ export interface ParseSatelliteOptions {
   excludeDebris?: boolean;
 }
 
+export function clearSatelliteCatalog(): void {
+  parsedSatellites = [];
+}
+
 export function parseSatelliteData(
   records: satellite.OMMJsonObject[],
   options?: ParseSatelliteOptions

@@ -4,6 +4,9 @@ interface ControlsPanelProps {
   satelliteCount: number;
   launchSiteCount: number;
   mode?: 'earth' | 'orbiter';
+  satellitesEnabled: boolean;
+  onSatellitesEnabledChange: (enabled: boolean) => void;
+  satellitesLoading?: boolean;
 }
 
 const LEGEND_ITEMS: [string, string][] = [
@@ -26,6 +29,9 @@ export default function ControlsPanel({
   satelliteCount,
   launchSiteCount,
   mode = 'earth',
+  satellitesEnabled,
+  onSatellitesEnabledChange,
+  satellitesLoading = false,
 }: ControlsPanelProps) {
   return (
     <div className={styles.controlsWrap}>
@@ -39,6 +45,24 @@ export default function ControlsPanel({
           <span className={styles.infoCardValue}>{launchSiteCount}</span>
         </div>
       </div>
+      {mode !== 'orbiter' && (
+        <div className={styles.satelliteToggleRow}>
+          <span className={styles.satelliteToggleLabel} title="Loads full CelesTrak catalog (~heavy). Off by default for faster startup.">
+            Satellites
+          </span>
+          <label className={styles.toggle}>
+            <input
+              type="checkbox"
+              className={styles.toggleInput}
+              checked={satellitesEnabled}
+              disabled={satellitesLoading}
+              onChange={(e) => onSatellitesEnabledChange(e.target.checked)}
+            />
+            <span className={styles.toggleSlider} />
+          </label>
+          {satellitesLoading && <span className={styles.satToggleSpinner} aria-hidden />}
+        </div>
+      )}
       {mode !== 'orbiter' && (
         <div className={styles.legend}>
           {LEGEND_ITEMS.map(([color, label]) => (

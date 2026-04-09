@@ -8,6 +8,7 @@ interface SearchResultsPanelProps {
   query: string;
   results: SearchResult[];
   isLoading?: boolean;
+  satellitesEnabled?: boolean;
   onSelect: (result: SearchResult) => void;
   onClose: () => void;
 }
@@ -16,6 +17,7 @@ export default function SearchResultsPanel({
   query,
   results,
   isLoading = false,
+  satellitesEnabled = true,
   onSelect,
   onClose,
 }: SearchResultsPanelProps) {
@@ -38,9 +40,13 @@ export default function SearchResultsPanel({
       </div>
       <div className={styles.searchResultsList}>
         {isLoading ? (
-          <p className={styles.searchResultsEmpty}>Loading satellite data...</p>
+          <p className={styles.searchResultsEmpty}>Loading...</p>
         ) : results.length === 0 ? (
-          <p className={styles.searchResultsEmpty}>No satellites found</p>
+          <p className={styles.searchResultsEmpty}>
+            {!satellitesEnabled
+              ? 'No matches. Turn on Satellites (bottom-left) to search Earth orbit, or open Moon/Mars for orbiters.'
+              : 'No matches for this search.'}
+          </p>
         ) : (
           results.map((r) => (
             <button

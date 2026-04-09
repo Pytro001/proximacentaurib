@@ -6,6 +6,7 @@ import { century, equationOfTime, declination } from 'solar-calculator';
 import {
   SatellitePosition,
   SatelliteOrbitPath,
+  clearSatelliteCatalog,
   parseSatelliteData,
   propagatePositions,
   computeOrbitPath,
@@ -346,7 +347,10 @@ function generateNightPolygon(date: Date) {
 
 export default function SpaceGlobe() {
   const globeRef = useRef<GlobeMethods>();
-  const [isLoading, setIsLoading] = useState(true);
+  const [launchDataLoading, setLaunchDataLoading] = useState(true);
+  const [loadSatellites, setLoadSatellites] = useState(false);
+  const [satellitesLoading, setSatellitesLoading] = useState(false);
+  const [highlightPadKey, setHighlightPadKey] = useState<string | null>(null);
   const [satellitePositions, setSatellitePositions] = useState<SatellitePosition[]>([]);
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedSatellite, setSelectedSatellite] = useState<SatellitePosition | null>(null);
@@ -379,45 +383,62 @@ export default function SpaceGlobe() {
 
   useEffect(() => {
     let cancelled = false;
-
-    async function loadData() {
-      setIsLoading(true);
+    (async () => {
+      setLaunchDataLoading(true);
       try {
-        const [satData, launchData] = await Promise.all([
-          fetchSatelliteData('full'),
-          fetchLaunches(),
-        ]);
-
+        const launchData = await fetchLaunches();
         if (cancelled) return;
-
-        if (satData?.length > 0) {
-          parseSatelliteData(satData, { excludeDebris: false });
-          setSatellitePositions(propagatePositions(new Date()));
-          setSelectedSatellite(null);
-          setShowUpcomingPanel(false);
-        } else {
-          setSatellitePositions([]);
-        }
-
         const validLaunches = (launchData || []).filter(
           (l: Launch) => l.lat != null && l.lng != null
         );
         setLaunches(validLaunches);
       } catch (err) {
-        console.error('Globe data load error:', err);
+        console.error('Launch data load error:', err);
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) setLaunchDataLoading(false);
       }
-    }
-
-    loadData();
+    })();
     return () => {
       cancelled = true;
     };
   }, []);
 
   useEffect(() => {
-    if (selectedGlobeId !== 'earth') return;
+    if (loadSatellites) return;
+    clearSatelliteCatalog();
+    setSatellitePositions([]);
+    setSelectedSatellite(null);
+  }, [loadSatellites]);
+
+  useEffect(() => {
+    if (!loadSatellites) return;
+    let cancelled = false;
+    (async () => {
+      setSatellitesLoading(true);
+      try {
+        const satData = await fetchSatelliteData('full');
+        if (cancelled) return;
+        if (satData?.length > 0) {
+          parseSatelliteData(satData, { excludeDebris: false });
+          setSatellitePositions(propagatePositions(new Date()));
+          setSelectedSatellite(null);
+        } else {
+          setSatellitePositions([]);
+        }
+      } catch (err) {
+        console.error('Satellite catalog load error:', err);
+        if (!cancelled) setSatellitePositions([]);
+      } finally {
+        if (!cancelled) setSatellitesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadSatellites]);
+
+  useEffect(() => {
+    if (!loadSatellites || selectedGlobeId !== 'earth') return;
 
     let rafId: number;
     let lastPropTime = 0;
@@ -467,7 +488,7 @@ export default function SpaceGlobe() {
     rafId = requestAnimationFrame(tick);
 
     return () => cancelAnimationFrame(rafId);
-  }, [selectedGlobeId]);
+  }, [loadSatellites, selectedGlobeId]);
 
   useEffect(() => {
     if (selectedGlobeId === 'earth') {
@@ -614,6 +635,7 @@ export default function SpaceGlobe() {
   const handleSatelliteClick = useCallback(
     (point: object) => {
       const sat = point as SatellitePosition;
+      setHighlightPadKey(null);
       setSelectedSatellite(sat);
       setSelectedOrbiter(null);
       setSelectedLaunches(null);
@@ -625,6 +647,7 @@ export default function SpaceGlobe() {
   const handleOrbiterClick = useCallback(
     (point: object) => {
       const orb = point as OrbiterPosition;
+      setHighlightPadKey(null);
       setSelectedOrbiter(orb);
       setSelectedSatellite(null);
       setSelectedLaunches(null);
@@ -641,7 +664,10 @@ export default function SpaceGlobe() {
 
   const handleLaunchClick = useCallback(
     (point: object) => {
-      const loc = point as { lat: number; lng: number; launches: Launch[] };
+      const loc = point as { lat: number; lng: number; padKey?: string; launches: Launch[] };
+      const pk =
+        loc.padKey ?? `${Number(loc.lat).toFixed(3)}_${Number(loc.lng).toFixed(3)}`;
+      setHighlightPadKey(pk);
       setSelectedLaunches(loc?.launches || null);
       setSelectedSatellite(null);
       setSelectedOrbiter(null);
@@ -650,7 +676,37 @@ export default function SpaceGlobe() {
     []
   );
 
+  const handleShowLaunchOnGlobe = useCallback(
+    (launch: Launch) => {
+      if (launch.lat == null || launch.lng == null) return;
+      setSelectedGlobeId('earth');
+      const pk = `${launch.lat.toFixed(3)}_${launch.lng.toFixed(3)}`;
+      setHighlightPadKey(pk);
+      setSelectedSatellite(null);
+      setSelectedOrbiter(null);
+
+      const atPad = launches.filter(
+        (l) =>
+          l.lat != null &&
+          l.lng != null &&
+          l.lat.toFixed(3) === launch.lat!.toFixed(3) &&
+          l.lng.toFixed(3) === launch.lng!.toFixed(3)
+      );
+      setSelectedLaunches(atPad.length > 0 ? atPad : [launch]);
+      setShowUpcomingPanel(true);
+
+      requestAnimationFrame(() => {
+        const globe = globeRef.current;
+        if (globe && typeof globe.pointOfView === 'function') {
+          globe.pointOfView({ lat: launch.lat!, lng: launch.lng!, altitude: 0.72 }, 1400);
+        }
+      });
+    },
+    [launches]
+  );
+
   const handleClosePanel = useCallback(() => {
+    setHighlightPadKey(null);
     setSelectedSatellite(null);
     setSelectedOrbiter(null);
     setSelectedLaunches(null);
@@ -661,12 +717,14 @@ export default function SpaceGlobe() {
     const q = searchQuery.trim();
     if (q.length < 2) return [];
     const lower = q.toLowerCase();
-    const earthResults = searchSatellites(q).map((s) => ({
-      type: 'satellite' as const,
-      noradId: s.noradId,
-      name: s.name,
-      category: s.category,
-    }));
+    const earthResults = loadSatellites
+      ? searchSatellites(q).map((s) => ({
+          type: 'satellite' as const,
+          noradId: s.noradId,
+          name: s.name,
+          category: s.category,
+        }))
+      : [];
     const moonOrbiters = selectedGlobeId === 'moon' ? orbiterPositions : getMoonOrbiters(new Date());
     const marsOrbiters = selectedGlobeId === 'mars' ? orbiterPositions : getMarsOrbiters(new Date());
     const orbiterResults = [
@@ -692,13 +750,14 @@ export default function SpaceGlobe() {
       })),
     ].slice(0, 15);
     return [...earthResults, ...orbiterResults].slice(0, 30);
-  }, [searchQuery, selectedGlobeId, orbiterPositions]);
+  }, [searchQuery, selectedGlobeId, orbiterPositions, loadSatellites]);
 
   const handleSearchSelect = useCallback(
     (result: SearchResult) => {
       if (result.type === 'satellite') {
         const sat = satellitePositions.find((s) => s.noradId === result.noradId);
         if (sat) {
+          setHighlightPadKey(null);
           setSelectedSatellite(sat);
           setSelectedLaunches(null);
           setShowUpcomingPanel(true);
@@ -709,6 +768,7 @@ export default function SpaceGlobe() {
           }
         }
       } else {
+        setHighlightPadKey(null);
         setSelectedGlobeId(result.body);
         const orbiters = result.body === 'moon' ? getMoonOrbiters(new Date()) : getMarsOrbiters(new Date());
         const orb = orbiters.find((o) => o.id === result.id);
@@ -730,7 +790,7 @@ export default function SpaceGlobe() {
         }, 600);
       }
     },
-    [satellitePositions, selectedGlobeId]
+    [satellitePositions, selectedGlobeId, loadSatellites]
   );
 
   const satPointsData = useMemo(() => {
@@ -756,12 +816,17 @@ export default function SpaceGlobe() {
       if (!byLoc.has(k)) byLoc.set(k, []);
       byLoc.get(k)!.push(l);
     }
-    return Array.from(byLoc.entries()).map(([_, launchList]) => ({
-      lat: launchList[0].lat!,
-      lng: launchList[0].lng!,
-      launches: launchList,
-      locationName: launchList[0].padLocation || launchList[0].padName || 'Launch site',
-    }));
+    return Array.from(byLoc.entries()).map(([_, launchList]) => {
+      const lat = launchList[0].lat!;
+      const lng = launchList[0].lng!;
+      return {
+        lat,
+        lng,
+        padKey: `${lat.toFixed(3)}_${lng.toFixed(3)}`,
+        launches: launchList,
+        locationName: launchList[0].padLocation || launchList[0].padName || 'Launch site',
+      };
+    });
   }, [launches]);
 
   const upcomingLaunches = useMemo(() => {
@@ -823,10 +888,14 @@ export default function SpaceGlobe() {
               <input
                 type="search"
                 className={styles.searchInput}
-                placeholder="Search satellites..."
+                placeholder={
+                  loadSatellites
+                    ? 'Search satellites & orbiters...'
+                    : 'Search orbiters (enable Satellites for Earth)...'
+                }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                aria-label="Search satellites"
+                aria-label="Search"
               />
               {searchQuery.trim().length >= 2 && (
                 <button
@@ -839,7 +908,7 @@ export default function SpaceGlobe() {
                 </button>
               )}
             </div>
-            {searchQuery.trim().length >= 2 && showEarthData && (
+            {searchQuery.trim().length >= 2 && showEarthData && loadSatellites && (
               <span className={styles.searchFilterBadge}>
                 {satPointsData.length} found
               </span>
@@ -852,6 +921,7 @@ export default function SpaceGlobe() {
                 if (isUpcomingOnly && showUpcomingPanel) {
                   setShowUpcomingPanel(false);
                 } else {
+                  setHighlightPadKey(null);
                   setSelectedSatellite(null);
                   setSelectedLaunches(null);
                   setSelectedOrbiter(null);
@@ -865,10 +935,10 @@ export default function SpaceGlobe() {
         </div>
       </header>
 
-      {isLoading && (
+      {launchDataLoading && (
         <div className={styles.loading}>
           <div className={styles.spinner} />
-          <p className={styles.loadingText}>Loading orbital data...</p>
+          <p className={styles.loadingText}>Loading launch schedule...</p>
         </div>
       )}
 
@@ -904,7 +974,9 @@ export default function SpaceGlobe() {
           pointsData={showEarthData ? launchPointsData : []}
           pointLat="lat"
           pointLng="lng"
-          pointColor={() => '#00c853'}
+          pointColor={(d: object) =>
+            (d as { padKey?: string }).padKey === highlightPadKey ? '#ff6d00' : '#00c853'
+          }
           pointAltitude={0.01}
           pointRadius={0.5}
           pointLabel={() => ''}
@@ -935,12 +1007,16 @@ export default function SpaceGlobe() {
         satelliteCount={showEarthData ? getSatelliteCount() : orbiterPositions.length}
         launchSiteCount={showEarthData ? launchPointsData.length : 0}
         mode={showOrbiterPanel ? 'orbiter' : 'earth'}
+        satellitesEnabled={loadSatellites}
+        onSatellitesEnabledChange={setLoadSatellites}
+        satellitesLoading={satellitesLoading}
       />
 
       <SearchResultsPanel
         query={searchQuery}
         results={searchResults}
-        isLoading={isLoading}
+        isLoading={launchDataLoading || (loadSatellites && satellitesLoading)}
+        satellitesEnabled={loadSatellites}
         onSelect={handleSearchSelect}
         onClose={() => setSearchQuery('')}
       />
@@ -954,6 +1030,7 @@ export default function SpaceGlobe() {
         globeId={selectedGlobeId}
         onClose={handleClosePanel}
         onExpandUpcoming={() => setShowUpcomingPanel(true)}
+        onShowLaunchOnGlobe={handleShowLaunchOnGlobe}
       />
 
       <a
