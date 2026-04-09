@@ -14,10 +14,8 @@ interface InfoPanelProps {
   orbiter: OrbiterPosition | null;
   launches: Launch[] | null;
   upcomingLaunches: Launch[];
-  showUpcomingPanel?: boolean;
   globeId?: string;
   onClose: () => void;
-  onExpandUpcoming?: () => void;
   onShowLaunchOnGlobe?: (launch: Launch) => void;
 }
 
@@ -179,22 +177,14 @@ function CountdownDisplay({ net }: { net: string }) {
 function LaunchInfo({
   launch,
   isNext,
-  isExpanded,
-  onToggle,
   onShowLaunchOnGlobe,
 }: {
   launch: Launch;
   isNext?: boolean;
-  isExpanded: boolean;
-  onToggle: () => void;
   onShowLaunchOnGlobe?: (launch: Launch) => void;
 }) {
   const statusColor = getLaunchStatusColor(launch.status);
   const [inlineYoutubeId, setInlineYoutubeId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isExpanded) setInlineYoutubeId(null);
-  }, [isExpanded]);
 
   const vids = (launch.vidUrls || []).filter((v) => !/go for launch/i.test(v.title || ''));
   const ytPreviews = vids
@@ -218,59 +208,54 @@ function LaunchInfo({
   const openYtInline = (id: string, e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     setInlineYoutubeId((cur) => (cur === id ? null : id));
-    if (!isExpanded) onToggle();
   };
 
-  return (
-    <div className={styles.launchCard}>
-      <div
-        className={styles.launchCardMain}
-        role="button"
-        tabIndex={0}
-        onClick={onToggle}
-        onKeyDown={(e) => e.key === 'Enter' && onToggle()}
-      >
-        {((isExpanded && launch.image) || ytPreviews.length > 0 || xPreviewsShown.length > 0) && (
-          <div className={styles.launchMediaStrip}>
-            {isExpanded && launch.image && (
-              <div className={styles.launchMediaHero}>
-                <img src={launch.image} alt="" className={styles.launchHeroImg} loading="lazy" />
-              </div>
-            )}
-            {ytPreviews.map(({ v, id }) => (
-              <button
-                key={v.url}
-                type="button"
-                className={styles.launchYtThumb}
-                onClick={(e) => openYtInline(id, e)}
-                title={v.title || 'YouTube'}
-              >
-                <img src={youtubeThumbnailUrl(id)} alt="" loading="lazy" />
-                <span className={styles.launchYtPlay}>▶</span>
-              </button>
-            ))}
-            {xPreviewsShown.map((v) => (
-              <a
-                key={v.url}
-                href={v.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.launchXThumb}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <span className={styles.launchXMark}>𝕏</span>
-                <span className={styles.launchXLabel}>
-                  {v.isLive ? 'Live on X' : v.title?.slice(0, 40) || 'Open on X'}
-                </span>
-              </a>
-            ))}
-          </div>
-        )}
+  const hasMediaStrip =
+    !!launch.image || ytPreviews.length > 0 || xPreviewsShown.length > 0;
 
+  return (
+    <div className={styles.launchFeedItem}>
+      {hasMediaStrip && (
+        <div className={styles.launchMediaStrip}>
+          {launch.image && (
+            <div className={styles.launchMediaHero}>
+              <img src={launch.image} alt="" className={styles.launchHeroImg} loading="lazy" />
+            </div>
+          )}
+          {ytPreviews.map(({ v, id }) => (
+            <button
+              key={v.url}
+              type="button"
+              className={styles.launchYtThumb}
+              onClick={(e) => openYtInline(id, e)}
+              title={v.title || 'YouTube'}
+            >
+              <img src={youtubeThumbnailUrl(id)} alt="" loading="lazy" />
+              <span className={styles.launchYtPlay}>▶</span>
+            </button>
+          ))}
+          {xPreviewsShown.map((v) => (
+            <a
+              key={v.url}
+              href={v.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.launchXThumb}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className={styles.launchXMark}>𝕏</span>
+              <span className={styles.launchXLabel}>
+                {v.isLive ? 'Live on X' : v.title?.slice(0, 40) || 'Open on X'}
+              </span>
+            </a>
+          ))}
+        </div>
+      )}
+
+      <div className={styles.launchFeedMain}>
         <div className={styles.launchCardHeader}>
           {isNext && <span className={styles.nextBadge}>NEXT</span>}
           <span className={styles.launchName}>{launch.name}</span>
-          <span className={styles.expandIcon} aria-hidden>{isExpanded ? '▼' : '▶'}</span>
         </div>
         {isNext ? (
           <div className={styles.countdownBlock}>
@@ -314,29 +299,27 @@ function LaunchInfo({
         </div>
       )}
 
-      {isExpanded && (
-        <div className={styles.launchDetails}>
-          <div className={styles.dataField}>
-            <span className={styles.dataLabel}>Status</span>
-            <span className={styles.dataValue} style={{ color: statusColor }}>{launch.status}</span>
-          </div>
-          {!!launch.orbitName && (
-            <div className={styles.dataField}>
-              <span className={styles.dataLabel}>Target orbit</span>
-              <span className={styles.dataValue}>{launch.orbitName}</span>
-            </div>
-          )}
-          {!!launch.missionDescription && (
-            <div className={styles.dataField}>
-              <span className={styles.dataLabel}>Mission</span>
-              <span className={styles.dataValue}>
-                {launch.missionDescription.split(/[.!?]/)[0]?.trim() || launch.missionDescription.slice(0, 160)}
-              </span>
-            </div>
-          )}
+      <div className={styles.detailBlock}>
+        <div className={styles.dataField}>
+          <span className={styles.dataLabel}>Status</span>
+          <span className={styles.dataValue} style={{ color: statusColor }}>{launch.status}</span>
         </div>
-      )}
-      {isExpanded && launch.vidUrls && launch.vidUrls.length > 0 && (
+        {!!launch.orbitName && (
+          <div className={styles.dataField}>
+            <span className={styles.dataLabel}>Target orbit</span>
+            <span className={styles.dataValue}>{launch.orbitName}</span>
+          </div>
+        )}
+        {!!launch.missionDescription && (
+          <div className={styles.dataField}>
+            <span className={styles.dataLabel}>Mission</span>
+            <span className={styles.dataValue}>
+              {launch.missionDescription.split(/[.!?]/)[0]?.trim() || launch.missionDescription.slice(0, 160)}
+            </span>
+          </div>
+        )}
+      </div>
+      {launch.vidUrls && launch.vidUrls.length > 0 && (
         <div className={styles.videoLinks} onClick={(e) => e.stopPropagation()}>
           {launch.vidUrls
             .filter((v) => !/go for launch/i.test(v.title || ''))
@@ -354,7 +337,7 @@ function LaunchInfo({
           })}
         </div>
       )}
-      {isExpanded && launch.externalLinks && launch.externalLinks.length > 0 && (
+      {launch.externalLinks && launch.externalLinks.length > 0 && (
         <div className={styles.videoLinks} onClick={(e) => e.stopPropagation()}>
           {launch.externalLinks
             .filter((link) => !/spacex\.com|x\.com\/spacex/i.test(link.url))
@@ -377,10 +360,6 @@ function LaunchCards({
   launches: Launch[];
   onShowLaunchOnGlobe?: (launch: Launch) => void;
 }) {
-  const [expandedId, setExpandedId] = useState<string | null>(launches[0]?.id || null);
-  useEffect(() => {
-    setExpandedId(launches[0]?.id || null);
-  }, [launches]);
   return (
     <div className={styles.launchList}>
       {launches.map((launch, i) => (
@@ -388,8 +367,6 @@ function LaunchCards({
           key={launch.id}
           launch={launch}
           isNext={i === 0}
-          isExpanded={expandedId === launch.id}
-          onToggle={() => setExpandedId(expandedId === launch.id ? null : launch.id)}
           onShowLaunchOnGlobe={onShowLaunchOnGlobe}
         />
       ))}
@@ -433,21 +410,14 @@ export default function InfoPanel({
   orbiter,
   launches,
   upcomingLaunches,
-  showUpcomingPanel = true,
   globeId = 'earth',
   onClose,
-  onExpandUpcoming,
   onShowLaunchOnGlobe,
 }: InfoPanelProps) {
   const hasLaunchSelection = !!(launches && launches.length > 0);
   const hasSatelliteSelection = !!satellite;
   const hasOrbiterSelection = !!orbiter;
-  const isUpcomingOnly = !hasSatelliteSelection && !hasOrbiterSelection && !hasLaunchSelection && showUpcomingPanel;
-  const isOpen =
-    hasSatelliteSelection
-    || hasOrbiterSelection
-    || hasLaunchSelection
-    || isUpcomingOnly;
+  const isUpcomingOnly = !hasSatelliteSelection && !hasOrbiterSelection && !hasLaunchSelection;
   const title = satellite?.name
     || orbiter?.name
     || (hasLaunchSelection
@@ -457,7 +427,7 @@ export default function InfoPanel({
   const bodyLabel = globeId === 'moon' ? 'Moon' : globeId === 'mars' ? 'Mars' : '';
 
   return (
-    <div className={`${styles.infoPanel} ${isOpen ? styles.infoPanelOpen : ''}`}>
+    <div className={styles.infoPanel}>
       <div className={styles.infoPanelHeader}>
         <div className={styles.infoPanelTitleWrap}>
           <h2 className={styles.infoPanelTitle}>{isUpcomingOnly ? 'Upcoming' : title}</h2>
@@ -465,7 +435,7 @@ export default function InfoPanel({
             <span className={styles.upcomingBadge}>{upcomingLaunches.length}</span>
           )}
         </div>
-        {isOpen && !isUpcomingOnly && (
+        {!isUpcomingOnly && (
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
             −
           </button>

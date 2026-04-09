@@ -102,7 +102,16 @@ const GLOBE_CONFIGS = [
 
 const GlobeGL = dynamic(() => import('react-globe.gl'), { ssr: false });
 
+const SIDEBAR_WIDTH_PX = 380;
+const STAGE_BREAKPOINT = 900;
+
 const EARTH_RADIUS_KM = 6371;
+
+function headerHeightForWidth(width: number): number {
+  if (width <= 480) return 56;
+  if (width <= 768) return 64;
+  return 72;
+}
 const LAUNCH_POINT_SIZE = 0.6;
 
 const satMaterialCache: Record<string, THREE.MeshBasicMaterial> = {};
@@ -359,7 +368,6 @@ export default function SpaceGlobe() {
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [selectedSatellite, setSelectedSatellite] = useState<SatellitePosition | null>(null);
   const [selectedLaunches, setSelectedLaunches] = useState<Launch[] | null>(null);
-  const [showUpcomingPanel, setShowUpcomingPanel] = useState(true);
   const [selectedGlobeId, setSelectedGlobeId] = useState<string>('earth');
   const [searchQuery, setSearchQuery] = useState('');
   const [orbiterPositions, setOrbiterPositions] = useState<OrbiterPosition[]>([]);
@@ -676,7 +684,6 @@ export default function SpaceGlobe() {
       setSelectedSatellite(sat);
       setSelectedOrbiter(null);
       setSelectedLaunches(null);
-      setShowUpcomingPanel(true);
     },
     []
   );
@@ -688,7 +695,6 @@ export default function SpaceGlobe() {
       setSelectedOrbiter(orb);
       setSelectedSatellite(null);
       setSelectedLaunches(null);
-      setShowUpcomingPanel(true);
       const globe = globeRef.current;
       if (globe && typeof globe.pointOfView === 'function') {
         const bodyRadius = orb.body === 'moon' ? MOON_RADIUS_KM : MARS_RADIUS_KM;
@@ -708,7 +714,6 @@ export default function SpaceGlobe() {
       setSelectedLaunches(loc?.launches || null);
       setSelectedSatellite(null);
       setSelectedOrbiter(null);
-      setShowUpcomingPanel(true);
     },
     []
   );
@@ -730,7 +735,6 @@ export default function SpaceGlobe() {
           l.lng.toFixed(3) === launch.lng!.toFixed(3)
       );
       setSelectedLaunches(atPad.length > 0 ? atPad : [launch]);
-      setShowUpcomingPanel(true);
 
       requestAnimationFrame(() => {
         const globe = globeRef.current;
@@ -747,7 +751,6 @@ export default function SpaceGlobe() {
     setSelectedSatellite(null);
     setSelectedOrbiter(null);
     setSelectedLaunches(null);
-    setShowUpcomingPanel(false);
   }, []);
 
   const searchResults = useMemo(() => {
@@ -797,7 +800,6 @@ export default function SpaceGlobe() {
           setHighlightPadKey(null);
           setSelectedSatellite(sat);
           setSelectedLaunches(null);
-          setShowUpcomingPanel(true);
           if (selectedGlobeId !== 'earth') setSelectedGlobeId('earth');
           const globe = globeRef.current;
           if (globe && typeof globe.pointOfView === 'function') {
@@ -812,7 +814,6 @@ export default function SpaceGlobe() {
         if (orb) {
           setSelectedOrbiter(orb);
           setSelectedSatellite(null);
-          setShowUpcomingPanel(true);
         }
         const alt =
           result.body === 'moon'
@@ -912,10 +913,17 @@ export default function SpaceGlobe() {
     satellitePositions.length,
   ]);
 
+  const isDesktopStage = dimensions.width >= STAGE_BREAKPOINT;
+  const headerH = headerHeightForWidth(dimensions.width);
+  const belowHeader = dimensions.height - headerH;
+  const mobileSidebarH = Math.min(Math.round(belowHeader * 0.38), 400);
+  const globeWidth = isDesktopStage ? dimensions.width - SIDEBAR_WIDTH_PX : dimensions.width;
+  const globeHeight = isDesktopStage ? dimensions.height : belowHeader - mobileSidebarH;
+
   if (dimensions.width === 0) return null;
 
   return (
-    <>
+    <div className={styles.spaceRoot}>
       <header className={styles.topNav}>
         <div className={styles.topNavInner}>
           <div className={styles.navLeft}>
@@ -972,24 +980,6 @@ export default function SpaceGlobe() {
                 {satPointsData.length} found
               </span>
             )}
-            <button
-              className={styles.navUpcomingBtn}
-              type="button"
-              onClick={() => {
-                const isUpcomingOnly = !selectedSatellite && !selectedLaunches && !selectedOrbiter;
-                if (isUpcomingOnly && showUpcomingPanel) {
-                  setShowUpcomingPanel(false);
-                } else {
-                  setHighlightPadKey(null);
-                  setSelectedSatellite(null);
-                  setSelectedLaunches(null);
-                  setSelectedOrbiter(null);
-                  setShowUpcomingPanel(true);
-                }
-              }}
-            >
-              Upcoming
-            </button>
           </div>
         </div>
       </header>
@@ -1001,75 +991,87 @@ export default function SpaceGlobe() {
         </div>
       )}
 
-      <div className={styles.globeWrap}>
-        <GlobeGL
-          key={selectedGlobeId}
-          ref={globeRef}
-          rendererConfig={rendererConfig}
-          width={dimensions.width}
-          height={dimensions.height}
-          backgroundColor="rgba(0,0,0,0)"
-          globeImageUrl={useDayNight && dayNightMaterial ? null : defaultGlobeUrl}
-          globeMaterial={useDayNight && dayNightMaterial ? dayNightMaterial : undefined}
-          bumpImageUrl={useDayNight && dayNightMaterial ? undefined : (bumpImageUrl || undefined)}
-          showAtmosphere={true}
-          atmosphereColor="#1d9bf0"
-          atmosphereAltitude={0.15}
-          onGlobeReady={handleGlobeReady}
-          onZoom={handleZoom}
-          // Satellites / orbiters: 3D objects in orbit
-          objectsData={showEarthData ? satPointsData : orbiterPointsData}
-          objectLat="lat"
-          objectLng="lng"
-          objectAltitude={(d: any) => {
-            if (selectedGlobeId === 'moon') return Math.max((d.alt || 50) / MOON_RADIUS_KM, 0.06);
-            if (selectedGlobeId === 'mars') return Math.max((d.alt || 300) / MARS_RADIUS_KM, 0.06);
-            return Math.max((d.alt || 400) / EARTH_RADIUS_KM, 0.02);
-          }}
-          objectThreeObject={showEarthData ? createSatObject : createOrbiterObject}
-          objectLabel={() => ''}
-          onObjectClick={showEarthData ? handleSatelliteClick : handleOrbiterClick}
-          // Launch points: one green point per location, click shows all upcoming launches
-          pointsData={showEarthData ? launchPointsData : []}
-          pointLat="lat"
-          pointLng="lng"
-          pointColor={(d: object) =>
-            (d as { padKey?: string }).padKey === highlightPadKey ? '#ff6d00' : '#00c853'
-          }
-          pointAltitude={0.01}
-          pointRadius={0.5}
-          pointLabel={() => ''}
-          onPointClick={(p: object) => handleLaunchClick(p)}
-          // Night side overlay
-          polygonsData={showEarthData ? nightPolygonsData : []}
-          polygonCapColor={() => 'rgba(0, 0, 20, 0.5)'}
-          polygonSideColor={() => 'rgba(0, 0, 0, 0)'}
-          polygonStrokeColor={() => 'rgba(0, 0, 0, 0)'}
-          polygonAltitude={0.005}
-          // Orbit paths: solid line, no animation
-          pathsData={pathsData}
-          pathPoints="coords"
-          pathPointLat="lat"
-          pathPointLng="lng"
-          pathPointAlt="alt"
-          pathColor={() => 'rgba(255, 255, 255, 0.6)'}
-          pathStroke={0.5}
-          pathDashLength={10}
-          pathDashGap={0}
-          pathDashInitialGap={0}
-          pathDashAnimateTime={0}
-          pathTransitionDuration={0}
-        />
-      </div>
+      <div className={styles.mainStage}>
+        <div className={styles.globeStage}>
+          <div className={styles.globeWrap}>
+            <GlobeGL
+              key={selectedGlobeId}
+              ref={globeRef}
+              rendererConfig={rendererConfig}
+              width={globeWidth}
+              height={globeHeight}
+              backgroundColor="rgba(0,0,0,0)"
+              globeImageUrl={useDayNight && dayNightMaterial ? null : defaultGlobeUrl}
+              globeMaterial={useDayNight && dayNightMaterial ? dayNightMaterial : undefined}
+              bumpImageUrl={useDayNight && dayNightMaterial ? undefined : (bumpImageUrl || undefined)}
+              showAtmosphere={true}
+              atmosphereColor="#1d9bf0"
+              atmosphereAltitude={0.15}
+              onGlobeReady={handleGlobeReady}
+              onZoom={handleZoom}
+              objectsData={showEarthData ? satPointsData : orbiterPointsData}
+              objectLat="lat"
+              objectLng="lng"
+              objectAltitude={(d: any) => {
+                if (selectedGlobeId === 'moon') return Math.max((d.alt || 50) / MOON_RADIUS_KM, 0.06);
+                if (selectedGlobeId === 'mars') return Math.max((d.alt || 300) / MARS_RADIUS_KM, 0.06);
+                return Math.max((d.alt || 400) / EARTH_RADIUS_KM, 0.02);
+              }}
+              objectThreeObject={showEarthData ? createSatObject : createOrbiterObject}
+              objectLabel={() => ''}
+              onObjectClick={showEarthData ? handleSatelliteClick : handleOrbiterClick}
+              pointsData={showEarthData ? launchPointsData : []}
+              pointLat="lat"
+              pointLng="lng"
+              pointColor={(d: object) =>
+                (d as { padKey?: string }).padKey === highlightPadKey ? '#ff6d00' : '#00c853'
+              }
+              pointAltitude={0.01}
+              pointRadius={0.5}
+              pointLabel={() => ''}
+              onPointClick={(p: object) => handleLaunchClick(p)}
+              polygonsData={showEarthData ? nightPolygonsData : []}
+              polygonCapColor={() => 'rgba(0, 0, 20, 0.5)'}
+              polygonSideColor={() => 'rgba(0, 0, 0, 0)'}
+              polygonStrokeColor={() => 'rgba(0, 0, 0, 0)'}
+              polygonAltitude={0.005}
+              pathsData={pathsData}
+              pathPoints="coords"
+              pathPointLat="lat"
+              pathPointLng="lng"
+              pathPointAlt="alt"
+              pathColor={() => 'rgba(255, 255, 255, 0.6)'}
+              pathStroke={0.5}
+              pathDashLength={10}
+              pathDashGap={0}
+              pathDashInitialGap={0}
+              pathDashAnimateTime={0}
+              pathTransitionDuration={0}
+            />
+          </div>
 
-      <ControlsPanel
-        satelliteCount={trackedSatellitesDisplay}
-        launchSiteCount={showEarthData ? launchPointsData.length : 0}
-        mode={showOrbiterPanel ? 'orbiter' : 'earth'}
-        satellitesEnabled={loadSatellites}
-        onSatellitesEnabledChange={setLoadSatellites}
-        satellitesLoading={satellitesLoading}
-      />
+          <ControlsPanel
+            satelliteCount={trackedSatellitesDisplay}
+            launchSiteCount={showEarthData ? launchPointsData.length : 0}
+            mode={showOrbiterPanel ? 'orbiter' : 'earth'}
+            satellitesEnabled={loadSatellites}
+            onSatellitesEnabledChange={setLoadSatellites}
+            satellitesLoading={satellitesLoading}
+          />
+        </div>
+
+        <aside className={styles.sidebarColumn}>
+          <InfoPanel
+            satellite={selectedSatellite}
+            orbiter={selectedOrbiter}
+            launches={selectedLaunches}
+            upcomingLaunches={upcomingLaunches}
+            globeId={selectedGlobeId}
+            onClose={handleClosePanel}
+            onShowLaunchOnGlobe={handleShowLaunchOnGlobe}
+          />
+        </aside>
+      </div>
 
       <SearchResultsPanel
         query={searchQuery}
@@ -1080,18 +1082,6 @@ export default function SpaceGlobe() {
         onClose={() => setSearchQuery('')}
       />
 
-      <InfoPanel
-        satellite={selectedSatellite}
-        orbiter={selectedOrbiter}
-        launches={selectedLaunches}
-        upcomingLaunches={upcomingLaunches}
-        showUpcomingPanel={showUpcomingPanel}
-        globeId={selectedGlobeId}
-        onClose={handleClosePanel}
-        onExpandUpcoming={() => setShowUpcomingPanel(true)}
-        onShowLaunchOnGlobe={handleShowLaunchOnGlobe}
-      />
-
       <a
         href="https://konstantinsaifoulline.com"
         target="_blank"
@@ -1100,6 +1090,6 @@ export default function SpaceGlobe() {
       >
         © 2026 Konstantin Saifoulline
       </a>
-    </>
+    </div>
   );
 }
