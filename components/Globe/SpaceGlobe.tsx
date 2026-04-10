@@ -960,6 +960,12 @@ export default function SpaceGlobe() {
           </button>
         ))}
       </nav>
+      <ControlsPanel
+        body={selectedGlobeId as PlanetBodyId}
+        overlayEnabled={bodyOverlayOn}
+        onOverlayEnabledChange={setBodyOverlay}
+        overlayLoading={showEarthData ? satellitesLoading : false}
+      />
     </div>
   );
 
@@ -1046,13 +1052,6 @@ export default function SpaceGlobe() {
               pathTransitionDuration={0}
             />
           </div>
-
-          <ControlsPanel
-            body={selectedGlobeId as PlanetBodyId}
-            overlayEnabled={bodyOverlayOn}
-            onOverlayEnabledChange={setBodyOverlay}
-            overlayLoading={showEarthData ? satellitesLoading : false}
-          />
         </div>
 
         <aside className={styles.sidebarColumn}>

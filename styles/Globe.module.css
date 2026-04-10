@@ -72,7 +72,8 @@
 }
 
 .brandCluster .logo,
-.brandCluster .planetPicker {
+.brandCluster .planetPicker,
+.brandCluster .controlsWrap {
   pointer-events: auto;
 }
 
@@ -372,12 +373,6 @@
   min-height: 0;
 }
 
-@media (min-width: 900px) {
-  .controlsWrap {
-    left: calc(240px + 16px);
-  }
-}
-
 @media (max-width: 899px) {
   .mainStage {
     flex-direction: column;
@@ -398,7 +393,7 @@
 
 }
 
-/* Controls area (bottom left); desktop left offset clears .leftRail */
+/* Live view control: fixed fallback; in-flow when inside .brandCluster */
 .controlsWrap {
   position: fixed;
   bottom: 16px;
@@ -409,6 +404,27 @@
   justify-content: flex-end;
   gap: 0;
   max-width: min(280px, calc(100vw - 32px));
+}
+
+.brandCluster .controlsWrap {
+  position: static;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  z-index: auto;
+  max-width: none;
+  width: 100%;
+  align-self: stretch;
+  margin: 0;
+}
+
+.brandCluster .controlsWrap .satToggleRow {
+  width: 100%;
+}
+
+.brandCluster .controlsWrap .satToggleBtn {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .satToggleRow {
@@ -1039,13 +1055,6 @@
   .planetLink,
   .planetLinkActive {
     font-size: 17px;
-  }
-
-  .controlsWrap {
-    left: 12px;
-    right: 12px;
-    max-width: none;
-    gap: 0;
   }
 
   .controls {
