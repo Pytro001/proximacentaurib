@@ -416,6 +416,16 @@ export default function InfoPanel({
             </p>
           </div>
         )}
+        <footer className={styles.sidebarFooter}>
+          <a
+            href="https://konstantinsaifoulline.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.sidebarFooterLink}
+          >
+            © 2026 Konstantin Saifoulline
+          </a>
+        </footer>
       </div>
     </div>
   );

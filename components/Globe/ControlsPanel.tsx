@@ -20,9 +20,8 @@ export default function ControlsPanel({
   onOverlayEnabledChange,
   overlayLoading = false,
 }: ControlsPanelProps) {
-  const isEarth = body === 'earth';
-  const labelOff = isEarth ? 'Activate satellites' : 'Activate spacecraft';
-  const labelOn = isEarth ? 'Satellites on' : 'Spacecraft on';
+  const labelOff = 'Activate Live view';
+  const labelOn = 'Live view on';
 
   return (
     <div
@@ -39,7 +38,7 @@ export default function ControlsPanel({
           aria-pressed={overlayEnabled}
           aria-label={overlayEnabled ? labelOn : labelOff}
           title={
-            isEarth
+            body === 'earth'
               ? 'Download satellite catalog and show objects in Earth orbit (heavy).'
               : 'Show major spacecraft orbiting this body.'
           }

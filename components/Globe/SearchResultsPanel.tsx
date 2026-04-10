@@ -11,6 +11,8 @@ interface SearchResultsPanelProps {
   satellitesEnabled?: boolean;
   onSelect: (result: SearchResult) => void;
   onClose: () => void;
+  /** default: floating panel; sidebar: in-column list */
+  variant?: 'default' | 'sidebar';
 }
 
 export default function SearchResultsPanel({
@@ -20,11 +22,17 @@ export default function SearchResultsPanel({
   satellitesEnabled = true,
   onSelect,
   onClose,
+  variant = 'default',
 }: SearchResultsPanelProps) {
   if (!query || query.trim().length < 2) return null;
 
+  const panelClass =
+    variant === 'sidebar'
+      ? `${styles.searchResultsPanel} ${styles.searchResultsPanelSidebar}`
+      : styles.searchResultsPanel;
+
   return (
-    <div className={styles.searchResultsPanel}>
+    <div className={panelClass}>
       <div className={styles.searchResultsHeader}>
         <h3 className={styles.searchResultsTitle}>
           Search: &quot;{query}&quot;
@@ -44,7 +52,7 @@ export default function SearchResultsPanel({
         ) : results.length === 0 ? (
           <p className={styles.searchResultsEmpty}>
             {!satellitesEnabled
-              ? 'No matches. Turn on the bottom-left overlay (satellites on Earth, spacecraft on Moon/Mars) to search.'
+              ? 'No matches. Turn on Activate Live view to search Earth satellites.'
               : 'No matches for this search.'}
           </p>
         ) : (

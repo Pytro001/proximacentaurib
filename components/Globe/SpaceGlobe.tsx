@@ -10,6 +10,7 @@ import {
   parseSatelliteData,
   propagatePositions,
   computeOrbitPath,
+  searchSatellites,
 } from '../../lib/satellites';
 import {
   Launch,
@@ -20,6 +21,7 @@ import {
 import { getMoonOrbiters, getMarsOrbiters, computeOrbiterPath, MOON_RADIUS_KM, MARS_RADIUS_KM, type OrbiterPosition } from '../../lib/orbiters';
 import ControlsPanel, { type PlanetBodyId } from './ControlsPanel';
 import InfoPanel from './InfoPanel';
+import SearchResultsPanel, { type SearchResult } from './SearchResultsPanel';
 import styles from '../../styles/Globe.module.css';
 
 function getSubsolarPoint(date: Date): [number, number] {
@@ -98,7 +100,10 @@ const GLOBE_CONFIGS = [
 const GlobeGL = dynamic(() => import('react-globe.gl'), { ssr: false });
 
 const SIDEBAR_WIDTH_PX = 380;
+const LEFT_RAIL_WIDTH_PX = 240;
 const STAGE_BREAKPOINT = 900;
+
+type SearchPickPending = { kind: 'sat'; norad: number } | { kind: 'orb'; id: string };
 
 /** Earth default camera distance (globe radii from center); lower = closer / larger on screen */
 const EARTH_INITIAL_ALTITUDE = 1.68;
@@ -389,6 +394,9 @@ export default function SpaceGlobe() {
   const sunPosRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const [globeReady, setGlobeReady] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchPickPending, setSearchPickPending] = useState<SearchPickPending | null>(null);
   const rendererConfig = useMemo(
     () => ({
       antialias: true,
@@ -404,6 +412,16 @@ export default function SpaceGlobe() {
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, []);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(searchQuery), 280);
+    return () => window.clearTimeout(t);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setSearchQuery('');
+    setSearchPickPending(null);
+  }, [selectedGlobeId]);
 
   /** Arrow keys cycle planets (no touch / pointer swipe on the globe). */
   useEffect(() => {
@@ -764,12 +782,82 @@ export default function SpaceGlobe() {
     setSelectedLaunches(null);
   }, []);
 
+  const searchResults = useMemo((): SearchResult[] => {
+    const q = debouncedSearch.trim();
+    if (q.length < 2) return [];
+    if (selectedGlobeId === 'earth') {
+      return searchSatellites(q).map((s) => ({
+        type: 'satellite' as const,
+        noradId: s.noradId,
+        name: s.name,
+        category: s.category,
+      }));
+    }
+    if (selectedGlobeId === 'moon' || selectedGlobeId === 'mars') {
+      const body = selectedGlobeId as 'moon' | 'mars';
+      const ql = q.toLowerCase();
+      return orbiterPositions
+        .filter((o) => o.body === body && o.name.toLowerCase().includes(ql))
+        .map((o) => ({
+          type: 'orbiter' as const,
+          id: o.id,
+          name: o.name,
+          category: o.category,
+          lat: o.lat,
+          lng: o.lng,
+          alt: o.alt,
+          body: o.body,
+        }));
+    }
+    return [];
+  }, [debouncedSearch, selectedGlobeId, orbiterPositions]);
+
   const setBodyOverlay = useCallback((enabled: boolean) => {
     const id = selectedGlobeId as PlanetBodyId;
     setOverlayEnabled((prev) => ({ ...prev, [id]: enabled }));
   }, [selectedGlobeId]);
 
   const bodyOverlayOn = overlayEnabled[selectedGlobeId as PlanetBodyId];
+
+  const handleSearchSelect = useCallback(
+    (r: SearchResult) => {
+      setBodyOverlay(true);
+      setSearchQuery('');
+      if (r.type === 'satellite') {
+        const sat = satellitePositions.find((s) => s.noradId === r.noradId);
+        if (sat) {
+          handleSatelliteClick(sat);
+        } else {
+          setSearchPickPending({ kind: 'sat', norad: r.noradId });
+        }
+      } else {
+        const orb = orbiterPositions.find((o) => o.id === r.id);
+        if (orb) {
+          handleOrbiterClick(orb);
+        } else {
+          setSearchPickPending({ kind: 'orb', id: r.id });
+        }
+      }
+    },
+    [satellitePositions, orbiterPositions, setBodyOverlay, handleSatelliteClick, handleOrbiterClick]
+  );
+
+  useEffect(() => {
+    if (!searchPickPending) return;
+    if (searchPickPending.kind === 'sat') {
+      const sat = satellitePositions.find((s) => s.noradId === searchPickPending.norad);
+      if (sat) {
+        handleSatelliteClick(sat);
+        setSearchPickPending(null);
+      }
+    } else {
+      const orb = orbiterPositions.find((o) => o.id === searchPickPending.id);
+      if (orb) {
+        handleOrbiterClick(orb);
+        setSearchPickPending(null);
+      }
+    }
+  }, [searchPickPending, satellitePositions, orbiterPositions, handleSatelliteClick, handleOrbiterClick]);
 
   const satPointsData = useMemo(() => satellitePositions, [satellitePositions]);
 
@@ -848,33 +936,39 @@ export default function SpaceGlobe() {
 
   const isDesktopStage = dimensions.width >= STAGE_BREAKPOINT;
   const mobileSidebarH = Math.min(Math.round(dimensions.height * 0.38), 400);
-  const globeWidth = isDesktopStage ? dimensions.width - SIDEBAR_WIDTH_PX : dimensions.width;
+  const globeWidth = isDesktopStage
+    ? dimensions.width - LEFT_RAIL_WIDTH_PX - SIDEBAR_WIDTH_PX
+    : dimensions.width;
   const globeHeight = isDesktopStage ? dimensions.height : dimensions.height - mobileSidebarH;
 
   if (dimensions.width === 0) return null;
 
+  const brandClusterEl = (
+    <div className={styles.brandCluster}>
+      <div className={styles.logo}>
+        <img src="/logo-proxima.png" alt="PROXIMA" />
+      </div>
+      <nav
+        className={styles.planetPicker}
+        aria-label="Planet (use Arrow Left and Arrow Right keys to change)"
+        title="Change planet with the ← and → keyboard keys"
+      >
+        {GLOBE_CONFIGS.map((g) => (
+          <span
+            key={g.id}
+            className={selectedGlobeId === g.id ? styles.planetLinkActive : styles.planetLink}
+            aria-current={selectedGlobeId === g.id ? 'true' : undefined}
+          >
+            {g.label}
+          </span>
+        ))}
+      </nav>
+    </div>
+  );
+
   return (
     <div className={styles.spaceRoot}>
-      <div className={styles.brandCluster}>
-        <div className={styles.logo}>
-          <img src="/logo-proxima.png" alt="PROXIMA" />
-        </div>
-        <nav
-          className={styles.planetPicker}
-          aria-label="Planet (use Arrow Left and Arrow Right keys to change)"
-          title="Change planet with the ← and → keyboard keys"
-        >
-          {GLOBE_CONFIGS.map((g) => (
-            <span
-              key={g.id}
-              className={selectedGlobeId === g.id ? styles.planetLinkActive : styles.planetLink}
-              aria-current={selectedGlobeId === g.id ? 'true' : undefined}
-            >
-              {g.label}
-            </span>
-          ))}
-        </nav>
-      </div>
+      {!isDesktopStage && brandClusterEl}
 
       {(launchDataLoading || satellitesLoading) && (
         <div className={styles.loading}>
@@ -888,6 +982,7 @@ export default function SpaceGlobe() {
       )}
 
       <div className={styles.mainStage}>
+        {isDesktopStage && <div className={styles.leftRail}>{brandClusterEl}</div>}
         <div className={styles.globeStage}>
           <div
             key={selectedGlobeId}
@@ -964,6 +1059,41 @@ export default function SpaceGlobe() {
         </div>
 
         <aside className={styles.sidebarColumn}>
+          <div className={styles.sidebarSearch}>
+            <div className={styles.searchInputWrap}>
+              <span className={styles.searchIcon} aria-hidden>
+                {'\u{1F50D}'}
+              </span>
+              <input
+                type="search"
+                className={styles.searchInput}
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Search satellites or spacecraft"
+                autoComplete="off"
+              />
+              {searchQuery.length > 0 && (
+                <button
+                  type="button"
+                  className={styles.searchClearBtn}
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            <SearchResultsPanel
+              variant="sidebar"
+              query={debouncedSearch}
+              results={searchResults}
+              isLoading={false}
+              satellitesEnabled={bodyOverlayOn}
+              onSelect={handleSearchSelect}
+              onClose={() => setSearchQuery('')}
+            />
+          </div>
           <InfoPanel
             satellite={selectedSatellite}
             orbiter={selectedOrbiter}
@@ -974,15 +1104,6 @@ export default function SpaceGlobe() {
           />
         </aside>
       </div>
-
-      <a
-        href="https://konstantinsaifoulline.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={styles.copyright}
-      >
-        © 2026 Konstantin Saifoulline
-      </a>
     </div>
   );
 }
