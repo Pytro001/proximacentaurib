@@ -113,6 +113,25 @@ export function filterLaunchesByDestination(
   return launches;
 }
 
+/** Case-insensitive match against common launch fields (for sidebar search). */
+export function launchMatchesSearchQuery(launch: Launch, query: string): boolean {
+  const s = query.trim().toLowerCase();
+  if (!s) return true;
+  const hay = [
+    launch.name,
+    launch.rocket,
+    launch.provider,
+    launch.padLocation,
+    launch.padName,
+    launch.orbitName,
+    launch.mission,
+    launch.missionDescription,
+  ]
+    .join(' ')
+    .toLowerCase();
+  return hay.includes(s);
+}
+
 export function getCountdown(net: string): { days: number; hours: number; mins: number; secs: number; past: boolean } {
   const target = Date.parse(net);
   const now = Date.now();

@@ -1,4 +1,12 @@
-import { useRef, useEffect, useState, useCallback, useMemo, type CSSProperties } from 'react';
+import {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 import dynamic from 'next/dynamic';
 import type { GlobeMethods } from 'react-globe.gl';
 import * as THREE from 'three';
@@ -10,18 +18,17 @@ import {
   parseSatelliteData,
   propagatePositions,
   computeOrbitPath,
-  searchSatellites,
 } from '../../lib/satellites';
 import {
   Launch,
   fetchLaunches,
   fetchSatelliteData,
   filterLaunchesByDestination,
+  launchMatchesSearchQuery,
 } from '../../lib/launches';
 import { getMoonOrbiters, getMarsOrbiters, computeOrbiterPath, MOON_RADIUS_KM, MARS_RADIUS_KM, type OrbiterPosition } from '../../lib/orbiters';
 import ControlsPanel, { type PlanetBodyId } from './ControlsPanel';
 import InfoPanel from './InfoPanel';
-import SearchResultsPanel, { type SearchResult } from './SearchResultsPanel';
 import styles from '../../styles/Globe.module.css';
 
 function getSubsolarPoint(date: Date): [number, number] {
@@ -102,8 +109,6 @@ const GlobeGL = dynamic(() => import('react-globe.gl'), { ssr: false });
 const SIDEBAR_WIDTH_PX = 380;
 const LEFT_RAIL_WIDTH_PX = 240;
 const STAGE_BREAKPOINT = 900;
-
-type SearchPickPending = { kind: 'sat'; norad: number } | { kind: 'orb'; id: string };
 
 /** Earth default camera distance (globe radii from center); lower = closer / larger on screen */
 const EARTH_INITIAL_ALTITUDE = 1.68;
@@ -399,7 +404,7 @@ export default function SpaceGlobe() {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [searchPickPending, setSearchPickPending] = useState<SearchPickPending | null>(null);
+  const [upcomingSearchIndex, setUpcomingSearchIndex] = useState(0);
   const rendererConfig = useMemo(
     () => ({
       antialias: true,
@@ -423,7 +428,7 @@ export default function SpaceGlobe() {
 
   useEffect(() => {
     setSearchQuery('');
-    setSearchPickPending(null);
+    setUpcomingSearchIndex(0);
   }, [selectedGlobeId]);
 
   /** Arrow keys cycle planets (no touch / pointer swipe on the globe). */
@@ -787,82 +792,12 @@ export default function SpaceGlobe() {
     setSelectedLaunches(null);
   }, []);
 
-  const searchResults = useMemo((): SearchResult[] => {
-    const q = debouncedSearch.trim();
-    if (q.length < 2) return [];
-    if (selectedGlobeId === 'earth') {
-      return searchSatellites(q).map((s) => ({
-        type: 'satellite' as const,
-        noradId: s.noradId,
-        name: s.name,
-        category: s.category,
-      }));
-    }
-    if (selectedGlobeId === 'moon' || selectedGlobeId === 'mars') {
-      const body = selectedGlobeId as 'moon' | 'mars';
-      const ql = q.toLowerCase();
-      return orbiterPositions
-        .filter((o) => o.body === body && o.name.toLowerCase().includes(ql))
-        .map((o) => ({
-          type: 'orbiter' as const,
-          id: o.id,
-          name: o.name,
-          category: o.category,
-          lat: o.lat,
-          lng: o.lng,
-          alt: o.alt,
-          body: o.body,
-        }));
-    }
-    return [];
-  }, [debouncedSearch, selectedGlobeId, orbiterPositions]);
-
   const setBodyOverlay = useCallback((enabled: boolean) => {
     const id = selectedGlobeId as PlanetBodyId;
     setOverlayEnabled((prev) => ({ ...prev, [id]: enabled }));
   }, [selectedGlobeId]);
 
   const bodyOverlayOn = overlayEnabled[selectedGlobeId as PlanetBodyId];
-
-  const handleSearchSelect = useCallback(
-    (r: SearchResult) => {
-      setBodyOverlay(true);
-      setSearchQuery('');
-      if (r.type === 'satellite') {
-        const sat = satellitePositions.find((s) => s.noradId === r.noradId);
-        if (sat) {
-          handleSatelliteClick(sat);
-        } else {
-          setSearchPickPending({ kind: 'sat', norad: r.noradId });
-        }
-      } else {
-        const orb = orbiterPositions.find((o) => o.id === r.id);
-        if (orb) {
-          handleOrbiterClick(orb);
-        } else {
-          setSearchPickPending({ kind: 'orb', id: r.id });
-        }
-      }
-    },
-    [satellitePositions, orbiterPositions, setBodyOverlay, handleSatelliteClick, handleOrbiterClick]
-  );
-
-  useEffect(() => {
-    if (!searchPickPending) return;
-    if (searchPickPending.kind === 'sat') {
-      const sat = satellitePositions.find((s) => s.noradId === searchPickPending.norad);
-      if (sat) {
-        handleSatelliteClick(sat);
-        setSearchPickPending(null);
-      }
-    } else {
-      const orb = orbiterPositions.find((o) => o.id === searchPickPending.id);
-      if (orb) {
-        handleOrbiterClick(orb);
-        setSearchPickPending(null);
-      }
-    }
-  }, [searchPickPending, satellitePositions, orbiterPositions, handleSatelliteClick, handleOrbiterClick]);
 
   const satPointsData = useMemo(() => satellitePositions, [satellitePositions]);
 
@@ -922,6 +857,44 @@ export default function SpaceGlobe() {
       .sort((a, b) => Date.parse(a.net) - Date.parse(b.net))
       .slice(0, 16);
   }, [launches, selectedGlobeId]);
+
+  const upcomingForSidebar = useMemo(() => {
+    const q = debouncedSearch.trim();
+    if (!q) return upcomingLaunches;
+    return upcomingLaunches.filter((l) => launchMatchesSearchQuery(l, q));
+  }, [debouncedSearch, upcomingLaunches]);
+
+  const upcomingSearchHasQuery = debouncedSearch.trim().length > 0;
+  const upcomingSearchNoResults =
+    upcomingSearchHasQuery && upcomingForSidebar.length === 0 && upcomingLaunches.length > 0;
+
+  useEffect(() => {
+    setUpcomingSearchIndex(0);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    setUpcomingSearchIndex((i) => {
+      const n = upcomingForSidebar.length;
+      if (n === 0) return 0;
+      return Math.min(i, n - 1);
+    });
+  }, [upcomingForSidebar]);
+
+  const handleUpcomingSearchKeyDown = useCallback(
+    (e: ReactKeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      if (!debouncedSearch.trim()) return;
+      const n = upcomingForSidebar.length;
+      if (n === 0) return;
+      e.preventDefault();
+      if (e.key === 'ArrowDown') {
+        setUpcomingSearchIndex((i) => Math.min(i + 1, n - 1));
+      } else {
+        setUpcomingSearchIndex((i) => Math.max(i - 1, 0));
+      }
+    },
+    [debouncedSearch, upcomingForSidebar]
+  );
 
   const nightPolygonsData = useMemo(() => {
     if (!nightPolygon || dayNightMaterial) return [];
@@ -1075,28 +1048,27 @@ export default function SpaceGlobe() {
               <input
                 type="text"
                 className={styles.searchInput}
-                placeholder="Search"
+                placeholder="Search upcoming"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                aria-label="Search satellites or spacecraft"
+                onKeyDown={handleUpcomingSearchKeyDown}
+                aria-label="Search upcoming launches. Use arrow up and down to move between results."
                 autoComplete="off"
               />
             </div>
-            <SearchResultsPanel
-              variant="sidebar"
-              query={debouncedSearch}
-              results={searchResults}
-              isLoading={false}
-              satellitesEnabled={bodyOverlayOn}
-              onSelect={handleSearchSelect}
-              onClose={() => setSearchQuery('')}
-            />
           </div>
           <InfoPanel
             satellite={selectedSatellite}
             orbiter={selectedOrbiter}
             launches={selectedLaunches}
-            upcomingLaunches={upcomingLaunches}
+            upcomingLaunches={upcomingForSidebar}
+            nextGlobalLaunchId={upcomingLaunches[0]?.id ?? null}
+            activeSearchLaunchId={
+              upcomingSearchHasQuery && upcomingForSidebar.length > 0
+                ? upcomingForSidebar[upcomingSearchIndex]?.id ?? null
+                : null
+            }
+            upcomingSearchNoResults={upcomingSearchNoResults}
             globeId={selectedGlobeId}
             onClose={handleClosePanel}
           />

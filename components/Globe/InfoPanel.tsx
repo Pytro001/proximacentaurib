@@ -13,7 +13,14 @@ interface InfoPanelProps {
   satellite: SatellitePosition | null;
   orbiter: OrbiterPosition | null;
   launches: Launch[] | null;
+  /** List shown in Upcoming (may be filtered by sidebar search). */
   upcomingLaunches: Launch[];
+  /** True next launch in schedule (for NEXT badge when list is filtered). */
+  nextGlobalLaunchId?: string | null;
+  /** Keyboard-selected row while searching. */
+  activeSearchLaunchId?: string | null;
+  /** Search text is non-empty but nothing matched. */
+  upcomingSearchNoResults?: boolean;
   globeId?: string;
   onClose: () => void;
 }
@@ -181,9 +188,11 @@ function includeExternalLink(link: { title?: string; url: string }): boolean {
 function LaunchInfo({
   launch,
   isNext,
+  isSearchKeyboardActive,
 }: {
   launch: Launch;
   isNext?: boolean;
+  isSearchKeyboardActive?: boolean;
 }) {
   const [inlineYoutubeId, setInlineYoutubeId] = useState<string | null>(null);
 
@@ -214,8 +223,19 @@ function LaunchInfo({
   const hasMediaStrip =
     !!launch.image || ytPreviews.length > 0 || xPreviewsShown.length > 0;
 
+  const itemClass = [
+    styles.launchFeedItem,
+    isSearchKeyboardActive ? styles.launchFeedItemSearchActive : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className={styles.launchFeedItem}>
+    <div
+      id={`launch-search-${launch.id}`}
+      className={itemClass}
+      data-launch-id={launch.id}
+    >
       {hasMediaStrip && (
         <div className={styles.launchMediaStrip}>
           {launch.image && (
@@ -337,11 +357,26 @@ function LaunchInfo({
   );
 }
 
-function LaunchCards({ launches }: { launches: Launch[] }) {
+function LaunchCards({
+  launches,
+  nextLaunchId,
+  activeSearchLaunchId,
+}: {
+  launches: Launch[];
+  nextLaunchId?: string | null;
+  activeSearchLaunchId?: string | null;
+}) {
   return (
     <div className={styles.launchList}>
-      {launches.map((launch, i) => (
-        <LaunchInfo key={launch.id} launch={launch} isNext={i === 0} />
+      {launches.map((launch) => (
+        <LaunchInfo
+          key={launch.id}
+          launch={launch}
+          isNext={nextLaunchId != null ? launch.id === nextLaunchId : false}
+          isSearchKeyboardActive={
+            activeSearchLaunchId != null && launch.id === activeSearchLaunchId
+          }
+        />
       ))}
     </div>
   );
@@ -353,15 +388,31 @@ function LaunchLocationInfo({ launches }: { launches: Launch[] }) {
   return (
     <div className={styles.infoPanelBody}>
       <div className={styles.siteLabel}>{locationName}</div>
-      <LaunchCards launches={launches} />
+      <LaunchCards
+        launches={launches}
+        nextLaunchId={launches[0]?.id ?? null}
+        activeSearchLaunchId={null}
+      />
     </div>
   );
 }
 
-function UpcomingLaunchesInfo({ launches }: { launches: Launch[] }) {
+function UpcomingLaunchesInfo({
+  launches,
+  nextGlobalLaunchId,
+  activeSearchLaunchId,
+}: {
+  launches: Launch[];
+  nextGlobalLaunchId: string | null;
+  activeSearchLaunchId: string | null;
+}) {
   return (
     <div className={styles.infoPanelBody}>
-      <LaunchCards launches={launches} />
+      <LaunchCards
+        launches={launches}
+        nextLaunchId={nextGlobalLaunchId}
+        activeSearchLaunchId={activeSearchLaunchId}
+      />
     </div>
   );
 }
@@ -371,6 +422,9 @@ export default function InfoPanel({
   orbiter,
   launches,
   upcomingLaunches,
+  nextGlobalLaunchId = null,
+  activeSearchLaunchId = null,
+  upcomingSearchNoResults = false,
   globeId = 'earth',
   onClose,
 }: InfoPanelProps) {
@@ -385,6 +439,12 @@ export default function InfoPanel({
       : 'Upcoming');
 
   const bodyLabel = globeId === 'moon' ? 'Moon' : globeId === 'mars' ? 'Mars' : '';
+
+  useEffect(() => {
+    if (!activeSearchLaunchId || !isUpcomingOnly) return;
+    const el = document.getElementById(`launch-search-${activeSearchLaunchId}`);
+    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [activeSearchLaunchId, isUpcomingOnly]);
 
   return (
     <div className={styles.infoPanel}>
@@ -405,9 +465,18 @@ export default function InfoPanel({
           <LaunchLocationInfo launches={launches} />
         )}
         {!satellite && !orbiter && !hasLaunchSelection && upcomingLaunches.length > 0 && (
-          <UpcomingLaunchesInfo launches={upcomingLaunches} />
+          <UpcomingLaunchesInfo
+            launches={upcomingLaunches}
+            nextGlobalLaunchId={nextGlobalLaunchId}
+            activeSearchLaunchId={activeSearchLaunchId}
+          />
         )}
-        {isUpcomingOnly && upcomingLaunches.length === 0 && (
+        {isUpcomingOnly && upcomingSearchNoResults && (
+          <div className={styles.infoPanelBody}>
+            <p className={styles.upcomingEmptyMessage}>No launches match your search.</p>
+          </div>
+        )}
+        {isUpcomingOnly && upcomingLaunches.length === 0 && !upcomingSearchNoResults && (
           <div className={styles.infoPanelBody}>
             <p className={styles.upcomingEmptyMessage}>
               {globeId === 'earth'

@@ -640,6 +640,12 @@
   overflow: hidden;
 }
 
+.launchFeedItemSearchActive {
+  border-color: rgba(29, 155, 240, 0.65);
+  box-shadow: 0 0 0 1px rgba(29, 155, 240, 0.35);
+  background: rgba(29, 155, 240, 0.06);
+}
+
 .launchFeedMain {
   padding: 4px 0 0;
   text-align: left;
