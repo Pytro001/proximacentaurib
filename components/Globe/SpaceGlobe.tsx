@@ -792,6 +792,22 @@ export default function SpaceGlobe() {
     setSelectedLaunches(null);
   }, []);
 
+  const selectPlanetById = useCallback((targetId: string) => {
+    setPlanetView((pv) => {
+      if (pv.id === targetId) return pv;
+      const idx = GLOBE_CONFIGS.findIndex((g) => g.id === pv.id);
+      const nextIdx = GLOBE_CONFIGS.findIndex((g) => g.id === targetId);
+      if (idx < 0 || nextIdx < 0) return pv;
+      const slideFrom = nextIdx > idx ? '100%' : '-100%';
+      return {
+        ...pv,
+        id: targetId,
+        slideFrom,
+        hasSwitched: true,
+      };
+    });
+  }, []);
+
   const setBodyOverlay = useCallback((enabled: boolean) => {
     const id = selectedGlobeId as PlanetBodyId;
     setOverlayEnabled((prev) => ({ ...prev, [id]: enabled }));
@@ -928,17 +944,20 @@ export default function SpaceGlobe() {
       </div>
       <nav
         className={styles.planetPicker}
-        aria-label="Planet (use Arrow Left and Arrow Right keys to change)"
-        title="Change planet with the ← and → keyboard keys"
+        aria-label="Planet"
+        title="Choose Earth, Moon, or Mars — or use ← and → keys"
       >
         {GLOBE_CONFIGS.map((g) => (
-          <span
+          <button
             key={g.id}
+            type="button"
             className={selectedGlobeId === g.id ? styles.planetLinkActive : styles.planetLink}
             aria-current={selectedGlobeId === g.id ? 'true' : undefined}
+            aria-pressed={selectedGlobeId === g.id}
+            onClick={() => selectPlanetById(g.id)}
           >
             {g.label}
-          </span>
+          </button>
         ))}
       </nav>
     </div>

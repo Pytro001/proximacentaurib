@@ -89,9 +89,10 @@
 
 .planetPicker {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 6px;
   margin: 0;
   padding: 0;
 }
@@ -99,19 +100,26 @@
 .planetLink,
 .planetLinkActive {
   margin: 0;
-  padding: 0;
+  padding: 6px 0;
   border: none;
   background: transparent;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 500;
-  cursor: default;
-  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.2;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.45);
   transition: color 0.15s;
+  text-align: left;
+  width: 100%;
+}
+
+.planetLink:hover {
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .planetLinkActive {
-  font-weight: 600;
+  font-weight: 700;
   color: #fff;
 }
 
@@ -440,9 +448,15 @@
 }
 
 .satToggleBtnOn {
-  color: #fca5a5;
-  border-color: #ef4444;
+  color: rgba(196, 181, 253, 0.72);
+  border-color: rgba(167, 139, 250, 0.45);
   background: transparent;
+}
+
+.satToggleBtnOn:hover {
+  color: rgba(216, 204, 253, 0.88);
+  border-color: rgba(167, 139, 250, 0.65);
+  background: rgba(139, 92, 246, 0.06);
 }
 
 .satToggleBtn:disabled {
@@ -1015,7 +1029,7 @@
 
   .planetLink,
   .planetLinkActive {
-    font-size: 13px;
+    font-size: 17px;
   }
 
   .controlsWrap {
@@ -1043,7 +1057,7 @@
 
   .planetLink,
   .planetLinkActive {
-    font-size: 12px;
+    font-size: 16px;
   }
 }
 
