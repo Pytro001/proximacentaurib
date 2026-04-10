@@ -1073,7 +1073,7 @@ export default function SpaceGlobe() {
                 </svg>
               </span>
               <input
-                type="search"
+                type="text"
                 className={styles.searchInput}
                 placeholder="Search"
                 value={searchQuery}
@@ -1081,16 +1081,6 @@ export default function SpaceGlobe() {
                 aria-label="Search satellites or spacecraft"
                 autoComplete="off"
               />
-              {searchQuery.length > 0 && (
-                <button
-                  type="button"
-                  className={styles.searchClearBtn}
-                  onClick={() => setSearchQuery('')}
-                  aria-label="Clear search"
-                >
-                  x
-                </button>
-              )}
             </div>
             <SearchResultsPanel
               variant="sidebar"

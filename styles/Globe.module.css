@@ -68,6 +68,7 @@
 .sidebarSearch .searchInput {
   max-width: none;
   border-radius: 9999px;
+  padding-right: 16px;
 }
 
 .brandCluster .logo,
