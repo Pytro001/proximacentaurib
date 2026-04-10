@@ -45,7 +45,14 @@ export default function ControlsPanel({
           disabled={overlayLoading}
           onClick={() => onOverlayEnabledChange(!overlayEnabled)}
         >
-          {overlayEnabled ? labelOn : labelOff}
+          {overlayEnabled ? (
+            <>
+              <span className={styles.satToggleLiveDot} aria-hidden />
+              {labelOn}
+            </>
+          ) : (
+            labelOff
+          )}
         </button>
         {overlayLoading && <span className={styles.satToggleSpinner} aria-hidden />}
       </div>

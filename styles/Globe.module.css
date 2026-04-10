@@ -422,6 +422,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   min-height: 40px;
   padding: 0 16px;
   margin: 0;
@@ -457,6 +458,14 @@
   color: rgba(216, 204, 253, 0.88);
   border-color: rgba(167, 139, 250, 0.65);
   background: rgba(139, 92, 246, 0.06);
+}
+
+.satToggleLiveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
 }
 
 .satToggleBtn:disabled {
