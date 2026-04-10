@@ -1062,7 +1062,10 @@ export default function SpaceGlobe() {
           <div className={styles.sidebarSearch}>
             <div className={styles.searchInputWrap}>
               <span className={styles.searchIcon} aria-hidden>
-                {'\u{1F50D}'}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+                  <path d="M20 20l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
               </span>
               <input
                 type="search"
@@ -1080,7 +1083,7 @@ export default function SpaceGlobe() {
                   onClick={() => setSearchQuery('')}
                   aria-label="Clear search"
                 >
-                  ×
+                  x
                 </button>
               )}
             </div>
