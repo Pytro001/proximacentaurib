@@ -107,6 +107,9 @@ type SearchPickPending = { kind: 'sat'; norad: number } | { kind: 'orb'; id: str
 
 /** Earth default camera distance (globe radii from center); lower = closer / larger on screen */
 const EARTH_INITIAL_ALTITUDE = 1.68;
+/** Default Earth POV: Arabian Sea / Middle East–India (matches landing view, not Atlantic/Africa). */
+const EARTH_INITIAL_LAT = 20;
+const EARTH_INITIAL_LNG = 58;
 const MOON_MARS_INITIAL_ALTITUDE = 2.5;
 
 const EARTH_RADIUS_KM = 6371;
@@ -706,10 +709,12 @@ export default function SpaceGlobe() {
 
       const initialAlt =
         selectedGlobeId === 'earth' ? EARTH_INITIAL_ALTITUDE : MOON_MARS_INITIAL_ALTITUDE;
-      globe.pointOfView({ lat: 28, lng: -38, altitude: initialAlt }, 0);
+      const initLat = selectedGlobeId === 'earth' ? EARTH_INITIAL_LAT : 28;
+      const initLng = selectedGlobeId === 'earth' ? EARTH_INITIAL_LNG : -38;
+      globe.pointOfView({ lat: initLat, lng: initLng, altitude: initialAlt }, 0);
 
       if (dayNightMaterial) {
-        dayNightMaterial.uniforms.globeRotation.value.set(-38, 28);
+        dayNightMaterial.uniforms.globeRotation.value.set(initLng, initLat);
       }
 
       try {
