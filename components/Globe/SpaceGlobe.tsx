@@ -107,7 +107,7 @@ const GLOBE_CONFIGS = [
 const GlobeGL = dynamic(() => import('react-globe.gl'), { ssr: false });
 
 const SIDEBAR_WIDTH_PX = 380;
-const LEFT_RAIL_WIDTH_PX = 240;
+const LEFT_RAIL_WIDTH_PX = 220;
 const STAGE_BREAKPOINT = 900;
 
 /** Earth default camera distance (globe radii from center); lower = closer / larger on screen */

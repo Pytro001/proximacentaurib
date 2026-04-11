@@ -4,7 +4,7 @@
   inset: 0;
   background: #000;
   overflow: hidden;
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #e7e9ea;
   -webkit-font-smoothing: antialiased;
   display: flex;
@@ -20,7 +20,7 @@
   width: 100%;
 }
 
-/* Logo + planet picker: fixed on narrow viewports; in-flow inside .leftRail on desktop */
+/* ── Left rail ── */
 .brandCluster {
   position: fixed;
   top: 16px;
@@ -36,39 +36,21 @@
 .leftRail .brandCluster {
   position: static;
   z-index: auto;
-  padding: 20px 16px 16px;
+  padding: 24px 20px 20px;
   width: 100%;
   box-sizing: border-box;
   pointer-events: none;
 }
 
 .leftRail {
-  width: 240px;
+  width: 220px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   min-height: 0;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(0, 0, 0, 0.15);
-}
-
-.sidebarSearch {
-  flex-shrink: 0;
-  padding: 12px 16px 10px;
-  background: rgba(8, 8, 10, 0.6);
-}
-
-.sidebarSearch .searchInputWrap {
-  flex: none;
-  width: 100%;
-  max-width: none;
-}
-
-.sidebarSearch .searchInput {
-  max-width: none;
-  border-radius: 9999px;
-  padding-right: 16px;
+  background: transparent;
 }
 
 .brandCluster .logo,
@@ -78,8 +60,9 @@
 }
 
 .logo {
-  height: 40px;
+  height: 36px;
   display: block;
+  margin-bottom: 4px;
 }
 
 .logo img {
@@ -93,7 +76,7 @@
   flex-direction: column;
   flex-wrap: nowrap;
   align-items: flex-start;
-  gap: 6px;
+  gap: 2px;
   margin: 0;
   padding: 0;
 }
@@ -101,27 +84,53 @@
 .planetLink,
 .planetLinkActive {
   margin: 0;
-  padding: 6px 0;
+  padding: 8px 0;
   border: none;
   background: transparent;
   font-family: inherit;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 500;
   line-height: 1.2;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.45);
-  transition: color 0.15s;
+  color: rgba(255, 255, 255, 0.35);
+  transition: color 0.18s;
   text-align: left;
   width: 100%;
+  letter-spacing: -0.01em;
 }
 
 .planetLink:hover {
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .planetLinkActive {
-  font-weight: 700;
+  font-weight: 600;
   color: #fff;
+}
+
+/* ── Sidebar search ── */
+.sidebarSearch {
+  flex-shrink: 0;
+  padding: 14px 16px 12px;
+}
+
+.sidebarSearch .searchInputWrap {
+  flex: none;
+  width: 100%;
+  max-width: none;
+}
+
+.sidebarSearch .searchInput {
+  max-width: none;
+  border-radius: 9999px;
+  padding-right: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.sidebarSearch .searchInput:focus {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .searchInputWrap {
@@ -136,34 +145,35 @@
   width: 100%;
   min-width: 140px;
   max-width: 360px;
-  padding: 10px 34px 10px 40px;
+  padding: 10px 16px 10px 38px;
   font-size: 14px;
+  font-family: inherit;
   color: #fff;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   outline: none;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.18s, background 0.18s;
 }
 
 .searchInput::placeholder {
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.28);
 }
 
 .searchInput:focus {
-  border-color: rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .searchIcon {
   position: absolute;
-  left: 14px;
+  left: 13px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.3);
   pointer-events: none;
 }
 
@@ -184,7 +194,7 @@
   border: none;
   border-radius: 4px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.35);
   font-size: 14px;
   font-weight: 500;
   font-family: inherit;
@@ -196,7 +206,7 @@
 
 .searchClearBtn:hover {
   background: transparent;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .searchFilterBadge {
@@ -206,14 +216,14 @@
   font-size: 12px;
   font-weight: 500;
   color: #1d9bf0;
-  background: rgba(29, 155, 240, 0.12);
-  border: 1px solid rgba(29, 155, 240, 0.25);
+  background: rgba(29, 155, 240, 0.1);
+  border: 1px solid rgba(29, 155, 240, 0.18);
   border-radius: 20px;
   white-space: nowrap;
   letter-spacing: 0.02em;
 }
 
-/* Search results panel (right side) */
+/* Search results panel (unused floating fallback) */
 .searchResultsPanel {
   position: fixed;
   top: 88px;
@@ -221,12 +231,12 @@
   width: 340px;
   max-height: calc(100vh - 96px);
   z-index: 24;
-  background: rgba(8, 8, 10, 0.95);
+  background: rgba(8, 8, 10, 0.96);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -237,14 +247,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .searchResultsTitle {
   font-size: 12px;
   font-weight: 600;
   margin: 0;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6);
   letter-spacing: 0.04em;
 }
 
@@ -272,13 +282,13 @@
 }
 
 .searchResultItem:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .searchResultName {
   font-size: 13px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.85);
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -291,14 +301,14 @@
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.3);
   flex-shrink: 0;
 }
 
 .searchResultsEmpty {
   padding: 24px 16px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.4);
   text-align: center;
   margin: 0;
 }
@@ -319,7 +329,7 @@
   max-height: min(200px, 28vh);
 }
 
-/* Main stage: globe + sidebar */
+/* ── Main stage ── */
 .mainStage {
   flex: 1;
   display: flex;
@@ -337,7 +347,6 @@
   min-height: 0;
 }
 
-/* Globe canvas fills globeStage */
 .globeWrap {
   position: absolute;
   inset: 0;
@@ -345,13 +354,13 @@
 }
 
 .globeWrapPlanetEnter {
-  animation: globePlanetEnter 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: globePlanetEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes globePlanetEnter {
   from {
     transform: translateX(var(--globe-slide-from, 100%));
-    opacity: 0.65;
+    opacity: 0.6;
   }
   to {
     transform: translateX(0);
@@ -359,6 +368,7 @@
   }
 }
 
+/* ── Sidebar column ── */
 .sidebarColumn {
   width: 380px;
   flex-shrink: 0;
@@ -366,8 +376,8 @@
   flex-direction: column;
   min-height: 0;
   align-self: stretch;
-  background: rgba(0, 0, 0, 0.2);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .sidebarColumn .infoPanel {
@@ -390,12 +400,11 @@
     height: min(38vh, 400px);
     flex-shrink: 0;
     border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
   }
-
 }
 
-/* Live view control: fixed fallback; in-flow when inside .brandCluster */
+/* ── Live view control ── */
 .controlsWrap {
   position: fixed;
   bottom: 16px;
@@ -417,7 +426,7 @@
   max-width: none;
   width: 100%;
   align-self: stretch;
-  margin: 0;
+  margin: 6px 0 0;
 }
 
 .brandCluster .controlsWrap .satToggleRow {
@@ -441,61 +450,61 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 40px;
-  padding: 0 16px;
+  min-height: 38px;
+  padding: 0 14px;
   margin: 0;
-  border: 1px solid #dc2626;
-  border-radius: 8px;
+  border: 1px solid rgba(220, 38, 38, 0.5);
+  border-radius: 9999px;
   background: transparent;
   color: #dc2626;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   font-family: inherit;
-  transition: border-color 0.15s, color 0.15s, background 0.15s, opacity 0.15s;
+  transition: border-color 0.18s, color 0.18s, background 0.18s, opacity 0.18s;
 }
 
 .satToggleBtn:hover {
-  background: rgba(220, 38, 38, 0.08);
-  border-color: #ef4444;
+  background: rgba(220, 38, 38, 0.06);
+  border-color: rgba(239, 68, 68, 0.65);
   color: #ef4444;
 }
 
 .satToggleBtn:focus-visible {
-  outline: 2px solid rgba(252, 165, 165, 0.9);
+  outline: 2px solid rgba(252, 165, 165, 0.7);
   outline-offset: 2px;
 }
 
 .satToggleBtnOn {
-  color: rgba(196, 181, 253, 0.72);
-  border-color: rgba(167, 139, 250, 0.45);
+  color: rgba(196, 181, 253, 0.7);
+  border-color: rgba(167, 139, 250, 0.35);
   background: transparent;
 }
 
 .satToggleBtnOn:hover {
-  color: rgba(216, 204, 253, 0.88);
-  border-color: rgba(167, 139, 250, 0.65);
-  background: rgba(139, 92, 246, 0.06);
+  color: rgba(216, 204, 253, 0.85);
+  border-color: rgba(167, 139, 250, 0.55);
+  background: rgba(139, 92, 246, 0.05);
 }
 
 .satToggleLiveDot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: currentColor;
   flex-shrink: 0;
 }
 
 .satToggleBtn:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .satToggleSpinner {
   width: 12px;
   height: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.12);
-  border-top-color: rgba(29, 155, 240, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: rgba(29, 155, 240, 0.8);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
@@ -508,10 +517,8 @@
   padding: 10px 12px;
   min-width: 160px;
   background: #000;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 10px;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 
 .controlsTitle {
@@ -522,27 +529,27 @@
 .badge {
   display: inline-block;
   width: fit-content;
-  padding: 5px 10px;
+  padding: 4px 10px;
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.84);
-  background: rgba(0, 0, 0, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
 }
 
-/* Info panel (sidebar column) */
+/* ── Info panel ── */
 .infoPanel {
   position: relative;
   flex: 1;
   min-height: 0;
   width: 100%;
   z-index: 1;
-  background: rgba(8, 8, 10, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -570,11 +577,11 @@
 
 .expandBtn {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   width: 28px;
-  height: 38px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -584,21 +591,20 @@
 }
 
 .expandBtn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
 }
-
 
 .infoPanelHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 14px 18px;
   position: sticky;
   top: 0;
-  background: rgba(8, 8, 10, 0.95);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 0;
   z-index: 1;
 }
@@ -607,8 +613,8 @@
   font-size: 13px;
   font-weight: 600;
   margin: 0;
-  color: rgba(255, 255, 255, 0.8);
-  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -620,29 +626,29 @@
 
 .closeBtn {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.5);
+  border: none;
+  color: rgba(255, 255, 255, 0.35);
   cursor: pointer;
   width: 28px;
-  height: 38px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  font-size: 13px;
-  transition: background 0.15s, border-color 0.15s;
+  border-radius: 50%;
+  font-size: 16px;
+  transition: background 0.15s, color 0.15s;
 }
 
 .closeBtn:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .infoPanelBody {
-  padding: 16px 20px;
+  padding: 12px 18px 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .siteLabel {
@@ -650,40 +656,45 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.3);
   margin-bottom: 4px;
 }
 
+/* ── Launch list ── */
 .launchList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .upcomingEmptyMessage {
   margin: 0;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.35);
   font-size: 14px;
   line-height: 1.5;
   text-align: center;
-  padding: 24px 0 8px;
+  padding: 32px 0 12px;
 }
 
 .launchFeedItem {
-  padding: 14px 14px 16px;
+  padding: 14px;
   margin-bottom: 0;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: transparent;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: border-color 0.18s, background 0.18s;
+}
+
+.launchFeedItem:hover {
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .launchFeedItemSearchActive {
-  border-color: rgba(29, 155, 240, 0.65);
-  box-shadow: 0 0 0 1px rgba(29, 155, 240, 0.35);
-  background: rgba(29, 155, 240, 0.06);
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(139, 92, 246, 0.04);
 }
 
 .launchFeedMain {
@@ -695,7 +706,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin: -2px 0 12px;
+  margin: -2px 0 10px;
 }
 
 .launchMediaHero {
@@ -724,7 +735,7 @@
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: #000;
 }
 
@@ -733,7 +744,8 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  opacity: 0.92;
+  opacity: 0.88;
+  transition: opacity 0.15s;
 }
 
 .launchYtThumb:hover img {
@@ -746,9 +758,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 20px;
   color: #fff;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
   pointer-events: none;
 }
 
@@ -759,23 +771,23 @@
   padding: 8px 12px;
   min-height: 63px;
   border-radius: 8px;
-  background: #000;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.88);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   flex: 0 0 auto;
   transition: background 0.15s, border-color 0.15s;
 }
 
 .launchXThumb:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .launchXMark {
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1;
 }
 
@@ -789,14 +801,14 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 4px;
-  margin-top: 8px;
+  margin-top: 6px;
   font-size: 12px;
-  font-weight: 500;
-  color: #71767b;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .launchQuickDot {
-  opacity: 0.5;
+  opacity: 0.4;
   user-select: none;
 }
 
@@ -804,7 +816,7 @@
   margin: 12px 0 0;
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   aspect-ratio: 16 / 9;
   background: #000;
 }
@@ -832,14 +844,14 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px 10px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .nextBadge {
   flex-shrink: 0;
   font-size: 9px;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 2px 7px;
   background: #dc2626;
   color: #fff;
   border-radius: 4px;
@@ -847,9 +859,9 @@
 }
 
 .launchName {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: #f7f9f9;
+  color: rgba(255, 255, 255, 0.92);
   flex: 0 1 auto;
   min-width: 0;
   line-height: 1.35;
@@ -858,7 +870,7 @@
 }
 
 .countdownBlock {
-  margin: 8px 0 4px;
+  margin: 6px 0 2px;
   padding: 0;
   text-align: left;
   border: none;
@@ -870,31 +882,31 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 255, 255, 0.8);
   letter-spacing: 0;
 }
 
 .launchDate {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: inherit;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .launchMeta {
   font-size: 12px;
-  color: #71767b;
-  margin-bottom: 6px;
+  color: rgba(255, 255, 255, 0.3);
+  margin-bottom: 4px;
 }
 
 .detailBlock {
-  margin: 14px 0 0;
+  margin: 12px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   background: transparent;
   border: none;
 }
@@ -903,12 +915,12 @@
 .dataField {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .dataLabel {
   font-size: 10px;
-  color: #71767b;
+  color: rgba(255, 255, 255, 0.3);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
@@ -916,16 +928,16 @@
 
 .dataValue {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.8);
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
 }
 
 .dataValueMono {
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.92);
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 800;
+  color: rgba(255, 255, 255, 0.88);
+  font-family: inherit;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
@@ -950,7 +962,7 @@
   padding: 0;
   border-radius: 0;
   background: transparent;
-  color: #71767b;
+  color: rgba(255, 255, 255, 0.3);
   width: fit-content;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -965,33 +977,34 @@
 }
 
 .launchFeedItem .videoLinks {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .videoLink {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.04);
+  padding: 5px 10px;
+  background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.75);
+  border-radius: 9999px;
+  color: rgba(255, 255, 255, 0.55);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .videoLink:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* Divider */
 .divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   margin: 6px 0;
 }
 
@@ -1010,20 +1023,20 @@
 
 .loadingText {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.3);
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.5; }
+  0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
 }
 
 .spinner {
-  width: 32px;
-  height: 32px;
-  border: 2px solid rgba(255, 255, 255, 0.08);
-  border-top-color: rgba(255, 255, 255, 0.5);
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(255, 255, 255, 0.06);
+  border-top-color: rgba(255, 255, 255, 0.4);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -1032,7 +1045,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* Back button */
+/* Back button (hidden) */
 .backBtn {
   display: none;
 }
@@ -1042,7 +1055,7 @@
   border-color: transparent;
 }
 
-/* Responsive */
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .brandCluster {
     top: 12px;
@@ -1050,12 +1063,12 @@
   }
 
   .logo {
-    height: 32px;
+    height: 30px;
   }
 
   .planetLink,
   .planetLinkActive {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .controls {
@@ -1071,28 +1084,28 @@
 
 @media (max-width: 480px) {
   .logo {
-    height: 28px;
+    height: 26px;
   }
 
   .planetLink,
   .planetLinkActive {
-    font-size: 16px;
+    font-size: 15px;
   }
 }
 
+/* ── Sidebar footer ── */
 .sidebarFooter {
-  padding: 20px 20px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 16px 18px 20px;
 }
 
 .sidebarFooterLink {
   display: inline-block;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.28);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.18);
   text-decoration: none;
   transition: color 0.15s;
 }
 
 .sidebarFooterLink:hover {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.4);
 }
