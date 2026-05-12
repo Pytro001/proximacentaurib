@@ -61,7 +61,7 @@ export default function ControlsPanel({
           href="https://airsup.dev"
           target="_blank"
           rel="noopener noreferrer"
-          className={styles.satToggleBtn}
+          className={styles.mfgBtn}
         >
           Start manufacturing
         </a>

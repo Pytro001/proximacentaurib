@@ -413,7 +413,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 0;
+  gap: 8px;
   max-width: min(280px, calc(100vw - 32px));
 }
 
@@ -499,6 +499,28 @@
 .satToggleBtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.mfgBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  text-decoration: none;
+  transition: color 0.18s, opacity 0.18s;
+}
+
+.mfgBtn:hover {
+  opacity: 0.75;
 }
 
 .satToggleSpinner {
