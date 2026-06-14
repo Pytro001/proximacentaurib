@@ -250,6 +250,90 @@ export function getSatelliteCount(): number {
   return parsedSatellites.length;
 }
 
+const DEG = Math.PI / 180;
+
+function geodeticToEcef(latDeg: number, lngDeg: number, altKm: number): [number, number, number] {
+  // Spherical approximation — precise enough for line-of-sight / look-angle visuals.
+  const r = EARTH_RADIUS_KM + altKm;
+  const lat = latDeg * DEG;
+  const lng = lngDeg * DEG;
+  const cl = Math.cos(lat);
+  return [r * cl * Math.cos(lng), r * cl * Math.sin(lng), r * Math.sin(lat)];
+}
+
+export interface OverheadSat {
+  id: string;
+  name: string;
+  category: string;
+  noradId: number;
+  /** Degrees above the local horizon (90 = straight up). */
+  elevation: number;
+  /** Compass bearing from observer, degrees clockwise from north. */
+  azimuth: number;
+  /** Straight-line distance observer → satellite, km. */
+  range: number;
+  alt: number;
+}
+
+/** Compass label (N, NE, …) for an azimuth in degrees. */
+export function azimuthToCompass(azimuth: number): string {
+  const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  return dirs[Math.round(((azimuth % 360) / 45)) % 8];
+}
+
+/**
+ * Given an observer (lat/lng on the surface) and a set of already-propagated
+ * satellite positions, return those currently above the local horizon, sorted
+ * by elevation (highest in the sky first). Pure geometry over the supplied
+ * positions, so it's cheap enough to re-run on every animation tick.
+ */
+export function computeOverhead(
+  observerLat: number,
+  observerLng: number,
+  positions: SatellitePosition[],
+  minElevationDeg = 0,
+  limit = 60
+): OverheadSat[] {
+  const obs = geodeticToEcef(observerLat, observerLng, 0);
+  const obsLen = Math.hypot(obs[0], obs[1], obs[2]) || 1;
+  const latR = observerLat * DEG;
+  const lngR = observerLng * DEG;
+  const east: [number, number, number] = [-Math.sin(lngR), Math.cos(lngR), 0];
+  const north: [number, number, number] = [
+    -Math.sin(latR) * Math.cos(lngR),
+    -Math.sin(latR) * Math.sin(lngR),
+    Math.cos(latR),
+  ];
+
+  const results: OverheadSat[] = [];
+  for (const s of positions) {
+    const sat = geodeticToEcef(s.lat, s.lng, s.alt);
+    const los: [number, number, number] = [sat[0] - obs[0], sat[1] - obs[1], sat[2] - obs[2]];
+    const losLen = Math.hypot(los[0], los[1], los[2]);
+    if (losLen === 0) continue;
+    // Local "up" at the observer is just the observer position direction.
+    const dotUp = (los[0] * obs[0] + los[1] * obs[1] + los[2] * obs[2]) / (losLen * obsLen);
+    const elevation = Math.asin(Math.max(-1, Math.min(1, dotUp))) / DEG;
+    if (elevation < minElevationDeg) continue;
+    const e = los[0] * east[0] + los[1] * east[1] + los[2] * east[2];
+    const n = los[0] * north[0] + los[1] * north[1] + los[2] * north[2];
+    let az = Math.atan2(e, n) / DEG;
+    if (az < 0) az += 360;
+    results.push({
+      id: s.id,
+      name: s.name,
+      category: s.category,
+      noradId: s.noradId,
+      elevation,
+      azimuth: az,
+      range: losLen,
+      alt: s.alt,
+    });
+  }
+  results.sort((a, b) => b.elevation - a.elevation);
+  return results.slice(0, limit);
+}
+
 export interface SatelliteSearchResult {
   name: string;
   noradId: number;

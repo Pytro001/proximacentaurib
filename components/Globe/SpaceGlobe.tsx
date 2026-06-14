@@ -7,8 +7,7 @@ import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
-import dynamic from 'next/dynamic';
-import type { GlobeMethods } from 'react-globe.gl';
+import Globe, { type GlobeMethods } from 'react-globe.gl';
 import * as THREE from 'three';
 import { century, equationOfTime, declination } from 'solar-calculator';
 import {
@@ -27,7 +26,10 @@ import {
   launchMatchesSearchQuery,
 } from '../../lib/launches';
 import { getMoonOrbiters, getMarsOrbiters, computeOrbiterPath, MOON_RADIUS_KM, MARS_RADIUS_KM, type OrbiterPosition } from '../../lib/orbiters';
+import { computeOverhead, type OverheadSat } from '../../lib/satellites';
+import { getCategoryColor } from '../../lib/categoryColors';
 import ControlsPanel, { type PlanetBodyId } from './ControlsPanel';
+import SatLayerPanel from './SatLayerPanel';
 import InfoPanel from './InfoPanel';
 import styles from '../../styles/Globe.module.css';
 
@@ -104,7 +106,13 @@ const GLOBE_CONFIGS = [
   { id: 'mars', label: 'Mars', textureUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Solarsystemscope_texture_8k_mars.jpg', nightUrl: null, bumpUrl: null, useDayNight: false, showEarthData: false },
 ] as const;
 
-const GlobeGL = dynamic(() => import('react-globe.gl'), { ssr: false });
+/**
+ * react-globe.gl is imported directly (not via next/dynamic) because this whole
+ * component is already client-only (loaded with ssr:false in pages/index.tsx).
+ * A nested next/dynamic wrapper would hand back its `{retry}` loadable as the ref
+ * instead of the real Globe instance, breaking pointOfView/controls.
+ */
+const GlobeGL = Globe;
 
 const SIDEBAR_WIDTH_PX = 380;
 const LEFT_RAIL_WIDTH_PX = 220;
@@ -125,26 +133,6 @@ const satMaterialCache: Record<string, THREE.MeshBasicMaterial> = {};
 const panelMaterial = typeof window !== 'undefined'
   ? new THREE.MeshBasicMaterial({ color: '#1d9bf0', transparent: true, opacity: 0.8 })
   : null;
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Station: '#ff6d00',
-  Constellation: '#8899a6',
-  Navigation: '#00c853',
-  Weather: '#1d9bf0',
-  Science: '#e040fb',
-  Communications: '#ffab00',
-  'Earth Observation': '#4caf50',
-  Cargo: '#9c27b0',
-  Crew: '#2196f3',
-  Debris: '#555555',
-  Military: '#ef5350',
-  Private: '#ce93d8',
-  Other: '#546e7a',
-};
-
-function getCategoryColor(category: string): string {
-  return CATEGORY_COLORS[category] || CATEGORY_COLORS.Other;
-}
 
 function getSatMaterial(category: string): THREE.MeshBasicMaterial {
   const color = getCategoryColor(category);
@@ -373,6 +361,12 @@ interface PlanetViewState {
 
 export default function SpaceGlobe() {
   const globeRef = useRef<GlobeMethods>();
+  /**
+   * next/dynamic reassigns `globeRef.current` to its loadable wrapper (`{retry}`)
+   * during re-renders, which loses the imperative globe API. We stash the real
+   * instance — captured once in onGlobeReady — here so camera controls keep working.
+   */
+  const globeApiRef = useRef<GlobeMethods | undefined>(undefined);
   const catalogCacheRef = useRef<any[] | null>(null);
   const catalogInflightRef = useRef<Promise<any[]> | null>(null);
   const [launchDataLoading, setLaunchDataLoading] = useState(true);
@@ -405,6 +399,15 @@ export default function SpaceGlobe() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [upcomingSearchIndex, setUpcomingSearchIndex] = useState(0);
+  /** Per-category visibility for the live satellite swarm (false = hidden). */
+  const [categoryEnabled, setCategoryEnabled] = useState<Record<string, boolean>>({});
+  /** Observer location for the "what's above me" finder. */
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [overheadActive, setOverheadActive] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [locateError, setLocateError] = useState<string | null>(null);
+  /** When set, compute overhead as soon as the satellite catalog finishes loading. */
+  const pendingOverheadRef = useRef(false);
   const rendererConfig = useMemo(
     () => ({
       antialias: true,
@@ -425,6 +428,7 @@ export default function SpaceGlobe() {
     const t = window.setTimeout(() => setDebouncedSearch(searchQuery), 280);
     return () => window.clearTimeout(t);
   }, [searchQuery]);
+
 
   useEffect(() => {
     setSearchQuery('');
@@ -507,7 +511,28 @@ export default function SpaceGlobe() {
     clearSatelliteCatalog();
     setSatellitePositions([]);
     setSelectedSatellite(null);
+    setOverheadActive(false);
+    setUserLocation(null);
+    pendingOverheadRef.current = false;
   }, [overlayEnabled.earth]);
+
+  /** Leaving Earth tears down the personal-sky overlays. */
+  useEffect(() => {
+    if (selectedGlobeId !== 'earth') {
+      setOverheadActive(false);
+      setUserLocation(null);
+      pendingOverheadRef.current = false;
+    }
+  }, [selectedGlobeId]);
+
+  /** When the catalog finishes loading after an "above me" request, run it. */
+  useEffect(() => {
+    if (!pendingOverheadRef.current) return;
+    if (satellitePositions.length === 0) return;
+    pendingOverheadRef.current = false;
+    setOverheadActive(true);
+    setLocating(false);
+  }, [satellitePositions]);
 
   useEffect(() => {
     if (!overlayEnabled.earth) return;
@@ -711,6 +736,7 @@ export default function SpaceGlobe() {
     setTimeout(() => {
       const globe = globeRef.current;
       if (!globe || typeof globe.pointOfView !== 'function') return;
+      globeApiRef.current = globe;
 
       const initialAlt =
         selectedGlobeId === 'earth' ? EARTH_INITIAL_ALTITUDE : MOON_MARS_INITIAL_ALTITUDE;
@@ -744,6 +770,37 @@ export default function SpaceGlobe() {
     }, 100);
   }, [dayNightMaterial, selectedGlobeId]);
 
+  /** The live globe API (survives next/dynamic ref churn), or undefined if not ready. */
+  const getGlobe = useCallback((): GlobeMethods | undefined => {
+    const stashed = globeApiRef.current;
+    if (stashed && typeof stashed.pointOfView === 'function') return stashed;
+    const live = globeRef.current;
+    return live && typeof live.pointOfView === 'function' ? live : undefined;
+  }, []);
+
+  /** Stop the idle auto-rotation so a pointOfView fly-to actually lands and holds. */
+  const stopAutoRotate = useCallback(() => {
+    try {
+      const controls = getGlobe()?.controls?.();
+      if (controls) controls.autoRotate = false;
+    } catch {
+      // controls not ready yet
+    }
+  }, [getGlobe]);
+
+  const flyTo = useCallback((lat: number, lng: number, altitude: number, ms = 900) => {
+    const globe = getGlobe();
+    if (!globe) return;
+    stopAutoRotate();
+    globe.pointOfView({ lat, lng, altitude }, ms);
+  }, [getGlobe, stopAutoRotate]);
+
+  const flyToSatellite = useCallback((sat: SatellitePosition) => {
+    // Frame the object: closer for low orbits, pulled back for high ones.
+    const altNorm = Math.min(Math.max(sat.alt / EARTH_RADIUS_KM + 0.45, 0.55), 2.6);
+    flyTo(sat.lat, sat.lng, altNorm, 900);
+  }, [flyTo]);
+
   const handleSatelliteClick = useCallback(
     (point: object) => {
       const sat = point as SatellitePosition;
@@ -751,8 +808,9 @@ export default function SpaceGlobe() {
       setSelectedSatellite(sat);
       setSelectedOrbiter(null);
       setSelectedLaunches(null);
+      flyToSatellite(sat);
     },
-    []
+    [flyToSatellite]
   );
 
   const handleOrbiterClick = useCallback(
@@ -762,14 +820,14 @@ export default function SpaceGlobe() {
       setSelectedOrbiter(orb);
       setSelectedSatellite(null);
       setSelectedLaunches(null);
-      const globe = globeRef.current;
-      if (globe && typeof globe.pointOfView === 'function') {
+      const globe = getGlobe();
+      if (globe) {
         const bodyRadius = orb.body === 'moon' ? MOON_RADIUS_KM : MARS_RADIUS_KM;
         const altNorm = Math.max(orb.alt / bodyRadius, 0.06);
         globe.pointOfView({ lat: orb.lat, lng: orb.lng, altitude: 1 + altNorm }, 800);
       }
     },
-    []
+    [getGlobe]
   );
 
   const handleLaunchClick = useCallback(
@@ -791,6 +849,81 @@ export default function SpaceGlobe() {
     setSelectedOrbiter(null);
     setSelectedLaunches(null);
   }, []);
+
+  const handleSelectNotable = useCallback(
+    (noradId: number) => {
+      const sat = satellitePositions.find((s) => s.noradId === noradId);
+      if (!sat) return;
+      setHighlightPadKey(null);
+      setSelectedSatellite(sat);
+      setSelectedOrbiter(null);
+      setSelectedLaunches(null);
+      flyToSatellite(sat);
+    },
+    [satellitePositions, flyToSatellite]
+  );
+
+  const toggleCategory = useCallback((category: string) => {
+    setCategoryEnabled((prev) => ({ ...prev, [category]: prev[category] === false }));
+  }, []);
+
+  const setAllCategories = useCallback(
+    (value: boolean) => {
+      setCategoryEnabled(() => {
+        const next: Record<string, boolean> = {};
+        for (const s of satellitePositions) next[s.category] = value;
+        return next;
+      });
+    },
+    [satellitePositions]
+  );
+
+  const handleClearOverhead = useCallback(() => {
+    setOverheadActive(false);
+    pendingOverheadRef.current = false;
+  }, []);
+
+  const handleLocate = useCallback(() => {
+    setLocateError(null);
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setLocateError('Geolocation is not available in this browser.');
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setUserLocation({ lat, lng });
+        // Asking "what's above me" should reveal the overhead list, not a stale selection.
+        setSelectedSatellite(null);
+        setSelectedOrbiter(null);
+        setSelectedLaunches(null);
+        setHighlightPadKey(null);
+        flyTo(lat, lng, 1.6, 1100);
+        if (satellitePositions.length > 0 && overlayEnabled.earth) {
+          // Catalog already loaded — show overhead immediately.
+          setOverheadActive(true);
+          setLocating(false);
+        } else {
+          // Turn on live view and compute once the catalog arrives.
+          pendingOverheadRef.current = true;
+          if (!overlayEnabled.earth) {
+            setOverlayEnabled((prev) => ({ ...prev, earth: true }));
+          }
+        }
+      },
+      (err) => {
+        setLocating(false);
+        setLocateError(
+          err.code === err.PERMISSION_DENIED
+            ? 'Location permission denied.'
+            : 'Could not determine your location.'
+        );
+      },
+      { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
+    );
+  }, [satellitePositions, overlayEnabled.earth, flyTo]);
 
   const selectPlanetById = useCallback((targetId: string) => {
     setPlanetView((pv) => {
@@ -815,7 +948,39 @@ export default function SpaceGlobe() {
 
   const bodyOverlayOn = overlayEnabled[selectedGlobeId as PlanetBodyId];
 
-  const satPointsData = useMemo(() => satellitePositions, [satellitePositions]);
+  /** Count of tracked objects per category (drives the legend). */
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const s of satellitePositions) counts[s.category] = (counts[s.category] || 0) + 1;
+    return counts;
+  }, [satellitePositions]);
+
+  /** Whether any category is currently filtered out. */
+  const anyCategoryHidden = useMemo(
+    () => Object.values(categoryEnabled).some((v) => v === false),
+    [categoryEnabled]
+  );
+
+  const satPointsData = useMemo(() => {
+    if (!anyCategoryHidden) return satellitePositions;
+    return satellitePositions.filter((s) => categoryEnabled[s.category] !== false);
+  }, [satellitePositions, categoryEnabled, anyCategoryHidden]);
+
+  /** Notable objects present in the loaded catalog (for the quick-jump chips). */
+  const notablePresent = useMemo(() => {
+    const present: Record<number, boolean> = {};
+    const wanted = new Set([25544, 48274, 20580]);
+    for (const s of satellitePositions) {
+      if (wanted.has(s.noradId)) present[s.noradId] = true;
+    }
+    return present;
+  }, [satellitePositions]);
+
+  /** Live list of satellites currently above the observer's horizon. */
+  const overheadSats = useMemo(() => {
+    if (!overheadActive || !userLocation || satellitePositions.length === 0) return null;
+    return computeOverhead(userLocation.lat, userLocation.lng, satellitePositions, 0, 60);
+  }, [overheadActive, userLocation, satellitePositions]);
 
   const orbiterPointsData = useMemo(() => {
     if (selectedGlobeId !== 'moon' && selectedGlobeId !== 'mars') return [];
@@ -922,6 +1087,12 @@ export default function SpaceGlobe() {
     return [selectedOrbitPath];
   }, [selectedOrbitPath]);
 
+  /** Pulsing ring marking the observer's location during "above me" mode. */
+  const userRingsData = useMemo(() => {
+    if (selectedGlobeId !== 'earth' || !userLocation) return [];
+    return [{ lat: userLocation.lat, lng: userLocation.lng }];
+  }, [selectedGlobeId, userLocation]);
+
   const currentGlobe = GLOBE_CONFIGS.find((g) => g.id === selectedGlobeId) || GLOBE_CONFIGS[0];
   const defaultGlobeUrl = currentGlobe.textureUrl;
   const bumpImageUrl = currentGlobe.bumpUrl;
@@ -966,6 +1137,23 @@ export default function SpaceGlobe() {
         onOverlayEnabledChange={setBodyOverlay}
         overlayLoading={showEarthData ? satellitesLoading : false}
       />
+      {showEarthData && overlayEnabled.earth && satellitePositions.length > 0 && (
+        <SatLayerPanel
+          counts={categoryCounts}
+          enabled={categoryEnabled}
+          onToggle={toggleCategory}
+          onSetAll={setAllCategories}
+          totalTracked={satellitePositions.length}
+          totalVisible={satPointsData.length}
+          notablePresent={notablePresent}
+          onSelectNotable={handleSelectNotable}
+          onLocate={handleLocate}
+          locating={locating}
+          locateError={locateError}
+          overheadActive={overheadActive}
+          onClearOverhead={handleClearOverhead}
+        />
+      )}
     </div>
   );
 
@@ -1050,6 +1238,13 @@ export default function SpaceGlobe() {
               pathDashInitialGap={0}
               pathDashAnimateTime={0}
               pathTransitionDuration={0}
+              ringsData={userRingsData}
+              ringLat="lat"
+              ringLng="lng"
+              ringColor={() => (t: number) => `rgba(167, 139, 250, ${1 - t})`}
+              ringMaxRadius={6}
+              ringPropagationSpeed={2.2}
+              ringRepeatPeriod={900}
             />
           </div>
         </div>
@@ -1088,6 +1283,10 @@ export default function SpaceGlobe() {
             }
             upcomingSearchNoResults={upcomingSearchNoResults}
             globeId={selectedGlobeId}
+            overhead={overheadSats}
+            userLocation={userLocation}
+            onSelectOverhead={handleSelectNotable}
+            onClearOverhead={handleClearOverhead}
             onClose={handleClosePanel}
           />
         </aside>

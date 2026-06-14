@@ -1,8 +1,9 @@
 import { useState, useEffect, type MouseEvent } from 'react';
 import styles from '../../styles/Globe.module.css';
-import { SatellitePosition } from '../../lib/satellites';
+import { SatellitePosition, OverheadSat, azimuthToCompass } from '../../lib/satellites';
 import { OrbiterPosition } from '../../lib/orbiters';
 import { Launch, formatLaunchDate, getCountdown } from '../../lib/launches';
+import { getCategoryColor } from '../../lib/categoryColors';
 import {
   youtubeVideoId,
   youtubeThumbnailUrl,
@@ -22,6 +23,11 @@ interface InfoPanelProps {
   /** Search text is non-empty but nothing matched. */
   upcomingSearchNoResults?: boolean;
   globeId?: string;
+  /** Satellites currently above the observer, or null when not in "above me" mode. */
+  overhead?: OverheadSat[] | null;
+  userLocation?: { lat: number; lng: number } | null;
+  onSelectOverhead?: (noradId: number) => void;
+  onClearOverhead?: () => void;
   onClose: () => void;
 }
 
@@ -417,6 +423,71 @@ function UpcomingLaunchesInfo({
   );
 }
 
+function formatLatLng(loc: { lat: number; lng: number }): string {
+  const ns = loc.lat >= 0 ? 'N' : 'S';
+  const ew = loc.lng >= 0 ? 'E' : 'W';
+  return `${Math.abs(loc.lat).toFixed(2)}° ${ns}, ${Math.abs(loc.lng).toFixed(2)}° ${ew}`;
+}
+
+function OverheadInfo({
+  overhead,
+  userLocation,
+  onSelectOverhead,
+}: {
+  overhead: OverheadSat[];
+  userLocation: { lat: number; lng: number } | null;
+  onSelectOverhead?: (noradId: number) => void;
+}) {
+  const high = overhead.filter((s) => s.elevation >= 25).length;
+  return (
+    <div className={styles.infoPanelBody}>
+      <div className={styles.overheadSummary}>
+        <span className={styles.overheadCount}>{overhead.length}</span>
+        <span className={styles.overheadCountLabel}>
+          above the horizon{userLocation ? ` at ${formatLatLng(userLocation)}` : ''}
+        </span>
+        {high > 0 && (
+          <span className={styles.overheadHigh}>{high} high in the sky</span>
+        )}
+      </div>
+
+      {overhead.length === 0 && (
+        <p className={styles.upcomingEmptyMessage}>
+          Nothing is above your horizon this second — orbits move fast, try again in a moment.
+        </p>
+      )}
+
+      <div className={styles.overheadList}>
+        {overhead.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            className={styles.overheadRow}
+            onClick={() => onSelectOverhead?.(s.noradId)}
+            title={`Fly to ${s.name}`}
+          >
+            <span
+              className={styles.overheadDot}
+              style={{ background: getCategoryColor(s.category) }}
+              aria-hidden
+            />
+            <span className={styles.overheadInfoCol}>
+              <span className={styles.overheadName}>{s.name}</span>
+              <span className={styles.overheadMeta}>
+                {s.category} · {Math.round(s.range).toLocaleString('en-US')} km
+              </span>
+            </span>
+            <span className={styles.overheadAngles}>
+              <span className={styles.overheadElev}>{Math.round(s.elevation)}°</span>
+              <span className={styles.overheadAz}>{azimuthToCompass(s.azimuth)}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function InfoPanel({
   satellite,
   orbiter,
@@ -426,19 +497,28 @@ export default function InfoPanel({
   activeSearchLaunchId = null,
   upcomingSearchNoResults = false,
   globeId = 'earth',
+  overhead = null,
+  userLocation = null,
+  onSelectOverhead,
+  onClearOverhead,
   onClose,
 }: InfoPanelProps) {
   const hasLaunchSelection = !!(launches && launches.length > 0);
   const hasSatelliteSelection = !!satellite;
   const hasOrbiterSelection = !!orbiter;
-  const isUpcomingOnly = !hasSatelliteSelection && !hasOrbiterSelection && !hasLaunchSelection;
+  const hasSelection = hasSatelliteSelection || hasOrbiterSelection || hasLaunchSelection;
+  const showOverhead = !hasSelection && overhead != null;
+  const isUpcomingOnly = !hasSelection && !showOverhead;
   const title = satellite?.name
     || orbiter?.name
     || (hasLaunchSelection
       ? `${launches?.[0]?.padLocation || launches?.[0]?.padName || 'Launch site'}`
-      : 'Upcoming');
+      : showOverhead
+        ? 'Above you now'
+        : 'Upcoming');
 
   const bodyLabel = globeId === 'moon' ? 'Moon' : globeId === 'mars' ? 'Mars' : '';
+  const closeHandler = showOverhead && onClearOverhead ? onClearOverhead : onClose;
 
   useEffect(() => {
     if (!activeSearchLaunchId || !isUpcomingOnly) return;
@@ -450,10 +530,10 @@ export default function InfoPanel({
     <div className={styles.infoPanel}>
       <div className={styles.infoPanelHeader}>
         <div className={styles.infoPanelTitleWrap}>
-          <h2 className={styles.infoPanelTitle}>{isUpcomingOnly ? 'Upcoming' : title}</h2>
+          <h2 className={styles.infoPanelTitle}>{title}</h2>
         </div>
         {!isUpcomingOnly && (
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
+          <button className={styles.closeBtn} onClick={closeHandler} aria-label="Close">
             −
           </button>
         )}
@@ -464,7 +544,14 @@ export default function InfoPanel({
         {!satellite && !orbiter && hasLaunchSelection && launches && (
           <LaunchLocationInfo launches={launches} />
         )}
-        {!satellite && !orbiter && !hasLaunchSelection && upcomingLaunches.length > 0 && (
+        {showOverhead && overhead && (
+          <OverheadInfo
+            overhead={overhead}
+            userLocation={userLocation}
+            onSelectOverhead={onSelectOverhead}
+          />
+        )}
+        {isUpcomingOnly && upcomingLaunches.length > 0 && (
           <UpcomingLaunchesInfo
             launches={upcomingLaunches}
             nextGlobalLaunchId={nextGlobalLaunchId}

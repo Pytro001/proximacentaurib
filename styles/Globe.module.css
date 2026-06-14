@@ -1116,6 +1116,341 @@
   }
 }
 
+/* ── Satellite layer / legend panel (left rail, live view) ── */
+.satLayerPanel {
+  pointer-events: auto;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 360px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+  animation: satLayerIn 0.3s ease both;
+}
+
+@keyframes satLayerIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.satLayerPanel::-webkit-scrollbar {
+  width: 5px;
+}
+.satLayerPanel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.satLayerStat {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.satLayerStatNum {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.satLayerStatLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 2px;
+}
+
+.satLayerStatSub {
+  font-size: 11px;
+  color: rgba(167, 139, 250, 0.85);
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+
+.locateBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  border-radius: 9999px;
+  background: rgba(139, 92, 246, 0.06);
+  color: rgba(196, 181, 253, 0.95);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: background 0.18s, border-color 0.18s, color 0.18s, opacity 0.18s;
+}
+
+.locateBtn:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(167, 139, 250, 0.6);
+  color: #fff;
+}
+
+.locateBtn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.locateBtnActive {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.locateBtnActive:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.locateError {
+  font-size: 11px;
+  color: rgba(239, 83, 80, 0.9);
+  line-height: 1.4;
+}
+
+.notableRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.notableChip {
+  padding: 5px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.notableChip:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.legendHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.legendTitle {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.legendAllBtn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 2px 4px;
+  transition: color 0.15s;
+}
+
+.legendAllBtn:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.legendList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 5px 6px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.14s, opacity 0.14s;
+}
+
+.legendRow:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.legendRowOff {
+  opacity: 0.4;
+}
+
+.legendDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.legendName {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.82);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.legendCount {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+/* ── Overhead list (sidebar "above you now") ── */
+.overheadSummary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 8px;
+  padding-bottom: 4px;
+}
+
+.overheadCount {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.overheadCountLabel {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.3;
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
+.overheadHigh {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(167, 139, 250, 0.95);
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  padding: 3px 8px;
+  border-radius: 9999px;
+}
+
+.overheadList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.overheadRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 8px;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.14s;
+}
+
+.overheadRow:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.overheadDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.overheadInfoCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.overheadName {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.overheadMeta {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.38);
+  font-variant-numeric: tabular-nums;
+}
+
+.overheadAngles {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.overheadElev {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.overheadAz {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
 /* ── Sidebar footer ── */
 .sidebarFooter {
   padding: 16px 18px 20px;

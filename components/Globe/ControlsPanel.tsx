@@ -56,16 +56,6 @@ export default function ControlsPanel({
         </button>
         {overlayLoading && <span className={styles.satToggleSpinner} aria-hidden />}
       </div>
-      <div className={styles.satToggleRow}>
-        <a
-          href="https://airsup.dev"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={styles.mfgBtn}
-        >
-          Start manufacturing
-        </a>
-      </div>
     </div>
   );
 }
